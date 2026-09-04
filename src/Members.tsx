@@ -10,6 +10,7 @@ import {useEffect} from "react";
 import axios from "./axios";
 import Box from "@mui/material/Box";
 import AppAppBar from "./components/AppAppBar";
+import { brandColors } from "./theme/brand";
 
 
 export const columns: GridColDef[] = [
@@ -90,7 +91,7 @@ const MembersContainer = styled(Stack)(({ theme }) => ({
     backgroundRepeat: 'no-repeat',
     ...theme.applyStyles('dark', {
       backgroundImage:
-        'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), #0a0c18)',
+        `radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), ${brandColors.bg})`,
     }),
   },
 }));

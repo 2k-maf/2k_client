@@ -29,7 +29,7 @@ const CARD_STYLES: CardStyle[] = [
     ghostSide: 'right',
     rotate: -2.5,
     ring: brandColors.accent,
-    background: '#151a30',
+    background: brandColors.panelAlt,
     border: '1px solid rgba(250,43,30,0.5)',
     avatarSize: 60,
     nameSize: 30,
@@ -63,7 +63,7 @@ const CARD_STYLES: CardStyle[] = [
 
 /** Спільна геометрія картки — щоб скелетон і готова картка збігалися піксель у піксель. */
 const cardSx = (style: CardStyle, index: number) => ({
-  transform: { xs: 'none', md: `rotate(${style.rotate}deg)` },
+  transform: `rotate(${style.rotate}deg)`,
   mt: index === 0 ? 0 : '-2px',
   background: style.background,
   border: style.border,
@@ -93,7 +93,7 @@ function PodiumBadge({
   letter: string;
   style: CardStyle;
 }) {
-  const ringWidth = style.avatarSize > 56 ? 3 : 2;
+  const ringWidth = 1.5;
   return (
     <Box sx={{ position: 'relative', width: style.avatarSize, height: style.avatarSize, flex: 'none' }}>
       <Avatar
@@ -116,7 +116,8 @@ function PodiumBadge({
           position: 'absolute',
           inset: 0,
           borderRadius: '999px',
-          boxShadow: `inset 0 0 0 ${ringWidth}px ${style.ring}`,
+          border: `${ringWidth}px solid ${style.ring}`,
+          boxSizing: 'border-box',
           pointerEvents: 'none',
         }}
       />
@@ -219,7 +220,7 @@ function PodiumRowSkeleton({ style, index }: { style: CardStyle; index: number }
 export default function PodiumStack({ podium, loading }: { podium: Podium; loading?: boolean }) {
   const winners = [podium.champion, podium.mvp, podium.bestMafia];
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', px: 1, pb: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', px: { xs: 1.5, md: 1 }, py: 1 }}>
       {CARD_STYLES.map((style, i) => {
         const winner = winners[i];
         if (loading) {

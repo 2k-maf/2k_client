@@ -28,6 +28,14 @@ import { brandColors, brandFonts } from '../theme/brand';
 import Typography from "@mui/material/Typography";
 import {useEffect, useMemo} from "react";
 
+/** Кільце навколо аватара — інакше світлі фото зливаються з пісочною смугою хедера. */
+const headerAvatarSx = {
+  width: 28,
+  height: 28,
+  border: `1.5px solid ${brandColors.ink}`,
+  bgcolor: brandColors.band,
+} as const;
+
 /** Світла смуга хедера з макета: пісочне тло, чорнильний текст. */
 const StyledToolbar = styled(Toolbar)(({theme}) => ({
   display: 'flex',
@@ -312,7 +320,7 @@ export default function AppAppBar() {
           >
             {
               user && <Button onClick={() => navigateWithConfirm('/profile')} color="primary" variant="text" size="small" sx={{gap: 1, lineHeight: 1.2, py: 0.5, maxWidth: 180, overflow: 'hidden'}}>
-                    {user.avatarUrl && <Avatar src={user.avatarUrl} sx={{width: 28, height: 28}}/>}
+                    {user.avatarUrl && <Avatar src={user.avatarUrl} sx={headerAvatarSx}/>}
                     <Box sx={{display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
                       Мій Профіль
                       <span style={{fontSize: '0.7em', opacity: 0.7, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>({user?.name})</span>
@@ -463,7 +471,7 @@ export default function AppAppBar() {
                   user && <>
                         <MenuItem>
                             <Button href="/profile" color="primary" variant="outlined" fullWidth sx={{gap: 1, lineHeight: 1.2, py: 0.5}}>
-                                {user.avatarUrl && <Avatar src={user.avatarUrl} sx={{width: 28, height: 28}}/>}
+                                {user.avatarUrl && <Avatar src={user.avatarUrl} sx={headerAvatarSx}/>}
                                 <Box sx={{display: 'flex', flexDirection: 'column'}}>
                                   Мій Профіль
                                   <span style={{fontSize: '0.7em', opacity: 0.7}}>({user?.name})</span>

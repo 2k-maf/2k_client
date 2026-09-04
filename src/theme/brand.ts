@@ -9,13 +9,13 @@
 
 export const brandColors = {
   /** Page / app shell */
-  bg: '#0a0c18',
+  bg: '#12162a',
   /** Panels and cards */
-  panel: '#121629',
+  panel: '#1a1f36',
   /** Alternate panel, slightly darker */
-  panelAlt: '#101427',
+  panelAlt: '#161b32',
   /** Hairlines and card borders */
-  border: '#1c2138',
+  border: '#262c45',
   /** Light band used by the top nav */
   band: '#f4f1ea',
   /** Ink on the light band */

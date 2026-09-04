@@ -1,14 +1,37 @@
 import { useEffect, useState } from 'react';
 import axios from '../axios';
 import { CLUB_ID } from '../constants/club';
+import {
+  readClubRatingCache,
+  writeClubRatingCache,
+} from '../utils/clubRatingCache';
 import { derivePodium, EMPTY_PODIUM, Podium, RatingPlayer, RatingStats } from '../utils/podium';
 
-/** Рейтинг клубу: таблиця гравців, статистика сезону і похідний п'єдестал. */
+function applyPayload(
+  data: { players?: RatingPlayer[]; stats?: RatingStats },
+  setters: {
+    setPlayers: (p: RatingPlayer[]) => void;
+    setStats: (s: RatingStats) => void;
+    setPodium: (p: Podium) => void;
+  },
+) {
+  const list: RatingPlayer[] = data.players || [];
+  const stats = data.stats || {};
+  setters.setPlayers(list);
+  setters.setStats(stats);
+  setters.setPodium(derivePodium(list, stats));
+}
+
+/** Рейтинг клубу: таблиця гравців, статистика сезону і похідний п'єдестал.
+ *  Stale-while-revalidate: спочатку localStorage, потім свіжий /club/rating. */
 export function useClubRating() {
-  const [players, setPlayers] = useState<RatingPlayer[]>([]);
-  const [stats, setStats] = useState<RatingStats>({});
-  const [podium, setPodium] = useState<Podium>(EMPTY_PODIUM);
-  const [loading, setLoading] = useState(true);
+  const cached = readClubRatingCache(CLUB_ID);
+  const [players, setPlayers] = useState<RatingPlayer[]>(() => cached?.players || []);
+  const [stats, setStats] = useState<RatingStats>(() => cached?.stats || {});
+  const [podium, setPodium] = useState<Podium>(() =>
+    cached ? derivePodium(cached.players, cached.stats || {}) : EMPTY_PODIUM,
+  );
+  const [loading, setLoading] = useState(!cached);
 
   useEffect(() => {
     let cancelled = false;
@@ -16,10 +39,11 @@ export function useClubRating() {
       try {
         const { data } = await axios.post('/club/rating', { clubId: CLUB_ID });
         if (cancelled) return;
-        const list: RatingPlayer[] = data.players || [];
-        setPlayers(list);
-        setStats(data.stats || {});
-        setPodium(derivePodium(list, data.stats || {}));
+        applyPayload(data, { setPlayers, setStats, setPodium });
+        writeClubRatingCache({
+          players: data.players || [],
+          stats: data.stats || {},
+        });
       } catch (e) {
         console.error(e);
       } finally {

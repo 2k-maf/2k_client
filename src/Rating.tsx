@@ -16,7 +16,7 @@ import AppAppBar from './components/AppAppBar';
 import Footer from './components/Footer';
 import { brandColors, brandFonts } from './theme/brand';
 import { useClubRating } from './hooks/useClubRating';
-import { RatingPlayer } from './utils/podium';
+import { formatFloat1, RatingPlayer } from './utils/podium';
 
 const PAGE_SIZE = 15;
 
@@ -33,14 +33,16 @@ function rankAccent(rank: number) {
 }
 
 const formatSupportFive = (p: RatingPlayer) =>
-  p.supportFiveCount > 0 ? `${p.supportFivePoints > 0 ? '+' : ''}${p.supportFivePoints}` : '—';
+  p.supportFiveCount > 0
+    ? `${p.supportFivePoints > 0 ? '+' : ''}${formatFloat1(p.supportFivePoints)}`
+    : '—';
 
-const formatBonus = (p: RatingPlayer) => (p.bonusPoints ? `+${p.bonusPoints}` : '—');
+const formatBonus = (p: RatingPlayer) => (p.bonusPoints ? `+${formatFloat1(p.bonusPoints)}` : '—');
 
 const roleStatLine = (icon: React.ReactNode, wins: number, games: number, rate: number) => (
   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.3 }}>
     {icon}
-    <Typography variant="body2">{wins}/{games} ({rate}%)</Typography>
+    <Typography variant="body2">{wins}/{games} ({formatFloat1(rate)}%)</Typography>
   </Box>
 );
 
@@ -268,7 +270,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                     </Box>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                       <Box component="span" sx={{ ...mono(16, brandColors.text), fontWeight: 700 }}>
-                        {player.rating}
+                        {formatFloat1(player.rating)}
                       </Box>
                       <Box
                         component="span"
@@ -291,7 +293,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                       </Box>
                     </Box>
                     <Box component="span" sx={mono(13)}>
-                      {player.totalWins}/{player.totalGames} ({player.totalWinsRate}%)
+                      {player.totalWins}/{player.totalGames} ({formatFloat1(player.totalWinsRate)}%)
                     </Box>
                     <Box component="span" sx={{ ...mono(13), textAlign: 'right' }}>
                       {player.firsDie}

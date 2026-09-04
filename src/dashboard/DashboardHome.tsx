@@ -33,6 +33,7 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import AccountBoxIcon from "@mui/icons-material/AccountBox";
 import FormatPaintIcon from "@mui/icons-material/FormatPaint";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import { invalidateClubRatingCache } from "../utils/clubRatingCache";
 import Button from "@mui/material/Button";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import Card from "@mui/material/Card";
@@ -115,6 +116,7 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
       await axios.post('/club/rating-period', {
         name: name.value,
       });
+      invalidateClubRatingCache();
       setClubSelectId(null)
       alert('Ви успішно створили рейтинговий період');
       name.value = '';
@@ -137,6 +139,7 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
       const token = data?.token;
       console.log(`--->`, token, 'DashboardHome.tsx:137')
       token && setToken(token)
+      invalidateClubRatingCache();
       alert('Оновлено');
       nickname.value = '';
     } catch (e: any) {
@@ -157,6 +160,7 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
       try {
         const { data } = await axios.post('/user/avatar', { image: reader.result });
         data?.token && setToken(data.token);
+        invalidateClubRatingCache();
         alert(user?.authType === 'Клуб' ? 'Логотип клубу збережено' : 'Аватар оновлено');
       } catch (e: any) {
         alert(e?.response?.data?.error || 'Помилка при завантаженні');

@@ -9,6 +9,7 @@ import {DataGrid, GridColDef} from "@mui/x-data-grid";
 import {use, useEffect} from "react";
 import axios from "./axios";
 import AppAppBar from "./components/AppAppBar";
+import { brandColors } from "./theme/brand";
 
 export const columns: GridColDef[] = [
   { field: 'name', headerName: 'Назва клубу', flex: 1, minWidth: 200 },
@@ -56,7 +57,7 @@ const ClubsContainer = styled(Stack)(({ theme }) => ({
     backgroundRepeat: 'no-repeat',
     ...theme.applyStyles('dark', {
       backgroundImage:
-        'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), #0a0c18)',
+        `radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), ${brandColors.bg})`,
     }),
   },
 }));

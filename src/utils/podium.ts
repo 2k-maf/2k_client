@@ -31,6 +31,11 @@ export type Podium = {
 
 export const EMPTY_PODIUM: Podium = { champion: null, mvp: null, bestMafia: null };
 
+/** Один знак після коми — прибирає float-сміття на кшталт 0.10000000000000003. */
+export function formatFloat1(n: number): string {
+  return (Math.round((Number(n) + Number.EPSILON) * 10) / 10).toFixed(1);
+}
+
 export function derivePodium(players: RatingPlayer[], stats: RatingStats = {}): Podium {
   const champion = players[0];
   const mvpPlayer = [...players].sort((a, b) => (b.bonusPoints || 0) - (a.bonusPoints || 0))[0];
@@ -48,14 +53,14 @@ export function derivePodium(players: RatingPlayer[], stats: RatingStats = {}): 
       ? {
           nickname: champion.nickname,
           avatarUrl: champion.avatarUrl,
-          stat: `${champion.rating} · ${champion.totalWins}/${champion.totalGames} (${champion.totalWinsRate}%)`,
+          stat: `${formatFloat1(champion.rating)} · ${champion.totalWins}/${champion.totalGames} (${formatFloat1(champion.totalWinsRate)}%)`,
         }
       : null,
     mvp: mvpPlayer?.bonusPoints
       ? {
           nickname: mvpPlayer.nickname,
           avatarUrl: mvpPlayer.avatarUrl,
-          stat: `+${mvpPlayer.bonusPoints} бонусних балів`,
+          stat: `+${formatFloat1(mvpPlayer.bonusPoints)} бонусних балів`,
         }
       : null,
     bestMafia: bestMafiaPlayer
@@ -63,10 +68,10 @@ export function derivePodium(players: RatingPlayer[], stats: RatingStats = {}): 
           nickname: bestMafiaPlayer.nickname,
           avatarUrl: bestMafiaPlayer.avatarUrl,
           stat: `${bestMafiaPlayer.mafiaWins + bestMafiaPlayer.donWins}/${bestMafiaPlayer.mafiaGames + bestMafiaPlayer.donGames} (${
-            Math.round(
+            formatFloat1(
               ((bestMafiaPlayer.mafiaWins + bestMafiaPlayer.donWins) /
-                (bestMafiaPlayer.mafiaGames + bestMafiaPlayer.donGames)) * 1000,
-            ) / 10
+                (bestMafiaPlayer.mafiaGames + bestMafiaPlayer.donGames)) * 100,
+            )
           }%)`,
         }
       : null,

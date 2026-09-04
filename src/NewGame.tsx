@@ -28,6 +28,7 @@ import AppAppBar from "./components/AppAppBar";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import {Autocomplete, createFilterOptions, Popover} from "@mui/material";
 import Box from "@mui/material/Box";
+import { invalidateClubRatingCache } from "./utils/clubRatingCache";
 import Button from "@mui/material/Button";
 import {useAuth} from "./AuthProvider";
 import {vancouverTodayYmd} from "./utils/vancouverDate";
@@ -52,7 +53,7 @@ const NewGameContainer = styled(Stack)(({theme}) => ({
     backgroundRepeat: 'no-repeat',
     ...theme.applyStyles('dark', {
       backgroundImage:
-        'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), #0a0c18)',
+        `radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), ${brandColors.bg})`,
     }),
   },
 }));
@@ -483,6 +484,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       winState,
       votings
     });
+    invalidateClubRatingCache();
     alert('Гру збережено');
     resetGame();
   }

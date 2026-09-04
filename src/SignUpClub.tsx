@@ -18,6 +18,7 @@ import AppTheme from './theme/AppTheme';
 import ColorModeSelect from './theme/ColorModeSelect';
 import { GoogleIcon, FacebookIcon } from './components/CustomIcons';
 import SitemarkIcon from "./components/SitemarkIcon";
+import { brandColors } from "./theme/brand";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -56,7 +57,7 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
     backgroundRepeat: 'no-repeat',
     ...theme.applyStyles('dark', {
       backgroundImage:
-        'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), #0a0c18)',
+        `radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), ${brandColors.bg})`,
     }),
   },
 }));
