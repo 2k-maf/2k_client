@@ -61,11 +61,21 @@ export default function Footer() {
         pt: 3,
         pb: 3.5,
         borderTop: '1px solid rgba(255,255,255,0.10)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
       }}
     >
+      {/* Той самий контентний стовпчик, що й у решти сторінки, — інакше на широких
+          екранах футер «розповзається» до країв, а блок вище лишається по центру. */}
+      <Box
+        sx={{
+          maxWidth: 1280,
+          width: '100%',
+          mx: 'auto',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
       <Box
         sx={{
           display: 'flex',
@@ -108,6 +118,7 @@ export default function Footer() {
       </Box>
       <Box component="span" sx={{ fontSize: 12, color: 'rgba(242,243,247,0.45)' }}>
         © Dva Kol'ory Vancouver Mafia Club {new Date().getFullYear()}
+      </Box>
       </Box>
     </Box>
   );
