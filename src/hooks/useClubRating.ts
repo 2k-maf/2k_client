@@ -8,6 +8,7 @@ export function useClubRating() {
   const [players, setPlayers] = useState<RatingPlayer[]>([]);
   const [stats, setStats] = useState<RatingStats>({});
   const [podium, setPodium] = useState<Podium>(EMPTY_PODIUM);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -21,11 +22,13 @@ export function useClubRating() {
         setPodium(derivePodium(list, data.stats || {}));
       } catch (e) {
         console.error(e);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }
     fetchData();
     return () => { cancelled = true; };
   }, []);
 
-  return { players, stats, podium };
+  return { players, stats, podium, loading };
 }

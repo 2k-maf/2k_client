@@ -10,7 +10,7 @@ import PodiumStack from './brand/PodiumStack';
 
 export default function Hero() {
   const { user } = useAuth();
-  const { podium } = useClubRating();
+  const { podium, loading } = useClubRating();
 
   return (
     <Box
@@ -188,7 +188,7 @@ export default function Hero() {
                 Весь рейтинг →
               </Box>
             </Box>
-            <PodiumStack podium={podium} />
+            <PodiumStack podium={podium} loading={loading} />
           </Box>
         </Box>
       </Box>

@@ -48,7 +48,7 @@ export function derivePodium(players: RatingPlayer[], stats: RatingStats = {}): 
       ? {
           nickname: champion.nickname,
           avatarUrl: champion.avatarUrl,
-          stat: `Рейтинг ${champion.rating} | ${champion.totalWins}/${champion.totalGames} (${champion.totalWinsRate}%)`,
+          stat: `${champion.rating} · ${champion.totalWins}/${champion.totalGames} (${champion.totalWinsRate}%)`,
         }
       : null,
     mvp: mvpPlayer?.bonusPoints
