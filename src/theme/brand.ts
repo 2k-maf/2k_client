@@ -35,7 +35,11 @@ export const brandColors = {
 } as const;
 
 export const brandFonts = {
-  display: "'Satoshi', 'Inter', sans-serif",
+  // Satoshi НЕ має кирилиці, тож «ДВА КОЛЬОРИ» завжди падає у фолбек. У макеті це
+  // системний sans-serif (на macOS — Helvetica), тому Inter тут навмисно немає:
+  // з ним заголовок виглядав вужчим, ніж в оригіналі. Arial — метричний двійник
+  // Helvetica для Windows.
+  display: "'Satoshi', Helvetica, Arial, sans-serif",
   ui: "'Inter', sans-serif",
   mono: "'JetBrains Mono', monospace",
 } as const;
