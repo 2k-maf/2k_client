@@ -8,8 +8,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import FormLabel from '@mui/material/FormLabel';
 import axios from '../axios';
 import { normalizeAuthEmail } from '../utils/email';
+import { brandColors, brandFonts } from '../theme/brand';
+import { publicStaticUrl } from '../utils/mediaUrl';
 
 interface ForgotPasswordProps {
   open: boolean;
@@ -48,9 +52,37 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
   };
 
   return (
-    <Dialog open={open} onClose={onClose} slotProps={{ paper: { sx: { backgroundImage: 'none' } } }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      slotProps={{
+        paper: {
+          sx: {
+            backgroundImage: 'none',
+            backgroundColor: brandColors.panel,
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: 520,
+          },
+        },
+      }}
+    >
       <form onSubmit={handleSubmit}>
-        <DialogTitle>Відновлення паролю</DialogTitle>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.75, pb: 1 }}>
+          <Box
+            component="img"
+            src={publicStaticUrl('/brand/dk-mark-red.png')}
+            alt=""
+            sx={{ height: 44, width: 'auto', display: 'block' }}
+          />
+          <Box
+            component="span"
+            sx={{ fontFamily: brandFonts.display, fontWeight: 900, fontSize: 26, letterSpacing: '-0.02em' }}
+          >
+            Відновлення паролю
+          </Box>
+        </DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
           {sent ? (
             <Alert severity="success">
@@ -61,6 +93,7 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
               <DialogContentText>
                 Введіть електронну адресу вашого облікового запису і ми надішлемо посилання для відновлення паролю.
               </DialogContentText>
+              <FormLabel htmlFor="forgot-email">Електронна адреса</FormLabel>
               <OutlinedInput
                 autoFocus
                 required
@@ -77,7 +110,9 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
           )}
         </DialogContent>
         <DialogActions sx={{ pb: 3, px: 3 }}>
-          <Button onClick={onClose}>{sent ? 'Закрити' : 'Скасувати'}</Button>
+          <Button onClick={onClose} variant="outlined">
+            {sent ? 'Закрити' : 'Скасувати'}
+          </Button>
           {!sent && (
             <Button variant="contained" type="submit" disabled={loading}>
               {loading ? <CircularProgress size={20} /> : 'Надіслати'}
