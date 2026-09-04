@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Skeleton from '@mui/material/Skeleton';
+import Avatar from '@mui/material/Avatar';
 import { brandColors, brandFonts } from '../../theme/brand';
 import { Podium, PodiumWinner } from '../../utils/podium';
 
@@ -79,27 +80,46 @@ const cardSx = (style: CardStyle, index: number) => ({
   overflow: 'hidden',
 });
 
-/** Кружечок з ініціалом та кольоровим кільцем — як на макеті. */
-function PodiumBadge({ letter, style }: { letter: string; style: CardStyle }) {
+/**
+ * Аватар гравця в кольоровому кільці. Якщо фото немає — ініціал, як на макеті.
+ * Кільце малюємо окремим шаром, щоб воно лежало поверх фото.
+ */
+function PodiumBadge({
+  avatarUrl,
+  letter,
+  style,
+}: {
+  avatarUrl?: string;
+  letter: string;
+  style: CardStyle;
+}) {
+  const ringWidth = style.avatarSize > 56 ? 3 : 2;
   return (
-    <Box
-      sx={{
-        width: style.avatarSize,
-        height: style.avatarSize,
-        flex: 'none',
-        borderRadius: '999px',
-        background: brandColors.border,
-        boxShadow: `inset 0 0 0 ${style.avatarSize > 56 ? 3 : 2}px ${style.ring}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: brandFonts.display,
-        fontWeight: 900,
-        fontSize: style.avatarSize / 2.7,
-        color: '#fff',
-      }}
-    >
-      {letter}
+    <Box sx={{ position: 'relative', width: style.avatarSize, height: style.avatarSize, flex: 'none' }}>
+      <Avatar
+        src={avatarUrl || undefined}
+        sx={{
+          width: style.avatarSize,
+          height: style.avatarSize,
+          bgcolor: brandColors.border,
+          fontFamily: brandFonts.display,
+          fontWeight: 900,
+          fontSize: style.avatarSize / 2.7,
+          color: '#fff',
+        }}
+      >
+        {letter}
+      </Avatar>
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: '999px',
+          boxShadow: `inset 0 0 0 ${ringWidth}px ${style.ring}`,
+          pointerEvents: 'none',
+        }}
+      />
     </Box>
   );
 }
@@ -128,7 +148,11 @@ function PodiumRow({ winner, style, index }: { winner: PodiumWinner; style: Card
         {style.ghost}
       </Box>
       <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 2 }}>
-        <PodiumBadge letter={winner.nickname?.trim()?.[0]?.toUpperCase() || '?'} style={style} />
+        <PodiumBadge
+          avatarUrl={winner.avatarUrl}
+          letter={winner.nickname?.trim()?.[0]?.toUpperCase() || '?'}
+          style={style}
+        />
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6, minWidth: 0 }}>
           <Box
             component="span"
