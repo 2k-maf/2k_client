@@ -61,17 +61,10 @@ const liveDotPulse = keyframes`
   50% { opacity: 0.3; transform: scale(0.88); }
 `;
 
-/** У селекторі «Інше»: Учасники, $$$, Події (Правила — окремо в хедері) */
+/** У селекторі «Інше»: лише Учасники (Правила — окремо в хедері). */
 const EXTRA_NAV_ITEMS: { label: string; path: string; isActive: (pathname: string) => boolean }[] = [
   { label: 'Учасники', path: '/members', isActive: (p) => p.includes('members') },
-  { label: '$$$', path: '/$', isActive: (p) => p.includes('$') },
-  { label: 'Події', path: '/calendar', isActive: (p) => p.includes('calendar') },
 ];
-
-/** Збігаються з `BudgetRedirect` / `CalendarRedirect` */
-const BUDGET_SHEET_EXTERNAL_URL =
-  'https://docs.google.com/spreadsheets/d/1Rmp0EHC4pm5u8frgDozMUt7s3XSLwUTJyH2Okys4aqs/';
-const EVENTS_SITE_EXTERNAL_URL = 'https://sites.google.com/view/9or10mafia/home';
 
 /** Спільний вигляд випадаючих меню в хедері (як «Рейтингова / Фанова») */
 function appBarNavMenuPaperSx(theme: Theme) {
@@ -161,19 +154,8 @@ export default function AppAppBar() {
   }
 
   function openExtraNavPath(path: string, closeUi?: () => void) {
-    const done = () => closeUi?.();
-    if (path === '/$') {
-      window.open(BUDGET_SHEET_EXTERNAL_URL, '_blank', 'noopener,noreferrer');
-      done();
-      return;
-    }
-    if (path === '/calendar') {
-      window.open(EVENTS_SITE_EXTERNAL_URL, '_blank', 'noopener,noreferrer');
-      done();
-      return;
-    }
     navigateWithConfirm(path);
-    done();
+    closeUi?.();
   }
 
   return (
@@ -245,7 +227,7 @@ export default function AppAppBar() {
                   variant="text"
                   size="small"
                   onClick={(e) => setExtraNavMenuAnchor(e.currentTarget)}
-                  aria-label="Меню: учасники, бюджет, події"
+                  aria-label="Меню: учасники"
                   sx={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, minWidth: 'auto', px: 0.3 }}
                 >
                   <ArrowDropDownIcon sx={{ fontSize: 20 }} />
