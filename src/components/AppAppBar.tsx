@@ -226,7 +226,7 @@ export default function AppAppBar() {
                       size="small">
                 Фан гра
               </Button>}
-              <Button onClick={() => navigateWithConfirm('/scoring')} variant="text" size="small">
+              <Button onClick={() => navigateWithConfirm('/rules')} variant="text" size="small">
                 Правила
               </Button>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -398,7 +398,7 @@ export default function AppAppBar() {
                   selected={window.location.pathname.includes('scoring')}
                   onClick={() => {
                     setOpen(false);
-                    navigateWithConfirm('/scoring');
+                    navigateWithConfirm('/rules');
                   }}
                 >
                   Правила
