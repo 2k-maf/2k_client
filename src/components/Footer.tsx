@@ -112,16 +112,16 @@ export default function Footer() {
           а чорне то .... також любов
         </Box>
         <Box
-          component="img"
-          src={publicStaticUrl('/brand/dk-mark-red.png')}
-          alt=""
+          component="span"
+          aria-hidden
           sx={{
-            height: { xs: 36, md: 44 },
-            width: 'auto',
-            display: 'block',
+            fontSize: { xs: 28, md: 34 },
+            lineHeight: 1,
             ml: 0.5,
           }}
-        />
+        >
+          🫶
+        </Box>
       </Box>
 
       <Box
