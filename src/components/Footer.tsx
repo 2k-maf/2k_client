@@ -57,7 +57,6 @@ export default function Footer() {
       sx={{
         background: brandColors.bg,
         color: brandColors.text,
-        px: { xs: 2.5, md: 6 },
         pt: 3,
         pb: 3.5,
         borderTop: '1px solid rgba(255,255,255,0.10)',
@@ -67,9 +66,12 @@ export default function Footer() {
           екранах футер «розповзається» до країв, а блок вище лишається по центру. */}
       <Box
         sx={{
+          // Дзеркалить контейнер героя: та сама максимальна ширина І ті самі
+          // внутрішні відступи, інакше футер зсунуто рівно на величину padding.
           maxWidth: 1280,
           width: '100%',
           mx: 'auto',
+          px: { xs: 2.5, md: 6 },
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
