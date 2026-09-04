@@ -46,6 +46,9 @@ const StyledToolbar = styled(Toolbar)(({theme}) => ({
   },
   '& .MuiButton-outlined': {
     borderColor: alpha(brandColors.ink, 0.25),
+    backgroundColor: alpha(brandColors.ink, 0.06),
+    backgroundImage: 'none',
+    '&:hover': { backgroundColor: alpha(brandColors.ink, 0.1) },
   },
   '& .MuiIconButton-root': { color: brandColors.ink },
 }));

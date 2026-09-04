@@ -214,7 +214,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 sx={{ mb: 3, width: '100%' }}
                 onChange={(e: SelectChangeEvent<any>) => setClubSelectId(e.target.value)}
               >
-                { clubs?.map((c: { name: string, _id: string }) => <MenuItem value={c._id}>{c.name}</MenuItem> )}
+                { clubs?.map((c: { name: string, _id: string }) => <MenuItem key={c._id} value={c._id}>{c.name}</MenuItem> )}
                 {/*<MenuItem value={'users'}>Гравець</MenuItem>*/}
                 {/*<MenuItem value={'clubs'}>Клуб</MenuItem>*/}
               </Select>
