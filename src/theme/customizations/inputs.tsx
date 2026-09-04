@@ -8,6 +8,7 @@ import CheckBoxOutlineBlankRoundedIcon from '@mui/icons-material/CheckBoxOutline
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import { gray, brand } from '../themePrimitives';
+import { brandColors } from '../brand';
 
 export const inputsCustomizations: Components<Theme> = {
   MuiButtonBase: {
@@ -55,35 +56,21 @@ export const inputsCustomizations: Components<Theme> = {
               color: 'primary',
               variant: 'contained',
             },
+            // Головна CTA бренду Dva Kol'ory — суцільний червоний, без градієнта.
             style: {
-              color: 'white',
-              backgroundColor: gray[900],
-              backgroundImage: `linear-gradient(to bottom, ${gray[700]}, ${gray[800]})`,
-              boxShadow: `inset 0 1px 0 ${gray[600]}, inset 0 -1px 0 1px hsl(220, 0%, 0%)`,
-              border: `1px solid ${gray[700]}`,
+              color: '#fff',
+              backgroundColor: brandColors.accent,
+              backgroundImage: 'none',
+              boxShadow: 'none',
+              border: 'none',
+              fontWeight: 700,
               '&:hover': {
-                backgroundImage: 'none',
-                backgroundColor: gray[700],
+                backgroundColor: brandColors.accentHover,
                 boxShadow: 'none',
               },
               '&:active': {
-                backgroundColor: gray[800],
+                backgroundColor: brandColors.accent,
               },
-              ...theme.applyStyles('dark', {
-                color: 'black',
-                backgroundColor: gray[50],
-                backgroundImage: `linear-gradient(to bottom, ${gray[100]}, ${gray[50]})`,
-                boxShadow: 'inset 0 -1px 0  hsl(220, 30%, 80%)',
-                border: `1px solid ${gray[50]}`,
-                '&:hover': {
-                  backgroundImage: 'none',
-                  backgroundColor: gray[300],
-                  boxShadow: 'none',
-                },
-                '&:active': {
-                  backgroundColor: gray[400],
-                },
-              }),
             },
           },
           {

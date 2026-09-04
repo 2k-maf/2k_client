@@ -24,23 +24,30 @@ import {useAuth} from "../AuthProvider";
 import {useNavigate, useLocation, Link as RouterLink} from "react-router-dom";
 import axios from "../axios";
 import { brand } from '../theme/themePrimitives';
+import { brandColors, brandFonts } from '../theme/brand';
 import Typography from "@mui/material/Typography";
 import {useEffect, useMemo} from "react";
 
+/** Світла смуга хедера з макета: пісочне тло, чорнильний текст. */
 const StyledToolbar = styled(Toolbar)(({theme}) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   flexShrink: 0,
-  borderRadius: `calc(${theme.shape.borderRadius}px + 8px)`,
-  backdropFilter: 'blur(24px)',
-  border: '1px solid',
-  borderColor: (theme.vars || theme).palette.divider,
-  backgroundColor: theme.vars
-    ? `rgba(${theme.vars.palette.background.defaultChannel} / 0.4)`
-    : alpha(theme.palette.background.default, 0.4),
-  boxShadow: (theme.vars || theme).shadows[1],
-  padding: '8px 12px',
+  minHeight: 'auto',
+  backgroundColor: 'transparent',
+  color: brandColors.ink,
+  padding: '8px 0',
+  // Лише текстові/контурні кнопки — червона CTA має власні кольори.
+  '& .MuiButton-text, & .MuiButton-outlined': {
+    color: brandColors.ink,
+    fontWeight: 600,
+    '&:hover': { color: brandColors.accent, backgroundColor: 'transparent' },
+  },
+  '& .MuiButton-outlined': {
+    borderColor: alpha(brandColors.ink, 0.25),
+  },
+  '& .MuiIconButton-root': { color: brandColors.ink },
 }));
 
 let stopWatchInterval: NodeJS.Timeout;
@@ -172,15 +179,16 @@ export default function AppAppBar() {
       enableColorOnDark
       sx={{
         boxShadow: 0,
-        bgcolor: 'transparent',
+        bgcolor: brandColors.band,
         backgroundImage: 'none',
-        mt: 'calc(var(--template-frame-height, 0px) + 28px)',
+        color: brandColors.ink,
+        mt: 'var(--template-frame-height, 0px)',
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth={false} sx={{ px: { xs: 2, md: 3 } }}>
         <StyledToolbar variant="dense" disableGutters>
           <Box sx={{flexGrow: 1, display: 'flex', alignItems: 'center', px: 0, gap: 3}}>
-            <Sitemark/>
+            <Sitemark variant="navy" size={30}/>
             <Box sx={{display: 'none', '@media (min-width: 940px)': {display: 'flex'}, gap: 0.5, overflow: 'hidden', '& .MuiButton-root': {whiteSpace: 'nowrap', minWidth: 'auto', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis'}}}>
               <Button startIcon={<StarIcon/>} variant="text"
                       onClick={() => navigateWithConfirm('/clubs-rating')}
@@ -340,7 +348,12 @@ export default function AppAppBar() {
                 </Button>
             }
             {
-              !user && <Button href="/register" color="primary" variant="text" size="small">
+              !user && <Button
+                    href="/register"
+                    variant="contained"
+                    size="small"
+                    sx={{ px: 2, borderRadius: '12px' }}
+                >
                     Зареєструватися
                 </Button>
             }

@@ -1,4 +1,5 @@
 import { createTheme, alpha, PaletteMode, Shadows } from '@mui/material/styles';
+import { brandColors, brandFonts } from './brand';
 
 declare module '@mui/material/Paper' {
   interface PaperPropsVariantOverrides {
@@ -31,68 +32,68 @@ const defaultTheme = createTheme();
 const customShadows: Shadows = [...defaultTheme.shadows];
 
 export const brand = {
-  50: 'hsl(210, 100%, 95%)',
-  100: 'hsl(210, 100%, 92%)',
-  200: 'hsl(210, 100%, 80%)',
-  300: 'hsl(210, 100%, 65%)',
-  400: 'hsl(210, 98%, 48%)',
-  500: 'hsl(210, 98%, 42%)',
-  600: 'hsl(210, 98%, 55%)',
-  700: 'hsl(210, 100%, 35%)',
-  800: 'hsl(210, 100%, 16%)',
-  900: 'hsl(210, 100%, 21%)',
+  50: 'hsl(4, 100%, 96%)',
+  100: 'hsl(4, 100%, 90%)',
+  200: 'hsl(4, 100%, 80%)',
+  300: 'hsl(6, 100%, 68%)',
+  400: 'hsl(4, 96%, 55%)',
+  500: 'hsl(4, 89%, 45%)',
+  600: 'hsl(4, 87%, 37%)',
+  700: 'hsl(4, 87%, 28%)',
+  800: 'hsl(4, 87%, 20%)',
+  900: 'hsl(4, 87%, 13%)',
 };
 
 export const gray = {
-  50: 'hsl(220, 35%, 97%)',
-  100: 'hsl(220, 30%, 94%)',
-  200: 'hsl(220, 20%, 88%)',
-  300: 'hsl(220, 20%, 80%)',
-  400: 'hsl(220, 20%, 65%)',
-  500: 'hsl(220, 20%, 42%)',
-  600: 'hsl(220, 20%, 35%)',
-  700: 'hsl(220, 20%, 25%)',
-  800: 'hsl(220, 30%, 6%)',
-  900: 'hsl(220, 35%, 3%)',
+  50: 'hsl(225, 25%, 96%)',
+  100: 'hsl(226, 30%, 89%)',
+  200: 'hsl(226, 30%, 78%)',
+  300: 'hsl(226, 26%, 63%)',
+  400: 'hsl(226, 16%, 49%)',
+  500: 'hsl(226, 22%, 37%)',
+  600: 'hsl(226, 26%, 27%)',
+  700: 'hsl(228, 33%, 16%)',
+  800: 'hsl(230, 39%, 12%)',
+  900: 'hsl(229, 43%, 6%)',
 };
 
 export const green = {
-  50: 'hsl(120, 80%, 98%)',
-  100: 'hsl(120, 75%, 94%)',
-  200: 'hsl(120, 75%, 87%)',
-  300: 'hsl(120, 61%, 77%)',
-  400: 'hsl(120, 44%, 53%)',
-  500: 'hsl(120, 59%, 30%)',
-  600: 'hsl(120, 70%, 25%)',
-  700: 'hsl(120, 75%, 16%)',
-  800: 'hsl(120, 84%, 10%)',
-  900: 'hsl(120, 87%, 6%)',
+  50: 'hsl(154, 76%, 95%)',
+  100: 'hsl(154, 74%, 89%)',
+  200: 'hsl(154, 72%, 80%)',
+  300: 'hsl(154, 76%, 75%)',
+  400: 'hsl(154, 64%, 59%)',
+  500: 'hsl(154, 59%, 45%)',
+  600: 'hsl(154, 65%, 34%)',
+  700: 'hsl(154, 66%, 25%)',
+  800: 'hsl(154, 66%, 17%)',
+  900: 'hsl(154, 67%, 9%)',
 };
 
 export const orange = {
-  50: 'hsl(45, 100%, 97%)',
-  100: 'hsl(45, 92%, 90%)',
-  200: 'hsl(45, 94%, 80%)',
-  300: 'hsl(45, 90%, 65%)',
-  400: 'hsl(45, 90%, 40%)',
-  500: 'hsl(45, 90%, 35%)',
-  600: 'hsl(45, 91%, 25%)',
-  700: 'hsl(45, 94%, 20%)',
-  800: 'hsl(45, 95%, 16%)',
-  900: 'hsl(45, 93%, 12%)',
+  50: 'hsl(18, 100%, 96%)',
+  100: 'hsl(18, 100%, 90%)',
+  200: 'hsl(18, 100%, 82%)',
+  300: 'hsl(18, 100%, 68%)',
+  400: 'hsl(18, 100%, 61%)',
+  500: 'hsl(18, 86%, 53%)',
+  600: 'hsl(18, 83%, 43%)',
+  700: 'hsl(18, 83%, 33%)',
+  800: 'hsl(18, 84%, 23%)',
+  900: 'hsl(18, 85%, 14%)',
 };
 
 export const red = {
   50: 'hsl(0, 100%, 97%)',
-  100: 'hsl(0, 92%, 90%)',
-  200: 'hsl(0, 94%, 80%)',
-  300: 'hsl(0, 90%, 65%)',
-  400: 'hsl(0, 90%, 40%)',
-  500: 'hsl(0, 90%, 30%)',
-  600: 'hsl(0, 91%, 25%)',
-  700: 'hsl(0, 94%, 18%)',
-  800: 'hsl(0, 95%, 12%)',
-  900: 'hsl(0, 93%, 6%)',
+  100: 'hsl(0, 100%, 92%)',
+  200: 'hsl(0, 100%, 85%)',
+  300: 'hsl(0, 100%, 77%)',
+  400: 'hsl(0, 89%, 66%)',
+  500: 'hsl(0, 71%, 55%)',
+  600: 'hsl(0, 62%, 44%)',
+  700: 'hsl(0, 63%, 33%)',
+  800: 'hsl(0, 65%, 22%)',
+  900: 'hsl(0, 65%, 13%)',
 };
 
 export const getDesignTokens = (mode: PaletteMode) => {
@@ -161,17 +162,17 @@ export const getDesignTokens = (mode: PaletteMode) => {
       grey: {
         ...gray,
       },
-      divider: mode === 'dark' ? alpha(gray[700], 0.6) : alpha(gray[300], 0.4),
+      divider: mode === 'dark' ? brandColors.border : alpha(gray[300], 0.4),
       background: {
         default: 'hsl(0, 0%, 99%)',
         paper: 'hsl(220, 35%, 97%)',
-        ...(mode === 'dark' && { default: gray[900], paper: 'hsl(220, 30%, 7%)' }),
+        ...(mode === 'dark' && { default: brandColors.bg, paper: brandColors.panel }),
       },
       text: {
         primary: gray[800],
         secondary: gray[600],
         warning: orange[400],
-        ...(mode === 'dark' && { primary: 'hsl(0, 0%, 100%)', secondary: gray[400] }),
+        ...(mode === 'dark' && { primary: brandColors.text, secondary: gray[300] }),
       },
       action: {
         hover: alpha(gray[200], 0.2),
@@ -183,23 +184,27 @@ export const getDesignTokens = (mode: PaletteMode) => {
       },
     },
     typography: {
-      fontFamily: 'Inter, sans-serif',
+      fontFamily: "'Inter', sans-serif",
       h1: {
+      fontFamily: brandFonts.display,
         fontSize: defaultTheme.typography.pxToRem(48),
         fontWeight: 600,
         lineHeight: 1.2,
         letterSpacing: -0.5,
       },
       h2: {
+      fontFamily: brandFonts.display,
         fontSize: defaultTheme.typography.pxToRem(36),
         fontWeight: 600,
         lineHeight: 1.2,
       },
       h3: {
+      fontFamily: brandFonts.display,
         fontSize: defaultTheme.typography.pxToRem(30),
         lineHeight: 1.2,
       },
       h4: {
+      fontFamily: brandFonts.display,
         fontSize: defaultTheme.typography.pxToRem(24),
         fontWeight: 600,
         lineHeight: 1.5,
@@ -321,14 +326,14 @@ export const colorSchemes = {
       grey: {
         ...gray,
       },
-      divider: alpha(gray[700], 0.6),
+      divider: brandColors.border,
       background: {
-        default: gray[900],
-        paper: 'hsl(220, 30%, 7%)',
+        default: brandColors.bg,
+        paper: brandColors.panel,
       },
       text: {
-        primary: 'hsl(0, 0%, 100%)',
-        secondary: gray[400],
+        primary: brandColors.text,
+        secondary: gray[300],
       },
       action: {
         hover: alpha(gray[600], 0.2),
@@ -341,23 +346,27 @@ export const colorSchemes = {
 };
 
 export const typography = {
-  fontFamily: 'Roboto, sans-serif',
+  fontFamily: "'Inter', sans-serif",
   h1: {
+      fontFamily: brandFonts.display,
     fontSize: defaultTheme.typography.pxToRem(48),
     fontWeight: 600,
     lineHeight: 1.2,
     letterSpacing: -0.5,
   },
   h2: {
+      fontFamily: brandFonts.display,
     fontSize: defaultTheme.typography.pxToRem(36),
     fontWeight: 600,
     lineHeight: 1.2,
   },
   h3: {
+      fontFamily: brandFonts.display,
     fontSize: defaultTheme.typography.pxToRem(30),
     lineHeight: 1.2,
   },
   h4: {
+      fontFamily: brandFonts.display,
     fontSize: defaultTheme.typography.pxToRem(24),
     fontWeight: 600,
     lineHeight: 1.5,

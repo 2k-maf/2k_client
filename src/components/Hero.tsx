@@ -1,195 +1,197 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
-import InputLabel from '@mui/material/InputLabel';
-import Link from '@mui/material/Link';
-import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import visuallyHidden from '@mui/utils/visuallyHidden';
-import {styled} from '@mui/material/styles';
-import {useAuth} from "../AuthProvider";
-import { publicStaticUrl } from '../utils/mediaUrl';
-
-const heroBgUrl = process.env.TEMPLATE_IMAGE_URL || publicStaticUrl('/images/bg.png');
-
-const StyledBox = styled('div')(({theme}) => ({
-  alignSelf: 'center',
-  padding: '10rem',
-  width: '100%',
-  height: 400,
-  marginTop: theme.spacing(8),
-  borderRadius: (theme.vars || theme).shape.borderRadius,
-  outline: '6px solid',
-  outlineColor: 'hsla(220, 25%, 80%, 0.2)',
-  border: '1px solid',
-  borderColor: (theme.vars || theme).palette.grey[200],
-  boxShadow: '0 0 12px 8px hsla(220, 25%, 80%, 0.2)',
-  backgroundImage: `url(${heroBgUrl})`,
-  backgroundSize: 'contain',
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'center',
-  [theme.breakpoints.up('xs')]: {
-    marginTop: theme.spacing(10),
-    height: 100,
-  },
-  [theme.breakpoints.up('sm')]: {
-    marginTop: theme.spacing(10),
-    height: 400,
-  },
-  [theme.breakpoints.up('md')]: {
-    marginTop: theme.spacing(10),
-    height: 750,
-  },
-  ...theme.applyStyles('dark', {
-    boxShadow: '0 0 24px 12px hsla(210, 100%, 25%, 0.2)',
-    backgroundImage: `url(${heroBgUrl})`,
-    outlineColor: 'hsla(220, 20%, 42%, 0.1)',
-    borderColor: (theme.vars || theme).palette.grey[700],
-  }),
-}));
+import { Link as RouterLink } from 'react-router-dom';
+import { useAuth } from '../AuthProvider';
+import { brandColors, brandFonts } from '../theme/brand';
+import { useClubRating } from '../hooks/useClubRating';
+import PodiumStack from './brand/PodiumStack';
 
 export default function Hero() {
   const { user } = useAuth();
+  const { podium } = useClubRating();
 
   return (
     <Box
       id="hero"
-      sx={(theme) => ({
+      sx={{
         width: '100%',
-        backgroundRepeat: 'no-repeat',
-
-        backgroundImage:
-          'radial-gradient(ellipse 80% 50% at 50% -20%, hsl(210, 100%, 90%), transparent)',
-        ...theme.applyStyles('dark', {
-          backgroundImage:
-            'radial-gradient(ellipse 80% 50% at 50% -20%, hsl(210, 100%, 16%), transparent)',
-        }),
-      })}
+        background: brandColors.bg,
+        color: brandColors.text,
+      }}
     >
-      <Container
+      <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          pt: {xs: 14, sm: 20},
-          pb: {xs: 8, sm: 12},
+          display: 'grid',
+          gridTemplateColumns: { xs: 'minmax(0,1fr)', md: '36px minmax(0,1fr)' },
+          gap: { xs: 0, md: 4 },
+          px: { xs: 2.5, md: 6 },
+          pt: { xs: 12, md: 14 },
+          pb: { xs: 6, md: 9 },
+          maxWidth: 1280,
+          width: '100%',
+          mx: 'auto',
+          boxSizing: 'border-box',
         }}
       >
-        <Stack
-          spacing={2}
-          useFlexGap
-          sx={{alignItems: 'center', width: {xs: '100%', sm: '70%'}}}
+        <Box
+          sx={{
+            display: { xs: 'none', md: 'flex' },
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2,
+          }}
         >
-          <Typography
-            variant="h1"
+          <Box
+            component="span"
             sx={{
-              display: 'flex',
-              flexDirection: {xs: 'column', sm: 'row'},
-              alignItems: 'center',
-              fontSize: {xs: '2.5rem', sm: 'clamp(3rem, 10vw, 3.5rem)'},
-              background: 'linear-gradient(to bottom right, blue, yellow);',
-              // radial-gradient(ellipse 80% 50% at 50% -20%, hsl(210, 100%, 90%), transparent)
-              // background: linear-gradient(45deg, red, black);
-              '-webkit-background-clip': 'text',
-              '-webkit-text-fill-color': 'transparent',
+              fontFamily: brandFonts.mono,
+              fontSize: 11,
+              letterSpacing: '0.3em',
+              color: 'rgba(242,243,247,0.45)',
+              writingMode: 'vertical-rl',
+              textTransform: 'uppercase',
             }}
           >
-            Nine&nbsp;or&nbsp;Ten&nbsp;Mafia
-            {/*<Typography*/}
-            {/*  component="span"*/}
-            {/*  variant="h1"*/}
-            {/*  sx={(theme) => ({*/}
-            {/*    fontSize: 'inherit',*/}
-            {/*    color: 'primary.main',*/}
-            {/*    ...theme.applyStyles('dark', {*/}
-            {/*      color: 'primary.light',*/}
-            {/*    }),*/}
-            {/*      // background: 'linear-gradient(45deg, red, grey)',*/}
-            {/*      // '-webkit-background-clip': 'text',*/}
-            {/*      // '-webkit-text-fill-color': 'transparent'*/}
-            {/*  })}*/}
-            {/*>*/}
-            {/*    Мафія*/}
-            {/*</Typography>*/}
-          </Typography>
-          <Typography
+            Клуб мафії · Ванкувер
+          </Box>
+          <Box
+            aria-hidden
             sx={{
-              textAlign: 'center',
-              color: 'text.secondary',
-              width: {sm: '100%', md: '80%'},
+              width: '1px',
+              flex: 1,
+              background: 'linear-gradient(rgba(250,43,30,0.7), rgba(250,43,30,0))',
             }}
-          >
-            Рейтингова платформа інтелектуально-психологічної гри "Мафія"
-          </Typography>
-          <Stack
-            direction={{xs: 'column', sm: 'row'}}
-            spacing={1}
-            useFlexGap
-            sx={{pt: 2, width: {xs: '100%', sm: '380px'}}}
-          >
-            {
-              user && <>
-                    <Typography
-                        variant="h2"
-                        sx={{
-                          textAlign: 'center',
-                          color: 'text.secondary',
-                          width: {sm: '100%'},
-                        }}
-                    >
-                        Привіт, {user.authType === 'Клуб' ? user.name : user.nickname }!
-                    </Typography>
-                </>
-            }
-            {
-              !user && <>
-                    <Button
-                        href={'login'}
-                        variant="contained"
-                        color="primary"
-                        size="small"
-                        sx={{minWidth: 'fit-content'}}
-                    >
-                        Увійти
-                    </Button>
-                    <Button
-                        href={'register'}
-                        variant="contained"
-                        color="primary"
-                        size="small"
-                        sx={{minWidth: 'fit-content'}}
-                    >
-                        Зареєструватися
-                    </Button>
-                    <Button
-                        disabled
-                        variant="outlined"
-                        color="primary"
-                        href={'register-club'}
-                        size="small"
-                        sx={{minWidth: 'fit-content'}}
-                    >
-                        Зареєструвати клуб
-                    </Button>
-                </>
-            }
-          </Stack>
-          {/*<Typography*/}
-          {/*  variant="caption"*/}
-          {/*  color="text.secondary"*/}
-          {/*  sx={{ textAlign: 'center' }}*/}
-          {/*>*/}
-          {/*  By clicking &quot;Start now&quot; you agree to our&nbsp;*/}
-          {/*  <Link href="#" color="primary">*/}
-          {/*    Terms & Conditions*/}
-          {/*  </Link>*/}
-          {/*  .*/}
-          {/*</Typography>*/}
-        </Stack>
-        <StyledBox id="image"/>
-      </Container>
+          />
+        </Box>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'minmax(0,1fr)', lg: 'minmax(0,1fr) minmax(320px, 480px)' },
+            gap: { xs: 5, lg: 7 },
+            alignItems: 'start',
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5 }}>
+            <Typography
+              variant="h1"
+              sx={{
+                m: 0,
+                fontFamily: brandFonts.display,
+                fontWeight: 900,
+                fontSize: 'clamp(52px, 6.5vw, 104px)',
+                lineHeight: 0.98,
+                letterSpacing: '-0.045em',
+                textTransform: 'uppercase',
+                color: 'transparent',
+                WebkitTextStroke: '1.5px rgba(255,255,255,0.55)',
+              }}
+            >
+              Два
+              <br />
+              Кольори
+            </Typography>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2.5,
+                borderTop: '1px solid rgba(255,255,255,0.10)',
+                pt: 3.5,
+                maxWidth: '56ch',
+              }}
+            >
+              <Typography
+                sx={{
+                  m: 0,
+                  fontSize: 17,
+                  lineHeight: 1.6,
+                  color: 'rgba(242,243,247,0.7)',
+                  textWrap: 'pretty',
+                }}
+              >
+                Рейтингова платформа інтелектуально-психологічної гри «Мафія». Сезонний рейтинг,
+                статистика гравців, судейські протоколи.
+              </Typography>
+
+              {user ? (
+                <Typography
+                  sx={{ fontFamily: brandFonts.display, fontWeight: 700, fontSize: 22 }}
+                >
+                  Привіт, {user.authType === 'Клуб' ? user.name : user.nickname}!
+                </Typography>
+              ) : (
+                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                  <Button
+                    component={RouterLink}
+                    to="/register"
+                    variant="contained"
+                    sx={{ px: 3.25, py: 1.75, borderRadius: '12px', fontSize: 14 }}
+                  >
+                    Зареєструватися
+                  </Button>
+                  <Button
+                    component={RouterLink}
+                    to="/login"
+                    variant="outlined"
+                    sx={{
+                      px: 3.25,
+                      py: 1.75,
+                      borderRadius: '12px',
+                      borderColor: 'rgba(255,255,255,0.20)',
+                      color: brandColors.text,
+                      fontWeight: 600,
+                      fontSize: 14,
+                      '&:hover': { borderColor: brandColors.accent, bgcolor: 'transparent' },
+                    }}
+                  >
+                    Увійти
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                pb: 3,
+              }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: brandFonts.mono,
+                  fontSize: 11,
+                  letterSpacing: '0.14em',
+                  color: 'rgba(242,243,247,0.5)',
+                }}
+              >
+                П'ЄДЕСТАЛ СЕЗОНУ {new Date().getFullYear()}
+              </Box>
+              <Box
+                component={RouterLink}
+                to="/clubs-rating"
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: brandColors.accentHover,
+                  textDecoration: 'none',
+                }}
+              >
+                Весь рейтинг →
+              </Box>
+            </Box>
+            <PodiumStack podium={podium} />
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 }
