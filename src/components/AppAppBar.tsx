@@ -24,23 +24,41 @@ import {useAuth} from "../AuthProvider";
 import {useNavigate, useLocation, Link as RouterLink} from "react-router-dom";
 import axios from "../axios";
 import { brand } from '../theme/themePrimitives';
+import { brandColors, brandFonts } from '../theme/brand';
 import Typography from "@mui/material/Typography";
 import {useEffect, useMemo} from "react";
 
+/** Кільце навколо аватара — інакше світлі фото зливаються з пісочною смугою хедера. */
+const headerAvatarSx = {
+  width: 28,
+  height: 28,
+  border: `1.5px solid ${brandColors.ink}`,
+  bgcolor: brandColors.band,
+} as const;
+
+/** Світла смуга хедера з макета: пісочне тло, чорнильний текст. */
 const StyledToolbar = styled(Toolbar)(({theme}) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   flexShrink: 0,
-  borderRadius: `calc(${theme.shape.borderRadius}px + 8px)`,
-  backdropFilter: 'blur(24px)',
-  border: '1px solid',
-  borderColor: (theme.vars || theme).palette.divider,
-  backgroundColor: theme.vars
-    ? `rgba(${theme.vars.palette.background.defaultChannel} / 0.4)`
-    : alpha(theme.palette.background.default, 0.4),
-  boxShadow: (theme.vars || theme).shadows[1],
-  padding: '8px 12px',
+  minHeight: 'auto',
+  backgroundColor: 'transparent',
+  color: brandColors.ink,
+  padding: '8px 0',
+  // Лише текстові/контурні кнопки — червона CTA має власні кольори.
+  '& .MuiButton-text, & .MuiButton-outlined': {
+    color: brandColors.ink,
+    fontWeight: 600,
+    '&:hover': { color: brandColors.accent, backgroundColor: 'transparent' },
+  },
+  '& .MuiButton-outlined': {
+    borderColor: alpha(brandColors.ink, 0.25),
+    backgroundColor: alpha(brandColors.ink, 0.06),
+    backgroundImage: 'none',
+    '&:hover': { backgroundColor: alpha(brandColors.ink, 0.1) },
+  },
+  '& .MuiIconButton-root': { color: brandColors.ink },
 }));
 
 let stopWatchInterval: NodeJS.Timeout;
@@ -51,17 +69,10 @@ const liveDotPulse = keyframes`
   50% { opacity: 0.3; transform: scale(0.88); }
 `;
 
-/** У селекторі «Інше»: Учасники, $$$, Події (Правила — окремо в хедері) */
+/** У селекторі «Інше»: лише Учасники (Правила — окремо в хедері). */
 const EXTRA_NAV_ITEMS: { label: string; path: string; isActive: (pathname: string) => boolean }[] = [
   { label: 'Учасники', path: '/members', isActive: (p) => p.includes('members') },
-  { label: '$$$', path: '/$', isActive: (p) => p.includes('$') },
-  { label: 'Події', path: '/calendar', isActive: (p) => p.includes('calendar') },
 ];
-
-/** Збігаються з `BudgetRedirect` / `CalendarRedirect` */
-const BUDGET_SHEET_EXTERNAL_URL =
-  'https://docs.google.com/spreadsheets/d/1Rmp0EHC4pm5u8frgDozMUt7s3XSLwUTJyH2Okys4aqs/';
-const EVENTS_SITE_EXTERNAL_URL = 'https://sites.google.com/view/9or10mafia/home';
 
 /** Спільний вигляд випадаючих меню в хедері (як «Рейтингова / Фанова») */
 function appBarNavMenuPaperSx(theme: Theme) {
@@ -151,19 +162,8 @@ export default function AppAppBar() {
   }
 
   function openExtraNavPath(path: string, closeUi?: () => void) {
-    const done = () => closeUi?.();
-    if (path === '/$') {
-      window.open(BUDGET_SHEET_EXTERNAL_URL, '_blank', 'noopener,noreferrer');
-      done();
-      return;
-    }
-    if (path === '/calendar') {
-      window.open(EVENTS_SITE_EXTERNAL_URL, '_blank', 'noopener,noreferrer');
-      done();
-      return;
-    }
     navigateWithConfirm(path);
-    done();
+    closeUi?.();
   }
 
   return (
@@ -172,15 +172,16 @@ export default function AppAppBar() {
       enableColorOnDark
       sx={{
         boxShadow: 0,
-        bgcolor: 'transparent',
+        bgcolor: brandColors.band,
         backgroundImage: 'none',
-        mt: 'calc(var(--template-frame-height, 0px) + 28px)',
+        color: brandColors.ink,
+        mt: 'var(--template-frame-height, 0px)',
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth={false} sx={{ px: { xs: 2, md: 3 } }}>
         <StyledToolbar variant="dense" disableGutters>
           <Box sx={{flexGrow: 1, display: 'flex', alignItems: 'center', px: 0, gap: 3}}>
-            <Sitemark/>
+            <Sitemark variant="navy" size={30}/>
             <Box sx={{display: 'none', '@media (min-width: 940px)': {display: 'flex'}, gap: 0.5, overflow: 'hidden', '& .MuiButton-root': {whiteSpace: 'nowrap', minWidth: 'auto', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis'}}}>
               <Button startIcon={<StarIcon/>} variant="text"
                       onClick={() => navigateWithConfirm('/clubs-rating')}
@@ -218,7 +219,7 @@ export default function AppAppBar() {
                       size="small">
                 Фан гра
               </Button>}
-              <Button onClick={() => navigateWithConfirm('/scoring')} variant="text" size="small">
+              <Button onClick={() => navigateWithConfirm('/rules')} variant="text" size="small">
                 Правила
               </Button>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -234,7 +235,7 @@ export default function AppAppBar() {
                   variant="text"
                   size="small"
                   onClick={(e) => setExtraNavMenuAnchor(e.currentTarget)}
-                  aria-label="Меню: учасники, бюджет, події"
+                  aria-label="Меню: учасники"
                   sx={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, minWidth: 'auto', px: 0.3 }}
                 >
                   <ArrowDropDownIcon sx={{ fontSize: 20 }} />
@@ -319,7 +320,7 @@ export default function AppAppBar() {
           >
             {
               user && <Button onClick={() => navigateWithConfirm('/profile')} color="primary" variant="text" size="small" sx={{gap: 1, lineHeight: 1.2, py: 0.5, maxWidth: 180, overflow: 'hidden'}}>
-                    {user.avatarUrl && <Avatar src={user.avatarUrl} sx={{width: 28, height: 28}}/>}
+                    {user.avatarUrl && <Avatar src={user.avatarUrl} sx={headerAvatarSx}/>}
                     <Box sx={{display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
                       Мій Профіль
                       <span style={{fontSize: '0.7em', opacity: 0.7, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>({user?.name})</span>
@@ -340,7 +341,12 @@ export default function AppAppBar() {
                 </Button>
             }
             {
-              !user && <Button href="/register" color="primary" variant="text" size="small">
+              !user && <Button
+                    href="/register"
+                    variant="contained"
+                    size="small"
+                    sx={{ px: 2, borderRadius: '12px' }}
+                >
                     Зареєструватися
                 </Button>
             }
@@ -385,7 +391,7 @@ export default function AppAppBar() {
                   selected={window.location.pathname.includes('scoring')}
                   onClick={() => {
                     setOpen(false);
-                    navigateWithConfirm('/scoring');
+                    navigateWithConfirm('/rules');
                   }}
                 >
                   Правила
@@ -465,7 +471,7 @@ export default function AppAppBar() {
                   user && <>
                         <MenuItem>
                             <Button href="/profile" color="primary" variant="outlined" fullWidth sx={{gap: 1, lineHeight: 1.2, py: 0.5}}>
-                                {user.avatarUrl && <Avatar src={user.avatarUrl} sx={{width: 28, height: 28}}/>}
+                                {user.avatarUrl && <Avatar src={user.avatarUrl} sx={headerAvatarSx}/>}
                                 <Box sx={{display: 'flex', flexDirection: 'column'}}>
                                   Мій Профіль
                                   <span style={{fontSize: '0.7em', opacity: 0.7}}>({user?.name})</span>

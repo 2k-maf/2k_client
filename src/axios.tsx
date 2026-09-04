@@ -1,7 +1,8 @@
 import axios from "axios";
 
-axios.defaults.baseURL = 'https://mvu07ybpnj.execute-api.us-west-2.amazonaws.com';
-// axios.defaults.baseURL = 'http://localhost:3000';
+axios.defaults.baseURL =
+  process.env.REACT_APP_API_URL ||
+  'https://mvu07ybpnj.execute-api.us-west-2.amazonaws.com';
 
 axios.interceptors.request.use((config) => {
   const token = localStorage.getItem('jwt_token');

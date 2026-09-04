@@ -1,5 +1,5 @@
 /** Канал за замовчуванням, якщо для турніру не вказано своє посилання */
-export const DEFAULT_TOURNAMENT_YOUTUBE_URL = 'https://www.youtube.com/@9or10MafiaVancouver';
+export const DEFAULT_TOURNAMENT_YOUTUBE_URL = 'https://www.youtube.com/@2kMafiaVan';
 
 /** URL для кнопки на публічній сторінці: кастомне з БД або дефолтний канал */
 export function resolveTournamentYoutubeHref(stored: string | null | undefined): string {

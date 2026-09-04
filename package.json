@@ -35,6 +35,7 @@
     "eject": "react-scripts eject"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "react-scripts": "latest"
   },
   "browserslist": {

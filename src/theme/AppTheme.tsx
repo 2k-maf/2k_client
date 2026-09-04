@@ -28,6 +28,8 @@ export default function AppTheme(props: AppThemeProps) {
             colorSchemeSelector: 'data-mui-color-scheme',
             cssVarPrefix: 'template',
           },
+          // The Dva Kol'ory design is dark-only.
+          defaultColorScheme: 'dark',
           colorSchemes, // Recently added in v6 for building light & dark mode app, see https://mui.com/material-ui/customization/palette/#color-schemes
           typography,
           shadows,
@@ -46,7 +48,13 @@ export default function AppTheme(props: AppThemeProps) {
     return <React.Fragment>{children}</React.Fragment>;
   }
   return (
-    <ThemeProvider theme={theme} disableTransitionOnChange>
+    <ThemeProvider
+      theme={theme}
+      defaultMode="dark"
+      // A fresh key so a 'light' value stored before the rebrand is ignored.
+      modeStorageKey="dva-kolory-mode"
+      disableTransitionOnChange
+    >
       {children}
     </ThemeProvider>
   );
