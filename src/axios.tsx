@@ -1,8 +1,11 @@
 import axios from "axios";
 
-axios.defaults.baseURL =
-  process.env.REACT_APP_API_URL ||
-  'https://mvu07ybpnj.execute-api.us-west-2.amazonaws.com';
+// У проді фронтенд і API мають один origin: CloudFront направляє шляхи
+// /auth, /club, /clubs, /hello, /public, /tournament, /tournaments, /user,
+// /users у Lambda, решту — у бакет статики. Порожній baseURL дає відносні
+// запити, тому CORS і абсолютний хост API не потрібні.
+// Локальна розробка задає REACT_APP_API_URL (див. env.example).
+axios.defaults.baseURL = process.env.REACT_APP_API_URL || '';
 
 axios.interceptors.request.use((config) => {
   const token = localStorage.getItem('jwt_token');

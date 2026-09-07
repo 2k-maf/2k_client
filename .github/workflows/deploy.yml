@@ -1,0 +1,136 @@
+name: Deploy client
+
+on:
+  push:
+    branches: [main]
+    # Зміни лише в документації не мають передеплоювати збірку.
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+# Два деплої одночасно писали б в один бакет у непередбачуваному порядку.
+# cancel-in-progress: false — скасований посеред sync деплой лишає бакет
+# у стані, де новий index.html посилається на ще не залиті файли.
+concurrency:
+  group: deploy-client
+  cancel-in-progress: false
+
+permissions:
+  id-token: write # OIDC
+  contents: read
+
+# environment тут додавати НЕ можна: воно змінює claim `sub` токена OIDC на
+# "...:environment:НАЗВА", а політика довіри ролі чекає рівно
+# "repo:2k-maf/2k_client:ref:refs/heads/main". Assume role впаде.
+jobs:
+  deploy:
+    name: Зібрати та залити статику
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Репозиторій тримає pnpm-lock.yaml і не має package-lock.json.
+      # pnpm ставимо до setup-node, бо setup-node шукає бінарник pnpm
+      # для свого кешу.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # --frozen-lockfile забороняє мовчазне оновлення залежностей.
+      # Це важливо: react-scripts у package.json заданий як "latest",
+      # тож без лок-файлу кожна збірка брала б іншу версію.
+      - name: Встановити залежності
+        run: pnpm install --frozen-lockfile
+
+      # GitHub Actions задає CI=true, а react-scripts у такому режимі
+      # вважає попередження помилками. Це навмисно: збірка з попередженнями
+      # у прод не потрапляє.
+      - name: Зібрати продакшн-версію
+        run: pnpm run build
+
+      - name: Креденшели AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # ------------------------------------------------------------------
+      # Заливка у два проходи. Порядок проходів обов'язковий.
+      #
+      # Прохід 1 — build/static/**. CRA дає цим файлам хеш вмісту в імені,
+      # тож вміст файлу з таким іменем ніколи не змінюється. Кеш на рік.
+      # Прохід 1 НЕ використовує --delete: старі хешовані файли ще потрібні
+      # тим користувачам, хто тримає в руках старий index.html.
+      #
+      # Прохід 2 — решта build/**: index.html, asset-manifest.json,
+      # favicon.ico, зображення. Кеш нульовий. Довгий кеш на index.html
+      # закріпив би користувача на старій версії, яка посилається на вже
+      # видалені хешовані файли.
+      #
+      # Чому саме такий порядок:
+      #   1. Нові хешовані файли мають існувати в бакеті ДО того, як новий
+      #      index.html почне на них посилатись. Прохід 1 йде першим.
+      #   2. Старі хешовані файли не можна видаляти, доки новий index.html
+      #      не заллятий. Тому --delete стоїть лише в проході 2.
+      #
+      # aws s3 sync у проході 2 порівнює розмір і час зміни, тому файли
+      # з build/static, залиті проходом 1, він пропускає. Їхній
+      # Cache-Control залишається річним.
+      #
+      # Залишковий ризик: усередині проходу 2 завантаження нового
+      # index.html і видалення старих хешованих файлів ідуть одним
+      # процесом, тому вікно в кілька секунд лишається. Прибрати його
+      # можна тільки відкладеним прибиранням у окремому запуску.
+      # ------------------------------------------------------------------
+      - name: Прохід 1 — хешовані файли, кеш на рік
+        run: |
+          set -euo pipefail
+          aws s3 sync build/static "s3://${{ vars.S3_BUCKET }}/static" \
+            --no-progress \
+            --cache-control "public, max-age=31536000, immutable"
+
+      - name: Прохід 2 — index.html і решта, без кешу
+        run: |
+          set -euo pipefail
+          aws s3 sync build "s3://${{ vars.S3_BUCKET }}" \
+            --no-progress \
+            --delete \
+            --cache-control "public, max-age=0, must-revalidate"
+
+      # Інвалідуємо "/*", а не окремі шляхи. SPA-фолбек CloudFront віддає
+      # index.html на будь-який глибокий маршрут (/profile/tournaments/123),
+      # і ключ кешу — це запитаний шлях, а не "/index.html". Перелічити всі
+      # маршрути неможливо. Одна маска "/*" рахується як один шлях.
+      - name: Інвалідація CloudFront
+        run: |
+          set -euo pipefail
+          ID=$(aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.CF_DISTRIBUTION_ID }}" \
+            --paths '/*' \
+            --query 'Invalidation.Id' --output text)
+          echo "Інвалідація: $ID"
+          # Без очікування зелена галочка означала б лише "запит прийнято".
+          aws cloudfront wait invalidation-completed \
+            --distribution-id "${{ vars.CF_DISTRIBUTION_ID }}" \
+            --id "$ID"
+          echo "Інвалідація завершена"
+
+      # Перевірка не потребує прав AWS: це звичайний HTTP-запит.
+      # Крок пропускається, доки SITE_URL не заданий.
+      - name: Перевірити, що сайт віддає нову збірку
+        if: vars.SITE_URL != ''
+        run: |
+          set -euo pipefail
+          BUNDLE=$(node -e "process.stdout.write(require('./build/asset-manifest.json').entrypoints[0])")
+          echo "Очікуваний бандл: $BUNDLE"
+          if curl -sfL "${{ vars.SITE_URL }}" | grep -q "$BUNDLE"; then
+            echo "Сайт віддає нову збірку"
+          else
+            echo "index.html на сайті не посилається на $BUNDLE"
+            exit 1
+          fi
