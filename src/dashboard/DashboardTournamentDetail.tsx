@@ -1,25 +1,19 @@
 import * as React from 'react';
-import { alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import AppNavbar from '../components/dashboard/AppNavbar';
-import SideMenu from '../components/dashboard/SideMenu';
 import AppTheme from '../theme/AppTheme';
-import { chartsCustomizations } from '../theme/customizations/charts';
-import { dataGridCustomizations } from '../theme/customizations/dataGrid';
-import { datePickersCustomizations } from '../theme/customizations/datePickers';
-import { treeViewCustomizations } from '../theme/customizations/treeView';
+import ProfilePage from '../components/brand/ProfilePage';
+import BrandTable, { BrandColumn } from '../components/brand/BrandTable';
+import { monoSx } from '../theme/brand';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Copyright } from '../components/Footer';
 import axios from '../axios';
 import { useAuth } from '../AuthProvider';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
 import TournamentSeatingTiles from '../components/TournamentSeatingTiles';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -30,12 +24,22 @@ import { dateInputValueFromApi } from '../utils/vancouverDate';
 import { downloadSeatingAsPng } from '../utils/seatingPngExport';
 import { DEFAULT_TOURNAMENT_YOUTUBE_URL } from '../constants/youtube';
 
-const xThemeComponents = {
-  ...chartsCustomizations,
-  ...dataGridCustomizations,
-  ...datePickersCustomizations,
-  ...treeViewCustomizations,
-};
+/** Число в моно-шрифті — колонки рейтингу мають вирівнюватись по розряду. */
+const num = (value: any) => (
+  <Box component="span" sx={monoSx(13)}>
+    {value ?? 0}
+  </Box>
+);
+
+const STANDINGS_COLUMNS: BrandColumn<any>[] = [
+  { key: 'rank', header: '№', width: '56px', render: (r) => num(r.rank) },
+  { key: 'nickname', header: 'НІК', width: 'minmax(0,1fr)' },
+  { key: 'pointsSum', header: 'БАЛИ ГРИ', width: '104px', align: 'right', render: (r) => num(r.pointsSum) },
+  { key: 'supportFiveSum', header: 'ОП5', width: '84px', align: 'right', render: (r) => num(r.supportFiveSum) },
+  { key: 'bonusSum', header: 'ДБ', width: '78px', align: 'right', render: (r) => num(r.bonusSum) },
+  { key: 'total', header: 'ВСЬОГО', width: '90px', align: 'right', render: (r) => num(r.total) },
+  { key: 'gamesPlayed', header: 'ІГОР', width: '78px', align: 'right', render: (r) => num(r.gamesPlayed) },
+];
 
 const statusUa: Record<string, string> = {
   draft: 'Чернетка',
@@ -281,15 +285,7 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
     setParticipantRows(next);
   };
 
-  const standingsColumns: GridColDef[] = [
-    { field: 'rank', headerName: '№', width: 50 },
-    { field: 'nickname', headerName: 'Нік', flex: 1, minWidth: 120 },
-    { field: 'pointsSum', headerName: 'Бали гри', width: 90 },
-    { field: 'supportFiveSum', headerName: 'ОП5', width: 80 },
-    { field: 'bonusSum', headerName: 'ДБ', width: 70 },
-    { field: 'total', headerName: 'Всього', width: 80 },
-    { field: 'gamesPlayed', headerName: 'Ігор', width: 70 },
-  ];
+
 
   const isClubOwner = isClub && tournament?.clubId === clubIdStr;
   const allGamesSaved = tournament && tournament.gamesSaved >= tournament.numGames;
@@ -313,38 +309,24 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
 
   if (!tournament && id) {
     return (
-      <AppTheme {...props} themeComponents={xThemeComponents}>
-        <CssBaseline />
-        <Typography sx={{ p: 3 }}>Завантаження…</Typography>
+      <AppTheme {...props}>
+        <CssBaseline enableColorScheme />
+        <ProfilePage title="Турнір">
+          <Typography>Завантаження…</Typography>
+        </ProfilePage>
       </AppTheme>
     );
   }
 
   return (
-    <AppTheme {...props} themeComponents={xThemeComponents}>
+    <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <Box sx={{ display: 'flex' }}>
-        <SideMenu />
-        <AppNavbar />
-        <Box
-          component="main"
-          sx={(theme) => ({
-            flexGrow: 1,
-            backgroundColor: theme.vars
-              ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
-              : alpha(theme.palette.background.default, 1),
-            overflow: 'auto',
-          })}
-        >
-          <Stack spacing={2} sx={{ alignItems: 'center', mx: 3, pb: 5, mt: { xs: 8, md: 0 } }}>
-            <Box sx={{ width: '100%', maxWidth: 1000, mt: '2rem' }}>
+      <ProfilePage title={tournament?.name || 'Турнір'}>
+            <Box sx={{ width: '100%', maxWidth: 1000 }}>
               <Button size="small" onClick={() => navigate('/profile/tournaments')} sx={{ mb: 1 }}>
                 ← До списку
               </Button>
               <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1.25} sx={{ mb: 1 }}>
-                <Typography component="h1" variant="h5" sx={{ minWidth: 0 }}>
-                  {tournament?.name}
-                </Typography>
                 {isClubOwner && tournament?.status === 'in_progress' && nextUnsavedGameIndex != null && (
                   <Button
                     component={Link}
@@ -377,29 +359,15 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
                   <Typography variant="h6" sx={{ mb: 1 }}>
                     Рейтинг турніру
                   </Typography>
-                  <Box
-                    sx={{
-                      height: Math.max(320, 56 + standings.length * 52),
-                      width: '100%',
-                      maxWidth: '100%',
-                      mb: 3,
-                      '& .MuiDataGrid-row.tournament-standings--me': {
-                        backgroundColor: (t) => alpha(t.palette.primary.main, t.palette.mode === 'dark' ? 0.22 : 0.14),
-                        fontWeight: 700,
-                      },
-                    }}
-                  >
-                    <DataGrid
+                  <Box sx={{ mb: 3 }}>
+                    <BrandTable
+                      columns={STANDINGS_COLUMNS}
                       rows={standings}
-                      columns={standingsColumns}
-                      density="compact"
-                      disableRowSelectionOnClick
-                      hideFooter={standings.length <= 25}
-                      getRowClassName={(params) =>
-                        String(params.row.userId) === myUserIdStr ? 'tournament-standings--me' : ''
-                      }
-                      initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-                      pageSizeOptions={[10, 25, 50]}
+                      getRowKey={(row) => row.userId ?? row.rank}
+                      pageSize={25}
+                      emptyText="Рейтинг зʼявиться після першої збереженої гри."
+                      minWidth={720}
+                      highlightRow={(row) => String(row.userId) === myUserIdStr}
                     />
                   </Box>
                 </>
@@ -575,17 +543,21 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
                   <Typography variant="h6" sx={{ mb: 1 }}>
                     Рейтинг турніру
                   </Typography>
-                  <Box sx={{ height: 360, width: '100%', mb: 2 }}>
-                    <DataGrid rows={standings} columns={standingsColumns} density="compact" disableRowSelectionOnClick />
+                  <Box sx={{ mb: 2 }}>
+                    <BrandTable
+                      columns={STANDINGS_COLUMNS}
+                      rows={standings}
+                      getRowKey={(row) => row.userId ?? row.rank}
+                      pageSize={25}
+                      emptyText="Рейтинг зʼявиться після першої збереженої гри."
+                      minWidth={720}
+                    />
                   </Box>
                 </>
               ) : null}
 
-              <Copyright />
             </Box>
-          </Stack>
-        </Box>
-      </Box>
+      </ProfilePage>
     </AppTheme>
   );
 }

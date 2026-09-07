@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import { brandColors, brandFonts } from '../../theme/brand';
+import { brandColors, brandFonts, monoSx } from '../../theme/brand';
 
 export type PillTone = 'positive' | 'negative' | 'neutral' | 'accent' | 'light';
 
@@ -65,10 +65,9 @@ export default function DocTable({
             gap: 2,
             py: 1.25,
             borderBottom: '1px solid rgba(255,255,255,0.12)',
-            fontFamily: brandFonts.mono,
-            fontSize: 11,
+            // Ті самі токени, що в BrandTable — шапки таблиць не мають розходитись.
+            ...monoSx(11, 'rgba(242,243,247,0.45)'),
             letterSpacing: '0.14em',
-            color: 'rgba(242,243,247,0.45)',
           }}
         >
           {headers.map((h, i) => (

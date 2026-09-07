@@ -1,144 +1,127 @@
 import * as React from 'react';
-import AppTheme from "./theme/AppTheme";
-import CssBaseline from "@mui/material/CssBaseline";
-import Box from "@mui/material/Box";
-import {styled} from "@mui/material/styles";
-import Stack from "@mui/material/Stack";
-import Grid from "@mui/material/Grid2";
-import {DataGrid, GridColDef} from "@mui/x-data-grid";
-import {use, useEffect} from "react";
-import axios from "./axios";
-import AppAppBar from "./components/AppAppBar";
-import { brandColors } from "./theme/brand";
+import { useEffect, useMemo, useState } from 'react';
+import Box from '@mui/material/Box';
+import CssBaseline from '@mui/material/CssBaseline';
+import AppTheme from './theme/AppTheme';
+import BrandPage from './components/brand/BrandPage';
+import BrandTable, { BrandColumn } from './components/brand/BrandTable';
+import BrandSearchField from './components/brand/BrandSearchField';
+import axios from './axios';
+import { brandFonts, monoSx } from './theme/brand';
 
-export const columns: GridColDef[] = [
-  { field: 'name', headerName: 'Назва клубу', flex: 1, minWidth: 200 },
+type Club = {
+  id: number;
+  name?: string;
+  address?: string;
+  email?: string;
+  users?: number;
+};
+
+const COLUMNS: BrandColumn<Club>[] = [
   {
-    field: 'address',
-    headerName: 'Адреса',
-    headerAlign: 'left',
-    align: 'left',
-    flex: 1,
-    minWidth: 100,
+    key: 'name',
+    header: 'НАЗВА КЛУБУ',
+    width: 'minmax(0,1.2fr)',
+    render: (club) => (
+      <Box
+        component="span"
+        sx={{ fontFamily: brandFonts.display, fontWeight: 900, fontSize: 18, letterSpacing: '-0.01em' }}
+      >
+        {club.name?.trim()}
+      </Box>
+    ),
+  },
+  { key: 'address', header: 'АДРЕСА', width: 'minmax(0,1fr)' },
+  {
+    key: 'email',
+    header: 'EMAIL',
+    width: 'minmax(0,1fr)',
+    render: (club) => (
+      <Box component="span" sx={monoSx(13)}>
+        {club.email || '—'}
+      </Box>
+    ),
   },
   {
-    field: 'email',
-    headerName: 'Email',
-    headerAlign: 'left',
-    align: 'left',
-    flex: 1,
-    minWidth: 100,
-  },
-  {
-    field: 'users',
-    headerName: 'Учасники',
-    headerAlign: 'left',
-    align: 'left',
-    flex: .5,
-    minWidth: 80,
+    key: 'users',
+    header: 'УЧАСНИКИ',
+    width: '110px',
+    align: 'right',
+    render: (club) => (
+      <Box component="span" sx={monoSx(13)}>
+        {club.users ?? 0}
+      </Box>
+    ),
   },
 ];
 
-const ClubsContainer = styled(Stack)(({ theme }) => ({
-  // height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
-  // minHeight: '100%',
-  padding: theme.spacing(2),
-  [theme.breakpoints.up('sm')]: {
-    padding: theme.spacing(4),
-  },
-  '&::before': {
-    content: '""',
-    display: 'block',
-    position: 'absolute',
-    zIndex: -1,
-    inset: 0,
-    backgroundImage:
-      'radial-gradient(ellipse at 50% 50%, hsl(20, 30%, 97%), hsl(0, 0%, 100%))',
-    backgroundRepeat: 'no-repeat',
-    ...theme.applyStyles('dark', {
-      backgroundImage:
-        `radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), ${brandColors.bg})`,
-    }),
-  },
-}));
-
 export default function ClubsList(props: { disableCustomTheme?: boolean }) {
-  const [clubs, setClubs] = React.useState([]);
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     async function fetchData() {
       try {
         const { data } = await axios.get('/clubs');
-        const array = (data.items || []).map((item: any, i: number) => {
-          return { ...item, id: i + 1 };
-        })
-        setClubs(array || []);
+        setClubs((data.items || []).map((item: any, i: number) => ({ ...item, id: i + 1 })));
       } catch (e) {
         console.error(e);
+      } finally {
+        setLoading(false);
       }
     }
     fetchData();
-  }, [])
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return clubs;
+    return clubs.filter(
+      (c) => c.name?.toLowerCase().includes(q) || c.address?.toLowerCase().includes(q),
+    );
+  }, [clubs, query]);
+
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <ClubsContainer direction="column" justifyContent="space-between">
-        <AppAppBar />
-        <Box sx={{ mt: '5rem' }}>
-          <Grid container spacing={2} columns={12}>
-            <Grid size={{ xs: 12, lg: 9 }}>
-              <DataGrid
-                // checkboxSelection
-                rows={clubs}
-                disableColumnMenu
-                disableColumnSorting
-                columns={columns}
-                getRowClassName={(params) =>
-                  params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
-                }
-                initialState={{
-                  pagination: { paginationModel: { pageSize: 15 } },
-                }}
-                pageSizeOptions={[15]}
-                disableColumnResize
-                density="compact"
-                // slotProps={{
-                //   filterPanel: {
-                //     filterFormProps: {
-                //       logicOperatorInputProps: {
-                //         variant: 'outlined',
-                //         size: 'small',
-                //       },
-                //       columnInputProps: {
-                //         variant: 'outlined',
-                //         size: 'small',
-                //         sx: { mt: 'auto' },
-                //       },
-                //       operatorInputProps: {
-                //         variant: 'outlined',
-                //         size: 'small',
-                //         sx: { mt: 'auto' },
-                //       },
-                //       valueInputProps: {
-                //         InputComponentProps: {
-                //           variant: 'outlined',
-                //           size: 'small',
-                //         },
-                //       },
-                //     },
-                //   },
-                // }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 3 }}>
-              <Stack gap={2} direction={{ xs: 'column', sm: 'row', lg: 'column' }}>
-                {/*<CustomizedTreeView />*/}
-                {/*<ChartUserByCountry />*/}
-              </Stack>
-            </Grid>
-          </Grid>
-        </Box>
-      </ClubsContainer>
+      <BrandPage
+        eyebrow="Клуб мафії · Ванкувер"
+        title="Клуби"
+        actions={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+            <BrandSearchField
+              value={query}
+              onChange={setQuery}
+              placeholder="Пошук клубу"
+              label="Пошук клубу"
+            />
+            <Box
+              component="span"
+              sx={{
+                px: 2,
+                py: 1.5,
+                borderRadius: '12px',
+                border: '1px solid rgba(255,255,255,0.10)',
+                ...monoSx(12),
+                letterSpacing: '0.12em',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              УСЬОГО {clubs.length}
+            </Box>
+          </Box>
+        }
+      >
+        <BrandTable
+          columns={COLUMNS}
+          rows={filtered}
+          getRowKey={(club) => club.id}
+          loading={loading}
+          emptyText={query ? 'Клуб не знайдено.' : 'Клубів поки немає.'}
+          minWidth={720}
+        />
+      </BrandPage>
     </AppTheme>
   );
 }

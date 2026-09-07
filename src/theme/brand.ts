@@ -43,3 +43,22 @@ export const brandFonts = {
   ui: "'Inter', sans-serif",
   mono: "'JetBrains Mono', monospace",
 } as const;
+
+/**
+ * Моно-напис бренду: техноблок, лейбл колонки, службова цифра.
+ * Одна функція замість повторення трьох властивостей у кожній сторінці.
+ */
+export function monoSx(fontSize: number, color = 'rgba(242,243,247,0.75)') {
+  return {
+    fontFamily: brandFonts.mono,
+    fontSize,
+    color,
+  } as const;
+}
+
+/** Напис-«надзаголовок» над великим заголовком сторінки. */
+export const eyebrowSx = {
+  ...monoSx(11, brandColors.accentHover),
+  letterSpacing: '0.3em',
+  textTransform: 'uppercase',
+} as const;

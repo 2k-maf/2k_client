@@ -1,44 +1,11 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { Link as RouterLink } from 'react-router-dom';
-import AppAppBar from '../AppAppBar';
-import Footer from '../Footer';
+import BrandPage from './BrandPage';
+import BrandTabs, { BrandTab } from './BrandTabs';
 import { brandColors, brandFonts } from '../../theme/brand';
 
-export type DocTab = { label: string; to: string };
-
-/** Перемикач між сторінками правил — активна вкладка підсвічена червоним. */
-function DocTabs({ tabs, activeTo }: { tabs: DocTab[]; activeTo: string }) {
-  return (
-    <Box sx={{ display: 'flex', gap: 1.25, flexWrap: 'wrap' }}>
-      {tabs.map((tab) => {
-        const active = tab.to === activeTo;
-        return (
-          <Box
-            key={tab.to}
-            component={RouterLink}
-            to={tab.to}
-            sx={{
-              px: 2.5,
-              py: 1.5,
-              borderRadius: '12px',
-              fontSize: 14,
-              fontWeight: 700,
-              textDecoration: 'none',
-              background: active ? 'rgba(250,43,30,0.12)' : 'transparent',
-              border: `1px solid ${active ? 'rgba(250,43,30,0.5)' : 'rgba(255,255,255,0.12)'}`,
-              color: active ? brandColors.accentHover : 'rgba(242,243,247,0.65)',
-              '&:hover': { color: brandColors.accentHover },
-            }}
-          >
-            {tab.label}
-          </Box>
-        );
-      })}
-    </Box>
-  );
-}
+export type DocTab = BrandTab;
 
 /** Пронумерована секція документа: велика цифра ліворуч, вміст праворуч. */
 export function DocSection({
@@ -194,71 +161,8 @@ export default function DocPage({
   children: React.ReactNode;
 }) {
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: brandColors.bg,
-        color: brandColors.text,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <AppAppBar />
-      <Box
-        sx={{
-          flex: 1,
-          px: { xs: 2.5, md: 6 },
-          pt: { xs: 11, md: 13 },
-          pb: 8,
-          maxWidth: 1280,
-          width: '100%',
-          mx: 'auto',
-          boxSizing: 'border-box',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            gap: 4,
-            pb: 4.5,
-            flexWrap: 'wrap',
-          }}
-        >
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75 }}>
-            <Box
-              component="span"
-              sx={{
-                fontFamily: brandFonts.mono,
-                fontSize: 11,
-                letterSpacing: '0.3em',
-                textTransform: 'uppercase',
-                color: brandColors.accentHover,
-              }}
-            >
-              {eyebrow}
-            </Box>
-            <Typography
-              variant="h1"
-              sx={{
-                m: 0,
-                fontFamily: brandFonts.display,
-                fontWeight: 900,
-                fontSize: 'clamp(40px,5vw,64px)',
-                lineHeight: 0.95,
-                letterSpacing: '-0.04em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {title}
-            </Typography>
-          </Box>
-          <DocTabs tabs={tabs} activeTo={activeTo} />
-        </Box>
-        {children}
-      </Box>
-      <Footer />
-    </Box>
+    <BrandPage eyebrow={eyebrow} title={title} subnav={<BrandTabs tabs={tabs} activeTo={activeTo} />}>
+      {children}
+    </BrandPage>
   );
 }

@@ -5,7 +5,9 @@ import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
+import IconButton from '@mui/material/IconButton';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { Link as RouterLink } from 'react-router-dom';
 import axios from '../axios';
 import { resolveMediaUrl } from '../utils/mediaUrl';
@@ -67,6 +69,46 @@ const linkSx = (t: import('@mui/material/styles').Theme) => ({
   },
 });
 
+const DISMISSED_KEY = 'dismissedTournamentBanner';
+
+/** Читає id закритої плашки. Приватний режим браузера може заборонити localStorage. */
+function readDismissedBannerId(): string | null {
+  try {
+    return localStorage.getItem(DISMISSED_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeDismissedBannerId(id: string) {
+  try {
+    localStorage.setItem(DISMISSED_KEY, id);
+  } catch {
+    /* storage is unavailable: the banner comes back on the next load */
+  }
+}
+
+function DismissButton({ onClick }: { onClick: () => void }) {
+  return (
+    <IconButton
+      size="small"
+      aria-label="Закрити"
+      onClick={onClick}
+      sx={(t) => ({
+        flexShrink: 0,
+        p: 0.25,
+        color: t.palette.mode === 'dark' ? alpha('#ffffff', 0.75) : alpha(t.palette.text.primary, 0.6),
+        '&:hover': {
+          color: t.palette.mode === 'dark' ? '#ffffff' : t.palette.text.primary,
+          backgroundColor: alpha(t.palette.mode === 'dark' ? '#ffffff' : t.palette.primary.main, 0.12),
+        },
+      })}
+    >
+      <CloseRoundedIcon sx={{ fontSize: 16 }} />
+    </IconButton>
+  );
+}
+
 /**
  * Compact centered pill under AppAppBar on the home page; width fits content (not full header).
  * Після завершення турніру (до 7 днів) показує плашку з переможцем замість «вже скоро».
@@ -74,6 +116,12 @@ const linkSx = (t: import('@mui/material/styles').Theme) => ({
 export default function UpcomingTournamentBanner() {
   const [recentCompleted, setRecentCompleted] = React.useState<RecentCompletedBanner | null>(null);
   const [tournament, setTournament] = React.useState<UpcomingItem | null>(null);
+  const [dismissedId, setDismissedId] = React.useState<string | null>(() => readDismissedBannerId());
+
+  const dismiss = React.useCallback((bannerId: string) => {
+    writeDismissedBannerId(bannerId);
+    setDismissedId(bannerId);
+  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -107,7 +155,10 @@ export default function UpcomingTournamentBanner() {
     };
   }, []);
 
-  if (recentCompleted) {
+  const completedBannerId = recentCompleted ? `completed:${recentCompleted.id}` : null;
+  const upcomingBannerId = tournament ? `upcoming:${tournament.id}` : null;
+
+  if (recentCompleted && completedBannerId !== dismissedId) {
     const initial =
       recentCompleted.winnerNickname.trim().charAt(0).toUpperCase() || '?';
     const avatarSrc = resolveMediaUrl(recentCompleted.winnerAvatarUrl ?? null);
@@ -179,12 +230,13 @@ export default function UpcomingTournamentBanner() {
           >
             Перейти
           </Link>
+          <DismissButton onClick={() => dismiss(`completed:${recentCompleted.id}`)} />
         </Stack>
       </Box>
     );
   }
 
-  if (!tournament) return null;
+  if (!tournament || upcomingBannerId === dismissedId) return null;
 
   return (
     <Box role="status" aria-live="polite" sx={bannerShellSx}>
@@ -228,6 +280,7 @@ export default function UpcomingTournamentBanner() {
         >
           Перейти
         </Link>
+        <DismissButton onClick={() => dismiss(`upcoming:${tournament.id}`)} />
       </Stack>
     </Box>
   );

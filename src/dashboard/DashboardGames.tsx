@@ -1,187 +1,126 @@
 import * as React from 'react';
-import type {} from '@mui/x-date-pickers/themeAugmentation';
-import type {} from '@mui/x-charts/themeAugmentation';
-import type {} from '@mui/x-data-grid-pro/themeAugmentation';
-import type {} from '@mui/x-tree-view/themeAugmentation';
-import {alpha} from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import AppNavbar from '../components/dashboard/AppNavbar';
-import SideMenu from '../components/dashboard/SideMenu';
+import CssBaseline from '@mui/material/CssBaseline';
 import AppTheme from '../theme/AppTheme';
-import {chartsCustomizations} from "../theme/customizations/charts";
-import {dataGridCustomizations} from "../theme/customizations/dataGrid";
-import {datePickersCustomizations} from "../theme/customizations/datePickers";
-import {treeViewCustomizations} from "../theme/customizations/treeView";
-import Grid from "@mui/material/Grid2";
-import {DataGrid, GridColDef} from "@mui/x-data-grid";
-import {useEffect} from "react";
-import {Copyright} from "../components/Footer";
-import axios from "../axios";
-import Chip from "@mui/material/Chip";
-import StarsIcon from '@mui/icons-material/Stars';
-import ThumbDownIcon from '@mui/icons-material/ThumbDown';
-import ThumbUpIcon from '@mui/icons-material/ThumbUp';
-import Face5Icon from '@mui/icons-material/Face5';
+import ProfilePage from '../components/brand/ProfilePage';
+import BrandTable, { BrandColumn } from '../components/brand/BrandTable';
+import { Pill } from '../components/brand/DocTable';
+import axios from '../axios';
+import { monoSx } from '../theme/brand';
 
-const columns: GridColDef[] = [
-  {field: 'createdAt', headerName: 'Дата', flex: 1, minWidth: 170},
-  {
-    field: 'role',
-    headerName: 'Роль',
-    headerAlign: 'left',
-    align: 'left',
-    flex: 1,
-    minWidth: 50,
-    renderCell: (n) => <Chip sx={{p: 1}} icon={n.row.role === 'Шер' ? <StarsIcon/> : n.row.role === 'Дон' ?
-      <Face5Icon/> : n.row.role === 'Маф' ? <ThumbDownIcon/> : <ThumbUpIcon/>} label={n.value}
-                             color={n.row.role === 'Маф' || n.row.role === 'Дон' ? 'default' : 'error'}
-                             variant="outlined"/>,
-  },
-  {
-    field: 'winner',
-    headerName: 'Перемога',
-    headerAlign: 'left',
-    align: 'left',
-    flex: 1,
-    minWidth: 50,
-    renderCell: (n) => <Chip sx={{p: 1}} icon={n.row.winner === 'Маф' ? <ThumbDownIcon/> : <ThumbUpIcon/>}
-                             label={n.value} color={n.row.winner === 'Маф' ? 'default' : 'error'} variant="outlined"/>,
-  },
-  {
-    field: 'supportFivePoints',
-    headerName: 'ОП5',
-    headerAlign: 'left',
-    align: 'left',
-    flex: .5,
-    minWidth: 50,
-  },
-  {
-    field: 'bonus',
-    headerName: 'Бонус',
-    headerAlign: 'left',
-    align: 'left',
-    flex: .5,
-    minWidth: 50,
-  },
-  {
-    field: 'points',
-    headerName: 'Бали',
-    headerAlign: 'left',
-    align: 'left',
-    flex: .5,
-    minWidth: 80,
-  },
-  // {
-  //   field: 'viewsPerUser',
-  //   headerName: 'Views per User',
-  //   headerAlign: 'right',
-  //   align: 'right',
-  //   flex: 1,
-  //   minWidth: 120,
-  // },
-  // {
-  //   field: 'averageTime',
-  //   headerName: 'Average Time',
-  //   headerAlign: 'right',
-  //   align: 'right',
-  //   flex: 1,
-  //   minWidth: 100,
-  // },
-  // {
-  //   field: 'conversions',
-  //   headerName: 'Daily Conversions',
-  //   flex: 1,
-  //   minWidth: 150,
-  //   renderCell: renderSparklineCell,
-  // },
-];
-
-
-const xThemeComponents = {
-  ...chartsCustomizations,
-  ...dataGridCustomizations,
-  ...datePickersCustomizations,
-  ...treeViewCustomizations,
+type Game = {
+  id: number;
+  createdAt?: string;
+  role?: string;
+  winner?: string;
+  supportFivePoints?: number;
+  bonus?: number;
+  points?: number;
 };
 
+/** Ролі мафії позначені акцентом, мирні — світлою пігулкою, як у правилах. */
+const MAFIA_ROLES = ['Маф', 'Дон'];
+
+const signed = (value?: number) => {
+  if (!value) return '—';
+  return value > 0 ? `+${value}` : String(value);
+};
+
+const COLUMNS: BrandColumn<Game>[] = [
+  {
+    key: 'createdAt',
+    header: 'ДАТА',
+    width: 'minmax(0,1.2fr)',
+    render: (game) => (
+      <Box component="span" sx={monoSx(13)}>
+        {game.createdAt || '—'}
+      </Box>
+    ),
+  },
+  {
+    key: 'role',
+    header: 'РОЛЬ',
+    width: '110px',
+    render: (game) => (
+      <Pill tone={MAFIA_ROLES.includes(game.role || '') ? 'accent' : 'light'}>{game.role}</Pill>
+    ),
+  },
+  {
+    key: 'winner',
+    header: 'ПЕРЕМОГА',
+    width: '120px',
+    render: (game) => (
+      <Pill tone={game.winner === 'Маф' ? 'accent' : 'light'}>{game.winner}</Pill>
+    ),
+  },
+  {
+    key: 'supportFivePoints',
+    header: 'ОП5',
+    width: '84px',
+    align: 'right',
+    render: (game) => (
+      <Box component="span" sx={monoSx(13)}>
+        {signed(game.supportFivePoints)}
+      </Box>
+    ),
+  },
+  {
+    key: 'bonus',
+    header: 'БОНУС',
+    width: '84px',
+    align: 'right',
+    render: (game) => (
+      <Box component="span" sx={monoSx(13)}>
+        {signed(game.bonus)}
+      </Box>
+    ),
+  },
+  {
+    key: 'points',
+    header: 'БАЛИ',
+    width: '90px',
+    align: 'right',
+    render: (game) => (
+      <Box component="span" sx={{ ...monoSx(14), fontWeight: 700 }}>
+        {game.points ?? 0}
+      </Box>
+    ),
+  },
+];
+
 export default function DashboardGames(props: { disableCustomTheme?: boolean }) {
-  const [games, setGames] = React.useState([]);
+  const [games, setGames] = useState<Game[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const {data} = await axios.get('/user/games');
-        const array = (data.items || []).map((item: any, i: number) => {
-          return {...item, id: i + 1};
-        })
-        setGames(array || []);
+        const { data } = await axios.get('/user/games');
+        setGames((data.items || []).map((item: any, i: number) => ({ ...item, id: i + 1 })));
       } catch (e) {
         console.error(e);
+      } finally {
+        setLoading(false);
       }
     }
-
     fetchData();
-  }, [])
+  }, []);
 
   return (
-    <AppTheme {...props} themeComponents={xThemeComponents}>
-      <CssBaseline enableColorScheme/>
-      {/*<AppAppBar />*/}
-      <Box sx={{display: 'flex'}}>
-        <SideMenu/>
-        <AppNavbar/>
-        {/* Main content */}
-
-        <Box
-          component="main"
-          sx={(theme) => ({
-            flexGrow: 1,
-            backgroundColor: theme.vars
-              ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
-              : alpha(theme.palette.background.default, 1),
-            overflow: 'auto',
-          })}
-        >
-          <Stack
-            spacing={2}
-            sx={{
-              alignItems: 'center',
-              mx: 3,
-              pb: 5,
-              mt: {xs: 8, md: 0},
-            }}
-          >
-            {/*<Header />*/}
-            <Box sx={{width: '100%', maxWidth: {sm: '100%', md: '1700px'}}}>
-              {/*<Typography component="h2" variant="h6" sx={{ mb: 2 }}>*/}
-              {/*  Details*/}
-              {/*</Typography>*/}
-              <Grid sx={{mt: '2rem'}} size={{xs: 12, lg: 9}}>
-                <DataGrid
-                  disableColumnSelector
-                  // checkboxSelection
-                  disableColumnSorting
-                  disableColumnMenu
-                  rows={games}
-                  columns={columns}
-                  getRowClassName={(params) =>
-                    params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
-                  }
-                  initialState={{
-                    pagination: {paginationModel: {pageSize: 20}},
-                  }}
-                  pageSizeOptions={[10, 20, 50]}
-                  disableColumnResize
-                  density="compact"
-                />
-              </Grid>
-              <Copyright/>
-            </Box>
-          </Stack>
-        </Box>
-      </Box>
+    <AppTheme {...props}>
+      <CssBaseline enableColorScheme />
+      <ProfilePage title="Мої ігри">
+        <BrandTable
+          columns={COLUMNS}
+          rows={games}
+          getRowKey={(game) => game.id}
+          pageSize={20}
+          loading={loading}
+          emptyText="Зіграних ігор поки немає."
+          minWidth={820}
+        />
+      </ProfilePage>
     </AppTheme>
   );
 }

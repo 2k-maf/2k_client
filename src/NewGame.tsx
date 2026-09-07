@@ -13,7 +13,6 @@ import TextField from "@mui/material/TextField";
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import HeartBrokenIcon from '@mui/icons-material/HeartBroken';
 import WarningIcon from '@mui/icons-material/Warning';
-import {styled} from "@mui/material/styles";
 import Stack from "@mui/material/Stack";
 import MuiCard from "@mui/material/Card";
 import Grid from "@mui/material/Grid2";
@@ -24,7 +23,7 @@ import {DataGrid} from "@mui/x-data-grid";
 import {columns, rows} from "./internals/data/gridDataClubs";
 import {useEffect, useMemo} from "react";
 import axios from "./axios";
-import AppAppBar from "./components/AppAppBar";
+import BrandPage from "./components/brand/BrandPage";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import {Autocomplete, createFilterOptions, Popover} from "@mui/material";
 import Box from "@mui/material/Box";
@@ -34,29 +33,6 @@ import {useAuth} from "./AuthProvider";
 import {vancouverTodayYmd} from "./utils/vancouverDate";
 
 const filter = createFilterOptions();
-
-const NewGameContainer = styled(Stack)(({theme}) => ({
-  // height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
-  // minHeight: '100%',
-  padding: theme.spacing(2),
-  [theme.breakpoints.up('sm')]: {
-    padding: theme.spacing(4),
-  },
-  '&::before': {
-    content: '""',
-    display: 'block',
-    position: 'absolute',
-    zIndex: -1,
-    inset: 0,
-    backgroundImage:
-      'radial-gradient(ellipse at 50% 50%, hsl(20, 30%, 97%), hsl(0, 0%, 100%))',
-    backgroundRepeat: 'no-repeat',
-    ...theme.applyStyles('dark', {
-      backgroundImage:
-        `radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), ${brandColors.bg})`,
-    }),
-  },
-}));
 
 const RolesPoolDefault = [1, 2, 3, 4]
 const RolesPoolMap: Record<number, string> = {
@@ -650,12 +626,11 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     return (
       <AppTheme {...props}>
         <CssBaseline enableColorScheme />
-        <NewGameContainer direction="column" justifyContent="flex-start" alignItems="center">
-          <AppAppBar />
-          <Typography sx={{ mt: '6rem', px: 2, textAlign: 'center' }}>
+        <BrandPage>
+          <Typography sx={{ textAlign: 'center' }}>
             Результати цієї гри приховані до завершення турніру.
           </Typography>
-        </NewGameContainer>
+        </BrandPage>
       </AppTheme>
     );
   }
@@ -663,10 +638,13 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme/>
-      <NewGameContainer direction="column" justifyContent="space-between" alignItems="center">
-        <AppAppBar/>
+      <BrandPage
+        eyebrow="Протокол гри"
+        title={isTournamentGame ? 'Турнірна гра' : isRatingGame ? 'Рейтингова гра' : 'Фан гра'}
+      >
+        <Stack direction="column" alignItems="center" sx={{ width: '100%' }}>
         {isTournamentGame && (
-          <Box sx={{ mt: '5rem', mb: 0.5, textAlign: 'center', px: 1 }}>
+          <Box sx={{ mb: 0.5, textAlign: 'center', px: 1 }}>
             <Typography variant="body2">
               Турнір: {tournamentTitle || '…'} · Гра {gameIndexStr} / {tournamentNumGames || '…'}
               {readOnlyTournament ? ' (перегляд)' : editingSavedTournamentGame ? ' (редагування)' : ''}
@@ -678,43 +656,6 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             ) : null}
           </Box>
         )}
-        <Box
-          sx={{
-            mt: isTournamentGame ? '0.5rem' : '5.3rem',
-            width: '100%',
-            maxWidth: 1280,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1.5,
-          }}
-        >
-          <Box
-            component="span"
-            sx={{
-              fontFamily: brandFonts.mono,
-              fontSize: 11,
-              letterSpacing: '0.3em',
-              textTransform: 'uppercase',
-              color: brandColors.accentHover,
-            }}
-          >
-            Протокол гри
-          </Box>
-          <Typography
-            variant="h1"
-            sx={{
-              m: 0,
-              fontFamily: brandFonts.display,
-              fontWeight: 900,
-              fontSize: 'clamp(32px,4vw,52px)',
-              lineHeight: 0.95,
-              letterSpacing: '-0.04em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {isTournamentGame ? 'Турнірна гра' : isRatingGame ? 'Рейтингова гра' : 'Фан гра'}
-          </Typography>
-        </Box>
         <Box sx={{mt: 2, display: 'flex', justifyContent: 'space-between', flexGrow: 1, gap: 1, flexWrap: 'wrap'}}>
           <Button
             onClick={() =>
@@ -1010,7 +951,8 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                 </Button>
             </>
         }
-      </NewGameContainer>
+        </Stack>
+      </BrandPage>
     </AppTheme>
   );
 }

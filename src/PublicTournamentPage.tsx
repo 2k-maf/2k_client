@@ -2,7 +2,6 @@ import * as React from 'react';
 import type {} from '@mui/x-data-grid/themeAugmentation';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
@@ -26,8 +25,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import AppTheme from './theme/AppTheme';
-import AppAppBar from './components/AppAppBar';
-import Footer from './components/Footer';
+import BrandPage from './components/brand/BrandPage';
 import axios from './axios';
 import { formatDateUkVancouver } from './utils/vancouverDate';
 import { resolveMediaUrl } from './utils/mediaUrl';
@@ -536,18 +534,8 @@ export default function PublicTournamentPage(props: { disableCustomTheme?: boole
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <AppAppBar />
-      <Box
-        component="main"
-        sx={{
-          minHeight: '60vh',
-          pt: { xs: 14, sm: 13 },
-          pb: 4,
-          px: { xs: 1.5, sm: 2 },
-        }}
-      >
-        <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2 } }}>
-          {error ? (
+      <BrandPage eyebrow="Турнір" title={data?.name}>
+        {error ? (
             <Stack spacing={2} alignItems="flex-start">
               <Typography color="error">{error}</Typography>
               <Button variant="outlined" onClick={() => navigate('/')}>
@@ -574,18 +562,6 @@ export default function PublicTournamentPage(props: { disableCustomTheme?: boole
                     gap={1.25}
                     sx={{ flex: '1 1 200px', minWidth: 0 }}
                   >
-                    <Typography
-                      variant="h5"
-                      component="h1"
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: { xs: '1.15rem', sm: '1.35rem' },
-                        lineHeight: 1.3,
-                        minWidth: 0,
-                      }}
-                    >
-                      {data.name}
-                    </Typography>
                     {isClubOwnerPublic && data.status === 'in_progress' && id && (
                       <Button
                         type="button"
@@ -940,11 +916,9 @@ export default function PublicTournamentPage(props: { disableCustomTheme?: boole
                   ) : null}
                 </>
               )}
-            </Stack>
-          )}
-        </Container>
-      </Box>
-      <Footer />
+          </Stack>
+        )}
+      </BrandPage>
     </AppTheme>
   );
 }
