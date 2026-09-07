@@ -1,33 +1,19 @@
 import * as React from 'react';
-import { alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import AppNavbar from '../components/dashboard/AppNavbar';
-import SideMenu from '../components/dashboard/SideMenu';
 import AppTheme from '../theme/AppTheme';
-import { chartsCustomizations } from '../theme/customizations/charts';
-import { dataGridCustomizations } from '../theme/customizations/dataGrid';
-import { datePickersCustomizations } from '../theme/customizations/datePickers';
-import { treeViewCustomizations } from '../theme/customizations/treeView';
+import ProfilePage from '../components/brand/ProfilePage';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Card from '@mui/material/Card';
 import { useNavigate } from 'react-router-dom';
-import { Copyright } from '../components/Footer';
 import axios from '../axios';
 import { useAuth } from '../AuthProvider';
 import { DEFAULT_TOURNAMENT_YOUTUBE_URL } from '../constants/youtube';
-
-const xThemeComponents = {
-  ...chartsCustomizations,
-  ...dataGridCustomizations,
-  ...datePickersCustomizations,
-  ...treeViewCustomizations,
-};
+import { brandColors } from '../theme/brand';
 
 export default function DashboardTournamentNew(props: { disableCustomTheme?: boolean }) {
   const navigate = useNavigate();
@@ -74,46 +60,21 @@ export default function DashboardTournamentNew(props: { disableCustomTheme?: boo
   };
 
   return (
-    <AppTheme {...props} themeComponents={xThemeComponents}>
+    <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <Box sx={{ display: 'flex' }}>
-        <SideMenu />
-        <AppNavbar />
-        <Box
-          component="main"
-          sx={(theme) => ({
-            flexGrow: 1,
-            backgroundColor: theme.vars
-              ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
-              : alpha(theme.palette.background.default, 1),
-            overflow: 'auto',
-          })}
-        >
-          <Stack
-            spacing={2}
-            sx={{
-              alignItems: 'center',
-              mx: 'auto',
-              px: 2,
-              pb: 5,
-              mt: { xs: 8, md: 0 },
-              width: '100%',
-              maxWidth: 520,
-            }}
-          >
-            <Card
-              variant="outlined"
+      <ProfilePage title="Новий турнір">
+            <Box
               sx={{
                 width: '100%',
+                maxWidth: 520,
                 p: { xs: 2.5, sm: 3 },
-                mt: { xs: 2, md: 3 },
+                background: brandColors.panel,
+                border: '1px solid rgba(255,255,255,0.10)',
+                borderRadius: '16px',
                 boxSizing: 'border-box',
               }}
             >
-              <Typography component="h1" variant="h5" sx={{ mb: 0.5, fontWeight: 600 }}>
-                Новий турнір
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+              <Typography sx={{ mb: 2.5, fontSize: 15, color: 'rgba(242,243,247,0.6)' }}>
                 Заповніть основні дані. Учасників можна додати пізніше на сторінці турніру.
               </Typography>
               <Stack
@@ -216,13 +177,8 @@ export default function DashboardTournamentNew(props: { disableCustomTheme?: boo
                   </Button>
                 </Stack>
               </Stack>
-            </Card>
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-              <Copyright />
             </Box>
-          </Stack>
-        </Box>
-      </Box>
+      </ProfilePage>
     </AppTheme>
   );
 }

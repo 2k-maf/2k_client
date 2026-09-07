@@ -1,3 +1,21 @@
 node_modules
 .idea
 9or10mafia_api.code-workspace
+.env
+
+# Локальна база знань агента (не комітиться)
+AGENTS.md
+.agents/
+docs/STATE.md
+tools/check_agent_kb.ps1
+
+# design-sync
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+types/
+
+# Логи dev.sh / dev.ps1
+.dev-logs/

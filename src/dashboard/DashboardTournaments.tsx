@@ -1,141 +1,148 @@
 import * as React from 'react';
-import { alpha } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import AppNavbar from '../components/dashboard/AppNavbar';
-import SideMenu from '../components/dashboard/SideMenu';
-import AppTheme from '../theme/AppTheme';
-import { chartsCustomizations } from '../theme/customizations/charts';
-import { dataGridCustomizations } from '../theme/customizations/dataGrid';
-import { datePickersCustomizations } from '../theme/customizations/datePickers';
-import { treeViewCustomizations } from '../theme/customizations/treeView';
-import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Grid2';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
+import CssBaseline from '@mui/material/CssBaseline';
+import Typography from '@mui/material/Typography';
 import { useNavigate } from 'react-router-dom';
-import { Copyright } from '../components/Footer';
-import axios from '../axios';
+import AppTheme from '../theme/AppTheme';
+import ProfilePage from '../components/brand/ProfilePage';
+import BrandTable, { BrandColumn } from '../components/brand/BrandTable';
+import { Pill, PillTone } from '../components/brand/DocTable';
 import { useAuth } from '../AuthProvider';
+import axios from '../axios';
 import { formatDateUkVancouver } from '../utils/vancouverDate';
+import { brandFonts, monoSx } from '../theme/brand';
 
-const xThemeComponents = {
-  ...chartsCustomizations,
-  ...dataGridCustomizations,
-  ...datePickersCustomizations,
-  ...treeViewCustomizations,
+type Tournament = {
+  id: string;
+  name?: string;
+  numGames?: number;
+  scheduledDate?: string;
+  status?: string;
+  gamesSaved?: number;
+  winnerNickname?: string;
 };
 
-const statusUa: Record<string, string> = {
-  draft: 'Чернетка',
-  in_progress: 'Йде',
-  completed: 'Завершено',
+const STATUS_UA: Record<string, { label: string; tone: PillTone }> = {
+  draft: { label: 'Чернетка', tone: 'neutral' },
+  in_progress: { label: 'Йде', tone: 'accent' },
+  completed: { label: 'Завершено', tone: 'positive' },
 };
+
+const COLUMNS: BrandColumn<Tournament>[] = [
+  {
+    key: 'name',
+    header: 'НАЗВА',
+    width: 'minmax(0,1.4fr)',
+    render: (t) => (
+      <Box
+        component="span"
+        sx={{ fontFamily: brandFonts.display, fontWeight: 900, fontSize: 18, letterSpacing: '-0.01em' }}
+      >
+        {t.name}
+      </Box>
+    ),
+  },
+  {
+    key: 'scheduledDate',
+    header: 'ДАТА',
+    width: '128px',
+    render: (t) => (
+      <Box component="span" sx={monoSx(13)}>
+        {formatDateUkVancouver(t.scheduledDate) || '—'}
+      </Box>
+    ),
+  },
+  {
+    key: 'status',
+    header: 'СТАТУС',
+    width: '128px',
+    render: (t) => {
+      const status = STATUS_UA[String(t.status)];
+      return <Pill tone={status?.tone ?? 'neutral'}>{status?.label ?? t.status}</Pill>;
+    },
+  },
+  {
+    key: 'gamesSaved',
+    header: 'ІГРИ',
+    width: '84px',
+    align: 'right',
+    render: (t) => (
+      <Box component="span" sx={monoSx(13)}>
+        {t.gamesSaved ?? 0}/{t.numGames ?? 0}
+      </Box>
+    ),
+  },
+  {
+    key: 'winnerNickname',
+    header: 'ПЕРЕМОЖЕЦЬ',
+    width: 'minmax(0,1fr)',
+    align: 'right',
+    render: (t) => (
+      <Box component="span" sx={monoSx(13)}>
+        {t.winnerNickname || '—'}
+      </Box>
+    ),
+  },
+];
 
 export default function DashboardTournaments(props: { disableCustomTheme?: boolean }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [rows, setRows] = React.useState<any[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
-    (async () => {
+  useEffect(() => {
+    async function fetchData() {
       try {
         const { data } = await axios.get('/tournaments');
-        const items = (data.items || []).map((t: any) => ({
-          ...t,
-          id: t.id,
-        }));
-        setRows(items);
+        setTournaments(data.items || []);
       } catch (e) {
         console.error(e);
+      } finally {
+        setLoading(false);
       }
-    })();
+    }
+    fetchData();
   }, []);
 
-  const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Назва', flex: 1.2, minWidth: 140 },
-    { field: 'numGames', headerName: 'Ігор', width: 70 },
-    {
-      field: 'scheduledDate',
-      headerName: 'Дата',
-      flex: 0.8,
-      minWidth: 110,
-      valueFormatter: (v) => formatDateUkVancouver(v),
-    },
-    {
-      field: 'status',
-      headerName: 'Статус',
-      width: 110,
-      valueFormatter: (v) => statusUa[String(v)] || String(v),
-    },
-    { field: 'gamesSaved', headerName: 'Зіграно', width: 90 },
-    {
-      field: 'winnerNickname',
-      headerName: 'Переможець',
-      flex: 0.8,
-      minWidth: 100,
-      valueFormatter: (v) => v || '—',
-    },
-  ];
-
   return (
-    <AppTheme {...props} themeComponents={xThemeComponents}>
+    <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <Box sx={{ display: 'flex' }}>
-        <SideMenu />
-        <AppNavbar />
+      <ProfilePage title="Турніри">
         <Box
-          component="main"
-          sx={(theme) => ({
-            flexGrow: 1,
-            backgroundColor: theme.vars
-              ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
-              : alpha(theme.palette.background.default, 1),
-            overflow: 'auto',
-          })}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+            flexWrap: 'wrap',
+            pb: 2,
+          }}
         >
-          <Stack
-            spacing={2}
-            sx={{ alignItems: 'center', mx: 3, pb: 5, mt: { xs: 8, md: 0 } }}
-          >
-            <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' } }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: '2rem', mb: 1 }}>
-                <Typography component="h1" variant="h5">
-                  Турніри
-                </Typography>
-                {user?.authType === 'Клуб' && (
-                  <Button variant="contained" onClick={() => navigate('/profile/tournaments/new')}>
-                    Новий турнір
-                  </Button>
-                )}
-              </Stack>
-              {user?.authType === 'Учасник' ? (
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                  Показано турніри, де ви в списку учасників або в розсадці.
-                </Typography>
-              ) : null}
-              <Grid size={{ xs: 12, lg: 9 }}>
-                <DataGrid
-                  rows={rows}
-                  columns={columns}
-                  disableColumnSorting
-                  disableColumnMenu
-                  getRowClassName={(params) =>
-                    params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
-                  }
-                  onRowClick={(params) => navigate(`/profile/tournaments/${params.row.id}`)}
-                  sx={{ cursor: 'pointer' }}
-                  initialState={{ pagination: { paginationModel: { pageSize: 20 } } }}
-                  pageSizeOptions={[10, 20, 50]}
-                  density="compact"
-                />
-              </Grid>
-              <Copyright />
-            </Box>
-          </Stack>
+          <Typography sx={{ m: 0, fontSize: 15, color: 'rgba(242,243,247,0.6)' }}>
+            {user?.authType === 'Клуб'
+              ? 'Турніри вашого клубу. Натисніть рядок, щоб відкрити турнір.'
+              : 'Турніри, де ви в списку учасників або в розсадці.'}
+          </Typography>
+          {user?.authType === 'Клуб' && (
+            <Button variant="contained" onClick={() => navigate('/profile/tournaments/new')}>
+              Новий турнір
+            </Button>
+          )}
         </Box>
-      </Box>
+        <BrandTable
+          columns={COLUMNS}
+          rows={tournaments}
+          getRowKey={(t) => t.id}
+          pageSize={20}
+          loading={loading}
+          emptyText="Турнірів поки немає."
+          minWidth={860}
+          onRowClick={(t) => navigate(`/profile/tournaments/${t.id}`)}
+        />
+      </ProfilePage>
     </AppTheme>
   );
 }

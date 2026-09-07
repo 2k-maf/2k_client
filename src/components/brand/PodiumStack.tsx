@@ -69,8 +69,10 @@ const cardSx = (style: CardStyle, index: number) => ({
   border: style.border,
   borderRadius: '16px',
   px: 3,
-  py: 2.75,
-  minHeight: 124,
+  // Нижній відступ більший: він тримає вміст вище смуги слова-привида.
+  pt: 3,
+  pb: 5.5,
+  minHeight: 150,
   display: 'flex',
   alignItems: 'center',
   justifyContent: style.alignEnd ? 'flex-end' : 'flex-start',
@@ -154,14 +156,14 @@ function PodiumRow({ winner, style, index }: { winner: PodiumWinner; style: Card
           letter={winner.nickname?.trim()?.[0]?.toUpperCase() || '?'}
           style={style}
         />
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6, minWidth: 0 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
           <Box
             component="span"
             sx={{
               fontFamily: brandFonts.display,
               fontWeight: 900,
               fontSize: style.nameSize,
-              lineHeight: 1,
+              lineHeight: 1.2,
               letterSpacing: '-0.02em',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -172,7 +174,12 @@ function PodiumRow({ winner, style, index }: { winner: PodiumWinner; style: Card
           </Box>
           <Box
             component="span"
-            sx={{ fontFamily: brandFonts.mono, fontSize: 12, color: 'rgba(242,243,247,0.6)' }}
+            sx={{
+              fontFamily: brandFonts.mono,
+              fontSize: 12,
+              lineHeight: 1.5,
+              color: 'rgba(242,243,247,0.6)',
+            }}
           >
             {winner.stat}
           </Box>
@@ -194,7 +201,7 @@ function PodiumRowSkeleton({ style, index }: { style: CardStyle; index: number }
           height={style.avatarSize}
           sx={{ bgcolor: 'rgba(255,255,255,0.06)', flex: 'none' }}
         />
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.9, flex: 1, maxWidth: 220 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2, flex: 1, maxWidth: 220 }}>
           <Skeleton
             variant="rounded"
             animation="wave"

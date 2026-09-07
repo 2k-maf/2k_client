@@ -8,7 +8,6 @@ import MembersList from "./Members";
 import SignUpClub from "./SignUpClub";
 import {AuthProvider} from "./AuthProvider";
 import {PrivateRoute} from "./PrivateRoute";
-import Dashboard from "./dashboard/Dashboard";
 import DashboardHome from "./dashboard/DashboardHome";
 import DashboardUsers from "./dashboard/DashboardUsers";
 import DashboardClubs from "./dashboard/DashboardClubs";

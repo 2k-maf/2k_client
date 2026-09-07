@@ -1,0 +1,44 @@
+name: PR checks
+
+on:
+  pull_request:
+    branches: [main]
+
+# Новий пуш у PR скасовує попередній прогін — економія хвилин Actions.
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+# Жодних креденшелів AWS: перевірка PR нічого не деплоїть.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Типи та збірка
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Репозиторій тримає pnpm-lock.yaml і не має package-lock.json.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Встановити залежності
+        run: pnpm install --frozen-lockfile
+
+      # tsconfig.json уже має "noEmit": true, але прапорець ставимо явно:
+      # він не дає збірці записати файли, якщо конфіг колись зміниться.
+      - name: Перевірити типи
+        run: pnpm exec tsc --noEmit
+
+      # CI=true від GitHub Actions робить попередження react-scripts
+      # помилками. Збірка тут проходить рівно ті ж перевірки, що й деплой.
+      - name: Зібрати продакшн-версію
+        run: pnpm run build

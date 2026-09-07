@@ -11,7 +11,7 @@ import { publicStaticUrl } from '../utils/mediaUrl';
 
 const INSTAGRAM_URL = 'https://www.instagram.com/theukrainianmafia.vancouver/';
 const YOUTUBE_URL = 'https://www.youtube.com/@2kMafiaVan';
-const TELEGRAM_URL = 'https://t.me/-P_yQy5-Xfc0YWYy';
+const TELEGRAM_URL = 'https://t.me/+kW0ZPDBsdKY3MTMy';
 const PHONE = '+1 (403) 390-1484';
 
 export function Copyright() {

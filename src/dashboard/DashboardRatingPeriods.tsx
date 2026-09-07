@@ -1,146 +1,81 @@
 import * as React from 'react';
-import type {} from '@mui/x-date-pickers/themeAugmentation';
-import type {} from '@mui/x-charts/themeAugmentation';
-import type {} from '@mui/x-data-grid-pro/themeAugmentation';
-import type {} from '@mui/x-tree-view/themeAugmentation';
-import { alpha } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import AppNavbar from '../components/dashboard/AppNavbar';
-import Header from '../components/dashboard/Header';
-import MainGrid from '../components/dashboard/MainGrid';
-import SideMenu from '../components/dashboard/SideMenu';
+import CssBaseline from '@mui/material/CssBaseline';
 import AppTheme from '../theme/AppTheme';
-import {chartsCustomizations} from "../theme/customizations/charts";
-import {dataGridCustomizations} from "../theme/customizations/dataGrid";
-import {datePickersCustomizations} from "../theme/customizations/datePickers";
-import {treeViewCustomizations} from "../theme/customizations/treeView";
-import AppAppBar from "../components/AppAppBar";
-import Typography from "@mui/material/Typography";
-import Grid from "@mui/material/Grid2";
-import StatCard from "../components/dashboard/StatCard";
-import HighlightedCard from "../components/dashboard/HighlightedCard";
-import SessionsChart from "../components/dashboard/SessionsChart";
-import PageViewsBarChart from "../components/dashboard/PageViewsBarChart";
-import CustomizedDataGrid from "../components/dashboard/CustomizedDataGrid";
-import CustomizedTreeView from "../components/dashboard/CustomizedTreeView";
-import ChartUserByCountry from "../components/dashboard/ChartUserByCountry";
-// import Copyright from "../internals/components/Copyright";
-import {columns} from "../internals/data/gridDataPeriods";
-import {DataGrid} from "@mui/x-data-grid";
-import {useEffect} from "react";
-import {Copyright} from "../components/Footer";
-import axios from "../axios";
+import ProfilePage from '../components/brand/ProfilePage';
+import BrandTable, { BrandColumn } from '../components/brand/BrandTable';
+import { Pill } from '../components/brand/DocTable';
+import axios from '../axios';
+import { brandFonts } from '../theme/brand';
 
-
-const xThemeComponents = {
-  ...chartsCustomizations,
-  ...dataGridCustomizations,
-  ...datePickersCustomizations,
-  ...treeViewCustomizations,
+type Period = {
+  id: number;
+  name?: string;
+  club?: string;
+  active?: boolean;
 };
 
+const COLUMNS: BrandColumn<Period>[] = [
+  {
+    key: 'name',
+    header: 'НАЗВА ПЕРІОДУ',
+    width: 'minmax(0,1.4fr)',
+    render: (period) => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
+        <Box
+          component="span"
+          sx={{
+            fontFamily: brandFonts.display,
+            fontWeight: 900,
+            fontSize: 18,
+            letterSpacing: '-0.01em',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {period.name}
+        </Box>
+        {period.active && <Pill tone="positive">Активний</Pill>}
+      </Box>
+    ),
+  },
+  { key: 'club', header: 'КЛУБ', width: 'minmax(0,1fr)' },
+];
+
 export default function DashboardRatingPeriods(props: { disableCustomTheme?: boolean }) {
-  const [periods, setPeriods] = React.useState([]);
+  const [periods, setPeriods] = useState<Period[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
         const { data } = await axios.get('/club/rating-periods');
-        const array = (data.items || []).map((item: any, i: number) => {
-          return { ...item, id: i + 1 };
-        })
-        setPeriods(array || []);
+        setPeriods((data.items || []).map((item: any, i: number) => ({ ...item, id: i + 1 })));
       } catch (e) {
         console.error(e);
+      } finally {
+        setLoading(false);
       }
     }
     fetchData();
-  }, [])
+  }, []);
 
   return (
-    <AppTheme {...props} themeComponents={xThemeComponents}>
+    <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      {/*<AppAppBar />*/}
-      <Box sx={{ display: 'flex' }}>
-        <SideMenu />
-        <AppNavbar />
-        {/* Main content */}
-
-        <Box
-          component="main"
-          sx={(theme) => ({
-            flexGrow: 1,
-            backgroundColor: theme.vars
-              ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
-              : alpha(theme.palette.background.default, 1),
-            overflow: 'auto',
-          })}
-        >
-          <Stack
-            spacing={2}
-            sx={{
-              alignItems: 'center',
-              mx: 3,
-              pb: 5,
-              mt: { xs: 8, md: 0 },
-            }}
-          >
-            {/*<Header />*/}
-            <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' } }}>
-              {/*<Typography component="h2" variant="h6" sx={{ mb: 2 }}>*/}
-              {/*  Details*/}
-              {/*</Typography>*/}
-              <Grid sx={{ mt: '2rem' }} size={{ xs: 12, lg: 9 }}>
-                <DataGrid
-                  // checkboxSelection
-                  disableColumnSorting
-                  disableColumnMenu
-                  rows={periods}
-                  columns={columns}
-                  getRowClassName={(params) =>
-                    params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
-                  }
-                  initialState={{
-                    pagination: { paginationModel: { pageSize: 20 } },
-                  }}
-                  pageSizeOptions={[10, 20, 50]}
-                  disableColumnResize
-                  density="compact"
-                  slotProps={{
-                    filterPanel: {
-                      filterFormProps: {
-                        logicOperatorInputProps: {
-                          variant: 'outlined',
-                          size: 'small',
-                        },
-                        columnInputProps: {
-                          variant: 'outlined',
-                          size: 'small',
-                          sx: { mt: 'auto' },
-                        },
-                        operatorInputProps: {
-                          variant: 'outlined',
-                          size: 'small',
-                          sx: { mt: 'auto' },
-                        },
-                        valueInputProps: {
-                          InputComponentProps: {
-                            variant: 'outlined',
-                            size: 'small',
-                          },
-                        },
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-              <Copyright />
-            </Box>
-          </Stack>
-        </Box>
-      </Box>
+      <ProfilePage title="Рейтингові періоди">
+        <BrandTable
+          columns={COLUMNS}
+          rows={periods}
+          getRowKey={(period) => period.id}
+          pageSize={20}
+          loading={loading}
+          emptyText="Рейтингових періодів поки немає."
+          minWidth={600}
+        />
+      </ProfilePage>
     </AppTheme>
   );
 }

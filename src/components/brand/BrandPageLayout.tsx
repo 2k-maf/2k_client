@@ -1,9 +1,8 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import AppAppBar from '../AppAppBar';
-import Footer from '../Footer';
-import { brandColors, brandFonts } from '../../theme/brand';
+import BrandPage from './BrandPage';
+import { brandFonts, eyebrowSx } from '../../theme/brand';
 
 type Props = {
   /** Моно-напис над заголовком, напр. «Вхід до клубу». */
@@ -15,49 +14,23 @@ type Props = {
 };
 
 /**
- * Каркас внутрішніх сторінок з макета: світла смуга хедера, дві колонки
- * (бренд-блок + картка) і футер.
+ * Каркас сторінок автентифікації: бренд-блок ліворуч, картка форми праворуч.
+ * Хедер, фон і футер бере з `BrandPage`, тому відступи збігаються з рештою сайту.
  */
 export default function BrandPageLayout({ eyebrow, subtitle, children }: Props) {
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: brandColors.bg,
-        color: brandColors.text,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <AppAppBar />
+    <BrandPage centered>
       <Box
         sx={{
-          flex: 1,
           display: 'grid',
           gridTemplateColumns: { xs: 'minmax(0,1fr)', md: 'minmax(0,1fr) minmax(360px,500px)' },
           alignItems: 'center',
           gap: { xs: 4, md: 7 },
-          px: { xs: 2.5, md: 6 },
-          pt: { xs: 12, md: 14 },
-          pb: { xs: 6, md: 8 },
-          maxWidth: 1280,
-          width: '100%',
-          mx: 'auto',
-          boxSizing: 'border-box',
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {eyebrow && (
-            <Box
-              component="span"
-              sx={{
-                fontFamily: brandFonts.mono,
-                fontSize: 11,
-                letterSpacing: '0.3em',
-                textTransform: 'uppercase',
-                color: brandColors.accentHover,
-              }}
-            >
+            <Box component="span" sx={eyebrowSx}>
               {eyebrow}
             </Box>
           )}
@@ -89,7 +62,6 @@ export default function BrandPageLayout({ eyebrow, subtitle, children }: Props) 
         </Box>
         {children}
       </Box>
-      <Footer />
-    </Box>
+    </BrandPage>
   );
 }

@@ -36,13 +36,20 @@ const headerAvatarSx = {
   bgcolor: brandColors.band,
 } as const;
 
+/**
+ * Висота світлої смуги. Фіксована, інакше секундомір «Фан гри» робить хедер
+ * вищим, ніж на «Правилах» чи «Учасниках», і шапка скаче між вкладками.
+ */
+const HEADER_HEIGHT = 60;
+
 /** Світла смуга хедера з макета: пісочне тло, чорнильний текст. */
 const StyledToolbar = styled(Toolbar)(({theme}) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   flexShrink: 0,
-  minHeight: 'auto',
+  minHeight: HEADER_HEIGHT,
+  height: HEADER_HEIGHT,
   backgroundColor: 'transparent',
   color: brandColors.ink,
   padding: '8px 0',
@@ -58,7 +65,18 @@ const StyledToolbar = styled(Toolbar)(({theme}) => ({
     backgroundImage: 'none',
     '&:hover': { backgroundColor: alpha(brandColors.ink, 0.1) },
   },
-  '& .MuiIconButton-root': { color: brandColors.ink },
+  // Тема в темному режимі дає іконковим кнопкам темне тло; на світлій смузі
+  // хедера це темне на темному. Фарбуємо їх так само, як контурні кнопки поруч.
+  '& .MuiIconButton-root': {
+    color: brandColors.ink,
+    borderColor: alpha(brandColors.ink, 0.25),
+    backgroundColor: alpha(brandColors.ink, 0.06),
+    backgroundImage: 'none',
+    '&:hover': {
+      backgroundColor: alpha(brandColors.ink, 0.12),
+      borderColor: alpha(brandColors.ink, 0.4),
+    },
+  },
 }));
 
 let stopWatchInterval: NodeJS.Timeout;
@@ -68,11 +86,6 @@ const liveDotPulse = keyframes`
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.3; transform: scale(0.88); }
 `;
-
-/** У селекторі «Інше»: лише Учасники (Правила — окремо в хедері). */
-const EXTRA_NAV_ITEMS: { label: string; path: string; isActive: (pathname: string) => boolean }[] = [
-  { label: 'Учасники', path: '/members', isActive: (p) => p.includes('members') },
-];
 
 /** Спільний вигляд випадаючих меню в хедері (як «Рейтингова / Фанова») */
 function appBarNavMenuPaperSx(theme: Theme) {
@@ -94,7 +107,6 @@ function appBarNavMenuPaperSx(theme: Theme) {
 export default function AppAppBar() {
   const [open, setOpen] = React.useState(false);
   const [gameMenuAnchor, setGameMenuAnchor] = React.useState<null | HTMLElement>(null);
-  const [extraNavMenuAnchor, setExtraNavMenuAnchor] = React.useState<null | HTMLElement>(null);
   const {user, logout} = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -147,6 +159,14 @@ export default function AppAppBar() {
     stopWatchStart = true;
   }
 
+  /**
+   * Вкладка активна, коли відкритий її маршрут. Одна функція на всі кнопки —
+   * інакше «Правила» і «Рейтинг клубу» лишаються без контуру, а решта його має.
+   */
+  const isActive = (route: string) => pathname === route || pathname.startsWith(`${route}/`);
+  const navVariant = (route: string) => (isActive(route) ? 'outlined' : 'text');
+  const isGameRoute = isActive('/new-game') || isActive('/new-game-rating');
+
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
   };
@@ -159,11 +179,6 @@ export default function AppAppBar() {
       return;
     }
     navigate(path);
-  }
-
-  function openExtraNavPath(path: string, closeUi?: () => void) {
-    navigateWithConfirm(path);
-    closeUi?.();
   }
 
   return (
@@ -183,7 +198,7 @@ export default function AppAppBar() {
           <Box sx={{flexGrow: 1, display: 'flex', alignItems: 'center', px: 0, gap: 3}}>
             <Sitemark variant="navy" size={30}/>
             <Box sx={{display: 'none', '@media (min-width: 940px)': {display: 'flex'}, gap: 0.5, overflow: 'hidden', '& .MuiButton-root': {whiteSpace: 'nowrap', minWidth: 'auto', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis'}}}>
-              <Button startIcon={<StarIcon/>} variant="text"
+              <Button startIcon={<StarIcon/>} variant={navVariant('/clubs-rating')}
                       onClick={() => navigateWithConfirm('/clubs-rating')}
                       size="small" color="secondary">
                 Рейтинг клубу
@@ -191,14 +206,14 @@ export default function AppAppBar() {
               {user?.authType === 'Клуб' ? <>
                 <Box sx={{display: 'flex', alignItems: 'center'}}>
                   <Button
-                    variant={window.location.pathname.includes('new-game') ? 'outlined' : 'text'}
+                    variant={isGameRoute ? 'outlined' : 'text'}
                     onClick={() => navigateWithConfirm('/new-game-rating')}
                     size="small"
                     sx={{borderTopRightRadius: 0, borderBottomRightRadius: 0, pr: 1}}>
-                    {window.location.pathname.endsWith('new-game-rating') ? 'Рейтингова гра' : window.location.pathname.endsWith('new-game') ? 'Фан гра' : 'Рейтингова гра'}
+                    {isActive('/new-game') ? 'Фан гра' : 'Рейтингова гра'}
                   </Button>
                   <Button
-                    variant={window.location.pathname.includes('new-game') ? 'outlined' : 'text'}
+                    variant={isGameRoute ? 'outlined' : 'text'}
                     onClick={(e) => setGameMenuAnchor(e.currentTarget)}
                     size="small"
                     sx={{borderTopLeftRadius: 0, borderBottomLeftRadius: 0, minWidth: 'auto', px: 0.3}}>
@@ -214,49 +229,21 @@ export default function AppAppBar() {
                   <MenuItem onClick={() => { setGameMenuAnchor(null); navigateWithConfirm('/new-game-rating'); }}>Рейтингова</MenuItem>
                   <MenuItem onClick={() => { setGameMenuAnchor(null); navigateWithConfirm('/new-game'); }}>Фанова</MenuItem>
                 </Menu>
-              </> : <Button variant={window.location.pathname.endsWith('new-game') ? 'outlined' : 'text'}
+              </> : <Button variant={navVariant('/new-game')}
                       onClick={() => navigateWithConfirm('/new-game')}
                       size="small">
                 Фан гра
               </Button>}
-              <Button onClick={() => navigateWithConfirm('/rules')} variant="text" size="small">
+              <Button onClick={() => navigateWithConfirm('/rules')} variant={navVariant('/rules')} size="small">
                 Правила
               </Button>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={() => openExtraNavPath(EXTRA_NAV_ITEMS[0].path)}
-                  sx={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, pr: 1 }}
-                >
-                  Інше
-                </Button>
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={(e) => setExtraNavMenuAnchor(e.currentTarget)}
-                  aria-label="Меню: учасники"
-                  sx={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, minWidth: 'auto', px: 0.3 }}
-                >
-                  <ArrowDropDownIcon sx={{ fontSize: 20 }} />
-                </Button>
-              </Box>
-              <Menu
-                anchorEl={extraNavMenuAnchor}
-                open={Boolean(extraNavMenuAnchor)}
-                onClose={() => setExtraNavMenuAnchor(null)}
-                PaperProps={{ sx: appBarNavMenuPaperSx }}
+              <Button
+                onClick={() => navigateWithConfirm('/members')}
+                variant={navVariant('/members')}
+                size="small"
               >
-                {EXTRA_NAV_ITEMS.map((item) => (
-                  <MenuItem
-                    key={item.path}
-                    selected={item.isActive(pathname)}
-                    onClick={() => openExtraNavPath(item.path, () => setExtraNavMenuAnchor(null))}
-                  >
-                    {item.label}
-                  </MenuItem>
-                ))}
-              </Menu>
+                Учасники
+              </Button>
               {liveTournament ? (
                 <Button
                   component={RouterLink}
@@ -305,8 +292,8 @@ export default function AppAppBar() {
             </Box>
           </Box>
           {
-            window.location.pathname.includes('new-game') &&
-              <Typography color={stopWatch <= 0 ? 'error' :  stopWatch <= 10 ? 'warning': 'default' } onClick={startStopWatch} sx={{ mr: 3, cursor: 'pointer' }} variant='h2'>
+            isGameRoute &&
+              <Typography color={stopWatch <= 0 ? 'error' :  stopWatch <= 10 ? 'warning': 'default' } onClick={startStopWatch} sx={{ mr: 3, cursor: 'pointer', lineHeight: 1 }} variant='h2'>
                 {stopWatchFmt}
               </Typography>
           }
@@ -378,17 +365,17 @@ export default function AppAppBar() {
                     <CloseRoundedIcon />
                   </OutlinedActionIconButton>
                 </Box>
-                <MenuItem selected={window.location.pathname.endsWith('clubs-rating')}
+                <MenuItem selected={isActive('/clubs-rating')}
                           onClick={() => navigateWithConfirm('/clubs-rating')}><StarIcon sx={{ mr: .5 }}/>Рейтинг клубу</MenuItem>
                 {user?.authType === 'Клуб' ? <>
-                  <MenuItem selected={window.location.pathname.endsWith('new-game-rating')}
+                  <MenuItem selected={isActive('/new-game-rating')}
                             onClick={() => { setOpen(false); navigateWithConfirm('/new-game-rating'); }}>Рейтингова гра</MenuItem>
-                  <MenuItem selected={window.location.pathname.endsWith('new-game')}
+                  <MenuItem selected={isActive('/new-game')}
                             onClick={() => { setOpen(false); navigateWithConfirm('/new-game'); }}>Фан гра</MenuItem>
-                </> : <MenuItem selected={window.location.pathname.endsWith('new-game')}
+                </> : <MenuItem selected={isActive('/new-game')}
                           onClick={() => { setOpen(false); navigateWithConfirm('/new-game'); }}>Фан гра</MenuItem>}
                 <MenuItem
-                  selected={window.location.pathname.includes('scoring')}
+                  selected={isActive('/rules')}
                   onClick={() => {
                     setOpen(false);
                     navigateWithConfirm('/rules');
@@ -396,23 +383,15 @@ export default function AppAppBar() {
                 >
                   Правила
                 </MenuItem>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ px: 2, pt: 1.5, pb: 0.5, display: 'block', fontWeight: 700 }}
+                <MenuItem
+                  selected={isActive('/members')}
+                  onClick={() => {
+                    setOpen(false);
+                    navigateWithConfirm('/members');
+                  }}
                 >
-                  Інше
-                </Typography>
-                {EXTRA_NAV_ITEMS.map((item) => (
-                  <MenuItem
-                    key={item.path}
-                    selected={item.isActive(pathname)}
-                    onClick={() => openExtraNavPath(item.path, () => setOpen(false))}
-                    sx={{ pl: 3 }}
-                  >
-                    {item.label}
-                  </MenuItem>
-                ))}
+                  Учасники
+                </MenuItem>
                 {liveTournament ? (
                   <MenuItem
                     component={RouterLink}
