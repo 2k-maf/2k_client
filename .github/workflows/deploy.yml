@@ -19,9 +19,15 @@ permissions:
   id-token: write # OIDC
   contents: read
 
-# environment тут додавати НЕ можна: воно змінює claim `sub` токена OIDC на
-# "...:environment:НАЗВА", а політика довіри ролі чекає рівно
-# "repo:2k-maf/2k_client:ref:refs/heads/main". Assume role впаде.
+# Репозиторій створений після 2026-07-15, тому GitHub кладе в claim `sub`
+# незмінну форму з ID власника й репозиторію:
+# "repo:2k-maf@319206025/2k_client@1342281852:ref:refs/heads/main".
+# Політика довіри ролі чекає рівно цей рядок.
+#
+# environment тут додавати НЕ можна: воно змінює хвіст claim `sub` на
+# ":environment:НАЗВА". Assume role впаде.
+#
+# Звірити токен з політикою: pwsh tools/check_oidc_trust.ps1
 jobs:
   deploy:
     name: Зібрати та залити статику
