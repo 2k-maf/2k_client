@@ -22,7 +22,6 @@ import axios from "./axios";
 import {useEffect} from "react";
 import InputLabel from "@mui/material/InputLabel";
 import Select, {SelectChangeEvent} from "@mui/material/Select";
-import OutlinedInput from "@mui/material/OutlinedInput";
 import MenuItem from "@mui/material/MenuItem";
 
 export default function SignUp(props: { disableCustomTheme?: boolean }) {
@@ -204,13 +203,11 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
             {/*  label="I want to receive updates via email."*/}
             {/*/>*/}
             <FormControl>
-              <FormLabel htmlFor="club">Клуб</FormLabel>
+              <FormLabel id="club-name-label">Клуб</FormLabel>
               <Select
                 labelId="club-name-label"
                 id="club-name"
-                input={<OutlinedInput label="Оберіть клуб" />}
                 value={clubSelectId}
-                label="Club Select"
                 sx={{ mb: 3, width: '100%' }}
                 onChange={(e: SelectChangeEvent<any>) => setClubSelectId(e.target.value)}
               >

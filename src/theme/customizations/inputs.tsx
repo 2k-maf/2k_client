@@ -436,6 +436,24 @@ export const inputsCustomizations: Components<Theme> = {
             borderColor: gray[500],
           },
         }),
+        // The real border lives on the root, so the error colour must live here too.
+        // Keep this rule after the hover rules; the error state must win.
+        [`&.${outlinedInputClasses.error}`]: {
+          borderColor: (theme.vars || theme).palette.error.main,
+        },
+        // MUI paints the <fieldset> in the hover, focused, error and disabled states.
+        // Those default rules are more specific than the notchedOutline slot, so
+        // neutralise them here. Without this a second border appears 4px above the
+        // real one, and a label legend cuts a notch out of it.
+        [[
+          `& .${outlinedInputClasses.notchedOutline}`,
+          `&:hover .${outlinedInputClasses.notchedOutline}`,
+          `&.${outlinedInputClasses.focused} .${outlinedInputClasses.notchedOutline}`,
+          `&.${outlinedInputClasses.error} .${outlinedInputClasses.notchedOutline}`,
+          `&.${outlinedInputClasses.disabled} .${outlinedInputClasses.notchedOutline}`,
+        ].join(', ')]: {
+          borderColor: 'transparent',
+        },
         variants: [
           {
             props: {
@@ -465,8 +483,9 @@ export const inputsCustomizations: Components<Theme> = {
           },
         ],
       }),
-      // Keep a 1px outline so the <legend> notch still sizes correctly for the floating label.
-      // border: 'none' breaks InputLabel position (label sits on the border line).
+      // Keep a 1px transparent outline so the <legend> notch still sizes correctly for
+      // the floating label. border: 'none' breaks InputLabel position (label sits on the
+      // border line). The root neutralises the more specific MUI state rules.
       notchedOutline: {
         borderWidth: 1,
         borderStyle: 'solid',
