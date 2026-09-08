@@ -21,10 +21,17 @@ type CardStyle = {
   alignEnd?: boolean;
 };
 
+/** Наскільки слово-привид виходить за нижній край картки, px. Одне значення на всі картки. */
+const GHOST_BOTTOM = -10;
+
+/** Прозорість слова-привида. Одне значення на всі картки. */
+const GHOST_ALPHA = 0.25;
+const ghost = (rgb: string) => `rgba(${rgb},${GHOST_ALPHA})`;
+
 const CARD_STYLES: CardStyle[] = [
   {
     ghost: 'Чемпіон',
-    ghostColor: 'rgba(250,43,30,0.24)',
+    ghostColor: ghost('250,43,30'),
     ghostSize: 64,
     ghostSide: 'right',
     rotate: -2.5,
@@ -36,7 +43,7 @@ const CARD_STYLES: CardStyle[] = [
   },
   {
     ghost: 'MVP',
-    ghostColor: 'rgba(255,255,255,0.10)',
+    ghostColor: ghost('255,255,255'),
     ghostSize: 72,
     ghostSide: 'left',
     rotate: 2,
@@ -49,7 +56,7 @@ const CARD_STYLES: CardStyle[] = [
   },
   {
     ghost: 'Топ мафія',
-    ghostColor: 'rgba(255,138,94,0.20)',
+    ghostColor: ghost('255,138,94'),
     ghostSize: 52,
     ghostSide: 'right',
     rotate: -1.5,
@@ -135,7 +142,7 @@ function PodiumRow({ winner, style, index }: { winner: PodiumWinner; style: Card
         sx={{
           position: 'absolute',
           [style.ghostSide]: 14,
-          bottom: -12,
+          bottom: GHOST_BOTTOM,
           fontFamily: brandFonts.display,
           fontWeight: 900,
           fontSize: style.ghostSize,

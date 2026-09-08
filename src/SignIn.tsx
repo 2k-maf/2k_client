@@ -136,7 +136,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 labelId="auth-type-label"
                 id="auth-type"
                 value={authType}
-                label="Auth Type"
                 onChange={(e) => setAuthType(e.target.value)}
               >
                 <MenuItem value={'users'}>Гравець</MenuItem>
