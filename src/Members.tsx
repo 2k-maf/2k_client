@@ -6,6 +6,7 @@ import AppTheme from './theme/AppTheme';
 import BrandPage from './components/brand/BrandPage';
 import BrandTable, { BrandColumn } from './components/brand/BrandTable';
 import BrandSearchField from './components/brand/BrandSearchField';
+import RemoteAvatar from './components/brand/RemoteAvatar';
 import axios from './axios';
 import { brandFonts, monoSx } from './theme/brand';
 
@@ -14,9 +15,32 @@ type Member = {
   nickname?: string;
   name?: string;
   clubs?: string;
+  avatarUrl?: string;
 };
 
+/** Сторона аватара в пікселях. Трек сітки має збігатися з цим числом. */
+const AVATAR_SIZE = 40;
+
 const COLUMNS: BrandColumn<Member>[] = [
+  {
+    key: 'avatar',
+    // Колонка з картинками заголовка не має: підпис до неї нічого не додає.
+    header: '',
+    width: `${AVATAR_SIZE}px`,
+    render: (member) => (
+      <RemoteAvatar
+        avatarUrl={member.avatarUrl}
+        nickname={member.nickname || member.name || ''}
+        sx={{
+          width: AVATAR_SIZE,
+          height: AVATAR_SIZE,
+          fontFamily: brandFonts.display,
+          fontWeight: 900,
+          fontSize: 16,
+        }}
+      />
+    ),
+  },
   {
     key: 'nickname',
     header: 'НІК',
@@ -107,7 +131,8 @@ export default function MembersList(props: { disableCustomTheme?: boolean }) {
           getRowKey={(member) => member.id}
           loading={loading}
           emptyText={query ? 'Учасника не знайдено.' : 'Учасників поки немає.'}
-          minWidth={640}
+          // Колонка аватара додала 40 пікселів і проміжок сітки.
+          minWidth={700}
         />
       </BrandPage>
     </AppTheme>

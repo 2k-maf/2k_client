@@ -11,7 +11,6 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
@@ -28,7 +27,7 @@ import AppTheme from './theme/AppTheme';
 import BrandPage from './components/brand/BrandPage';
 import axios from './axios';
 import { formatDateUkVancouver } from './utils/vancouverDate';
-import { resolveMediaUrl } from './utils/mediaUrl';
+import RemoteAvatar from './components/brand/RemoteAvatar';
 import TournamentSeatingTiles from './components/TournamentSeatingTiles';
 import TournamentCheerTab from './components/TournamentCheerTab';
 import { useAuth } from './AuthProvider';
@@ -122,25 +121,6 @@ function PublicTournamentYoutubeButton({
     >
       YouTube
     </Button>
-  );
-}
-
-function RemoteAvatar({
-  avatarUrl,
-  nickname,
-  sx,
-}: {
-  avatarUrl: string | null | undefined;
-  nickname: string;
-  sx?: React.ComponentProps<typeof Avatar>['sx'];
-}) {
-  const [failed, setFailed] = React.useState(false);
-  const src = !failed ? resolveMediaUrl(avatarUrl ?? null) : undefined;
-  const initial = nickname.trim().charAt(0).toUpperCase() || '?';
-  return (
-    <Avatar src={src || undefined} alt={nickname} onError={() => setFailed(true)} sx={sx}>
-      {initial}
-    </Avatar>
   );
 }
 
