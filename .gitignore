@@ -19,3 +19,6 @@ types/
 
 # Логи dev.sh / dev.ps1
 .dev-logs/
+
+# Результат збірки. CI збирає його сам (.github/workflows/deploy.yml).
+build/
