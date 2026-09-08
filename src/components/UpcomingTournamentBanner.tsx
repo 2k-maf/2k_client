@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
@@ -11,6 +10,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { Link as RouterLink } from 'react-router-dom';
 import axios from '../axios';
 import { resolveMediaUrl } from '../utils/mediaUrl';
+import { brandColors } from '../theme/brand';
 
 type UpcomingItem = {
   id: string;
@@ -25,29 +25,22 @@ type RecentCompletedBanner = {
   winnerAvatarUrl: string | null;
 };
 
-function bannerShellSx(t: import('@mui/material/styles').Theme) {
-  const dark = t.palette.mode === 'dark';
-  const primary = t.palette.primary.main;
-  return {
-    mt: 1,
-    mb: 0.25,
-    width: 'fit-content',
-    maxWidth: 'min(100%, calc(100vw - 20px))',
-    borderRadius: 999,
-    px: 0,
-    py: 0,
-    border: dark
-      ? `1px solid ${alpha('#93c5fd', 0.55)}`
-      : `1px solid ${alpha(primary, 0.45)}`,
-    background: dark
-      ? `linear-gradient(125deg, ${alpha(primary, 0.55)} 0%, #1e40af 42%, #172554 100%)`
-      : `linear-gradient(125deg, ${alpha(primary, 0.14)} 0%, ${alpha('#dbeafe', 0.95)} 55%, ${alpha('#eff6ff', 1)} 100%)`,
-    backdropFilter: 'blur(10px)',
-    boxShadow: dark
-      ? `0 4px 22px ${alpha('#1e3a8a', 0.55)}, 0 0 0 1px ${alpha('#60a5fa', 0.12)} inset`
-      : `0 4px 16px ${alpha(primary, 0.12)}`,
-  };
-}
+/** Pill-плашка: brand-кольори, fixed по центру під хедером. */
+const bannerShellSx = {
+  position: 'fixed' as const,
+  zIndex: (t: { zIndex: { appBar: number } }) => t.zIndex.appBar + 1,
+  top: { xs: 72, md: 80 },
+  left: '50%',
+  transform: 'translateX(-50%)',
+  width: 'fit-content',
+  maxWidth: 'min(100%, calc(100vw - 24px))',
+  borderRadius: 999,
+  border: '1px solid rgba(250,43,30,0.45)',
+  background: `linear-gradient(125deg, rgba(250,43,30,0.28) 0%, ${brandColors.panel} 42%, ${brandColors.panelAlt} 100%)`,
+  backdropFilter: 'blur(10px)',
+  boxShadow: '0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px rgba(250,43,30,0.12) inset',
+  color: brandColors.text,
+};
 
 const stackPaddingSx = {
   flexWrap: 'wrap' as const,
@@ -55,19 +48,19 @@ const stackPaddingSx = {
   py: { xs: 0.65, sm: 0.6 },
 };
 
-const linkSx = (t: import('@mui/material/styles').Theme) => ({
+const linkSx = {
   flexShrink: 0,
   fontWeight: 700,
   whiteSpace: 'nowrap' as const,
   textDecoration: 'underline',
   textUnderlineOffset: 3,
-  textDecorationColor: t.palette.mode === 'dark' ? alpha('#fef08a', 0.85) : alpha(t.palette.primary.main, 0.55),
-  color: t.palette.mode === 'dark' ? '#fef9c3' : t.palette.primary.dark,
+  textDecorationColor: 'rgba(255,106,94,0.85)',
+  color: brandColors.accentHover,
   '&:hover': {
-    color: t.palette.mode === 'dark' ? '#fffbeb' : t.palette.primary.main,
-    textDecorationColor: t.palette.mode === 'dark' ? '#fff' : alpha(t.palette.primary.main, 0.8),
+    color: '#fff',
+    textDecorationColor: '#fff',
   },
-});
+};
 
 const DISMISSED_KEY = 'dismissedTournamentBanner';
 
@@ -94,15 +87,15 @@ function DismissButton({ onClick }: { onClick: () => void }) {
       size="small"
       aria-label="Закрити"
       onClick={onClick}
-      sx={(t) => ({
+      sx={{
         flexShrink: 0,
         p: 0.25,
-        color: t.palette.mode === 'dark' ? alpha('#ffffff', 0.75) : alpha(t.palette.text.primary, 0.6),
+        color: 'rgba(242,243,247,0.55)',
         '&:hover': {
-          color: t.palette.mode === 'dark' ? '#ffffff' : t.palette.text.primary,
-          backgroundColor: alpha(t.palette.mode === 'dark' ? '#ffffff' : t.palette.primary.main, 0.12),
+          color: brandColors.text,
+          backgroundColor: 'rgba(255,255,255,0.08)',
         },
-      })}
+      }}
     >
       <CloseRoundedIcon sx={{ fontSize: 16 }} />
     </IconButton>
@@ -110,7 +103,7 @@ function DismissButton({ onClick }: { onClick: () => void }) {
 }
 
 /**
- * Compact centered pill under AppAppBar on the home page; width fits content (not full header).
+ * Compact centered floating pill under AppAppBar on the home page.
  * Після завершення турніру (до 7 днів) показує плашку з переможцем замість «вже скоро».
  */
 export default function UpcomingTournamentBanner() {
@@ -165,21 +158,15 @@ export default function UpcomingTournamentBanner() {
     return (
       <Box role="status" aria-live="polite" sx={bannerShellSx}>
         <Stack direction="row" alignItems="center" spacing={1} sx={stackPaddingSx}>
-          <EmojiEventsOutlinedIcon
-            sx={(t) => ({
-              fontSize: 18,
-              flexShrink: 0,
-              color: t.palette.mode === 'dark' ? '#e0f2fe' : t.palette.primary.dark,
-            })}
-          />
+          <EmojiEventsOutlinedIcon sx={{ fontSize: 18, flexShrink: 0, color: brandColors.accentHover }} />
           <Typography
             component="div"
             variant="body2"
-            sx={(t) => ({
+            sx={{
               lineHeight: 1.35,
               minWidth: 0,
               flex: 1,
-              color: t.palette.mode === 'dark' ? '#ffffff' : t.palette.text.primary,
+              color: brandColors.text,
               fontWeight: 600,
               display: 'flex',
               flexDirection: 'row',
@@ -187,30 +174,25 @@ export default function UpcomingTournamentBanner() {
               alignItems: 'center',
               columnGap: 0.5,
               rowGap: 0.35,
-            })}
+            }}
           >
             <Box component="span" sx={{ fontWeight: 800 }}>
               {recentCompleted.name}
             </Box>
-            <Box
-              component="span"
-              sx={(th) => ({
-                fontWeight: 500,
-                color: th.palette.mode === 'dark' ? '#e0e7ff' : alpha(th.palette.text.primary, 0.78),
-              })}
-            >
+            <Box component="span" sx={{ fontWeight: 500, color: 'rgba(242,243,247,0.72)' }}>
               закінчено! Вітаємо переможця
             </Box>
             <Avatar
               src={avatarSrc || undefined}
               alt=""
-              sx={(th) => ({
+              sx={{
                 width: 22,
                 height: 22,
                 fontSize: '0.7rem',
                 flexShrink: 0,
-                border: `1px solid ${th.palette.mode === 'dark' ? alpha('#fff', 0.35) : alpha(th.palette.primary.main, 0.35)}`,
-              })}
+                border: '1px solid rgba(250,43,30,0.5)',
+                bgcolor: brandColors.border,
+              }}
             >
               {initial}
             </Avatar>
@@ -241,33 +223,21 @@ export default function UpcomingTournamentBanner() {
   return (
     <Box role="status" aria-live="polite" sx={bannerShellSx}>
       <Stack direction="row" alignItems="center" spacing={1} sx={stackPaddingSx}>
-        <EmojiEventsOutlinedIcon
-          sx={(t) => ({
-            fontSize: 18,
-            flexShrink: 0,
-            color: t.palette.mode === 'dark' ? '#e0f2fe' : t.palette.primary.dark,
-          })}
-        />
+        <EmojiEventsOutlinedIcon sx={{ fontSize: 18, flexShrink: 0, color: brandColors.accentHover }} />
         <Typography
           component="span"
           variant="body2"
-          sx={(t) => ({
+          sx={{
             lineHeight: 1.35,
             minWidth: 0,
-            color: t.palette.mode === 'dark' ? '#ffffff' : t.palette.text.primary,
+            color: brandColors.text,
             fontWeight: 600,
-          })}
+          }}
         >
           <Box component="span" sx={{ fontWeight: 800 }}>
             {tournament.name}
           </Box>{' '}
-          <Box
-            component="span"
-            sx={(th) => ({
-              fontWeight: 500,
-              color: th.palette.mode === 'dark' ? '#e0e7ff' : alpha(th.palette.text.primary, 0.78),
-            })}
-          >
+          <Box component="span" sx={{ fontWeight: 500, color: 'rgba(242,243,247,0.72)' }}>
             — вже скоро!
           </Box>
         </Typography>
