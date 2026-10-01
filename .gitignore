@@ -22,3 +22,7 @@ types/
 
 # Результат збірки. CI збирає його сам (.github/workflows/deploy.yml).
 build/
+
+# Cloudflare: локальні секрети для wrangler pages dev і його кеш
+.dev.vars
+.wrangler/

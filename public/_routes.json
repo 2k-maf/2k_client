@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "include": [
+    "/auth/*",
+    "/club",
+    "/club/*",
+    "/clubs",
+    "/hello",
+    "/public/*",
+    "/tournament/*",
+    "/tournaments",
+    "/user",
+    "/user/*",
+    "/users",
+    "/avatars/*"
+  ],
+  "exclude": []
+}

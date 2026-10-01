@@ -1,0 +1,13 @@
+# Заголовки статики Cloudflare Pages. На відповіді функції (API, аватари)
+# не діють — там їх ставить edge/proxy.mjs.
+
+/*
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-XSS-Protection: 1; mode=block
+
+# Імена файлів CRA хешує, вміст за таким іменем ніколи не змінюється.
+/static/*
+  Cache-Control: public, max-age=31536000, immutable
