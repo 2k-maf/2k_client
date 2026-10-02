@@ -92,10 +92,21 @@ jobs:
 
       # API через функцію: /hello не потребує ні бази, ні авторизації.
       # 200 означає, що функція, змінні Pages і Lambda разом працюють.
+      #
+      # Повтори потрібні з тієї самої причини, що й у кроці вище: власний
+      # домен кілька секунд віддає попередній деплой. Попередній крок цього
+      # не ловить, якщо збірка не змінилась (той самий хеш бандла). Так
+      # 2026-10-02 перевірка влучила в деплой без змінних Pages і отримала 500.
       - name: Перевірити, що API відповідає через функцію
         if: vars.SITE_URL != ''
         run: |
           set -euo pipefail
-          code=$(curl -s -o /dev/null -w '%{http_code}' -H 'accept: application/json' "${{ vars.SITE_URL }}/hello")
-          echo "GET /hello → $code"
-          [ "$code" = "200" ]
+          for i in 1 2 3 4 5 6; do
+            # || true: мережевий збій дає код 000 і ще одну спробу, а не вихід через set -e.
+            code=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -H 'accept: application/json' "${{ vars.SITE_URL }}/hello" || true)
+            echo "Спроба $i: GET /hello → $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 10
+          done
+          echo "/hello не відповів 200 за 60 секунд"
+          exit 1

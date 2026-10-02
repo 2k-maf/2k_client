@@ -116,8 +116,13 @@ CORS на API відкритий для всіх джерел, тож прокс
 
 ## Продакшн: Cloudflare Pages
 
-Сайт живе на Cloudflare Pages. CloudFront у новому акаунті AWS недоступний — див. ADR 0006
-у `2k_api`. В AWS лишилися Lambda (API), приватний S3 з аватарами й секрети в SSM.
+Сайт живе на Cloudflare Pages за адресою `https://2kmaf.ca`. CloudFront у новому акаунті AWS
+недоступний — див. ADR 0006 у `2k_api`. В AWS лишилися Lambda (API), приватний S3 з аватарами
+й секрети в SSM.
+
+Домен `2kmaf.ca` зареєстровано в **Porkbun**; nameserver-и вказують на **Cloudflare**, тож усі
+DNS-записи живуть у Cloudflare. Повна схема з C4-діаграмами —
+[`2k_api/docs/architecture/aws-deployment.md`](../2k_api/docs/architecture/aws-deployment.md).
 
 ```text
 браузер → Cloudflare Pages
@@ -132,7 +137,7 @@ CORS на API відкритий для всіх джерел, тож прокс
 | `public/_routes.json` | які шляхи викликають функцію. **Новий кореневий маршрут в API без рядка тут віддаватиме `index.html`** |
 | `edge/proxy.mjs` | проксі API й аватарів; браузерна навігація на `/clubs` отримує `index.html`, а не JSON |
 | `public/_headers` | security headers і річний кеш для `/static/*` |
-| `.github/workflows/deploy.yml` | збірка → `wrangler pages deploy` |
+| `.github/workflows/deploy.yml` | збірка → `wrangler pages deploy` → перевірка бандла й `/hello` (повтори до 60 с) |
 
 Безкоштовний ліміт — 100 000 викликів функції на добу. Статика його не витрачає.
 
@@ -159,8 +164,15 @@ CORS на API відкритий для всіх джерел, тож прокс
    | `AVATARS_READER_KEY_ID`, `AVATARS_READER_SECRET` | ключ IAM-користувача `2k-prod-avatars-reader` (README Terraform) |
 
    Або з терміналу: `pnpm exec wrangler pages secret put ORIGIN_SECRET --project-name 2k-client`.
+
+   > **Змінні діють лише на нові деплої.** Після зміни змінних перезапустіть
+   > Actions → **Deploy client** → **Run workflow**. Інакше функція відповідає
+   > `500 {"message":"Server misconfigured"}`.
 4. Pages → 2k-client → Custom domains → додати домен і `www`. DNS і сертифікат Cloudflare
-   створить сам.
+   створить сам. `www.2kmaf.ca` відповідає 301 на корінь `https://2kmaf.ca/`.
+5. Записи Mailtrap (DKIM `rwmt1`/`rwmt2._domainkey`, `_dmarc`, `mt-link` та інші зі списку
+   Mailtrap → Sending Domains → `2kmaf.ca`) — у DNS зони, режим **DNS only**. Через проксі
+   Cloudflare DKIM не проходить перевірку.
 
 ### Локальна перевірка функції
 
