@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import AppTheme from '../theme/AppTheme';
 import ProfilePage from '../components/brand/ProfilePage';
 import ProfileCard, { ProfileCardGrid } from '../components/brand/ProfileCard';
+import GoogleLinkCard from '../components/GoogleLinkCard';
 import { useAuth } from '../AuthProvider';
 import axios from '../axios';
 import { invalidateClubRatingCache } from '../utils/clubRatingCache';
@@ -266,6 +267,8 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
               Змінити
             </Button>
           </ProfileCard>
+
+          <GoogleLinkCard />
         </ProfileCardGrid>
       </ProfilePage>
     </AppTheme>

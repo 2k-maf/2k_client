@@ -9,6 +9,8 @@ type User = {
   nickname: string;
   email: string;
   avatarUrl?: string;
+  /** Email прив'язаного Google-акаунта. Відсутній, якщо Google не прив'язано. */
+  googleEmail?: string;
 } & JwtPayload
 
 // Create Auth Context
