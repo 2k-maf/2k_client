@@ -146,7 +146,7 @@ CORS на API відкритий для всіх джерел, тож прокс
 2. GitHub `2k_client` → Settings → Secrets and variables → Actions:
    - **Secrets:** `CLOUDFLARE_API_TOKEN` (шаблон «Edit Cloudflare Workers» + Pages:Edit),
      `CLOUDFLARE_ACCOUNT_ID`.
-   - **Variables:** `CF_PAGES_PROJECT=2k-client`, `SITE_URL=https://<домен>`.
+   - **Variables:** `CF_PAGES_PROJECT=2k-client`, `SITE_URL=https://2kmaf.ca`.
      Старі `AWS_REGION`, `AWS_DEPLOY_ROLE`, `S3_BUCKET`, `CF_DISTRIBUTION_ID` видалити.
 3. Змінні функції — Pages → 2k-client → Settings → Variables and Secrets (Production),
    усі як **Secret**. Значення дає `terraform output pages_settings` у `2k_api`:
