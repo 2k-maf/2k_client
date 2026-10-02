@@ -19,6 +19,10 @@ import ColorModeSelect from './theme/ColorModeSelect';
 import { GoogleIcon, FacebookIcon } from './components/CustomIcons';
 import SitemarkIcon from "./components/SitemarkIcon";
 import { brandColors } from "./theme/brand";
+import Alert from '@mui/material/Alert';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthProvider';
+import GoogleSignUpBlock, { GoogleSignUpData, signUpErrorMessage } from './components/GoogleSignUp';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -75,6 +79,16 @@ export default function SignUpClub(props: { disableCustomTheme?: boolean }) {
   const [nickNameErrorMessage, setNickNameErrorMessage] = React.useState('');
   const [addressError, setAddressError] = React.useState(false);
   const [addressErrorMessage, setAddressErrorMessage] = React.useState('');
+  const [google, setGoogle] = React.useState<GoogleSignUpData | null>(null);
+  const [submitError, setSubmitError] = React.useState('');
+  const { setToken } = useAuth();
+  const navigate = useNavigate();
+
+  // Ім'я з Google — це ім'я людини, а не назва клубу, тому у форму його не підставляємо.
+  const handleGoogle = (value: GoogleSignUpData | null) => {
+    setGoogle(value);
+    setSubmitError('');
+  };
 
   const validateInputs = () => {
     const email = document.getElementById('email') as HTMLInputElement;
@@ -86,7 +100,8 @@ export default function SignUpClub(props: { disableCustomTheme?: boolean }) {
 
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+    // Адресу для реєстрації через Google бере сервер з credential.
+    if (!google && (!email.value || !/\S+@\S+\.\S+/.test(email.value))) {
       setEmailError(true);
       setEmailErrorMessage('Введіть коректну електронну адресу');
       isValid = false;
@@ -104,7 +119,8 @@ export default function SignUpClub(props: { disableCustomTheme?: boolean }) {
       setContactErrorMessage('');
     }
 
-    if (!password.value || password.value.length < 6) {
+    // З Google пароль необов'язковий, але введений перевіряємо так само.
+    if ((!google || password.value) && password.value.length < 6) {
       setPasswordError(true);
       setPasswordErrorMessage('Пароль повинен бути більше 6ти символів');
       isValid = false;
@@ -145,7 +161,8 @@ export default function SignUpClub(props: { disableCustomTheme?: boolean }) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (nameError || emailError || passwordError || nickNameError || contactError) {
+    // Перевіряємо поля напряму: стан помилок з onClick може бути ще не застосований.
+    if (!validateInputs()) {
       return;
     }
     const email = document.getElementById('email') as HTMLInputElement;
@@ -154,22 +171,35 @@ export default function SignUpClub(props: { disableCustomTheme?: boolean }) {
     const contact = document.getElementById('contact') as HTMLInputElement;
     const nickname = document.getElementById('nickname') as HTMLInputElement;
     const address = document.getElementById('address') as HTMLInputElement;
-    await axios.post('/club', {
+    const fields = {
       name: name.value,
       nickname: nickname.value,
       address: address.value,
       contact: contact.value,
-      email: email.value,
-      password: password.value,
-    }).catch((e) => {
-      const statusCode = e.response?.status;
-      if (statusCode === 409) {
-        alert('Користувач з такою електронною адресою вже існує. Зверніться до адміністратора');
+    };
+    const body = google
+      ? {
+          ...fields,
+          googleCredential: google.credential,
+          ...(password.value ? { password: password.value } : {}),
+        }
+      : { ...fields, email: email.value, password: password.value };
+    setSubmitError('');
+    try {
+      // 401 тут означає застарілий credential Google, а не сесію.
+      const { data } = await axios.post('/club', body, { skipAuthRedirect: true });
+      // Реєстрація через Google одразу повертає токен і входить в акаунт.
+      if (data?.token) {
+        setToken(data.token);
+        navigate('/profile');
+        return;
       }
-      throw e
-    }).then(() => {
       document.location.href = '/login';
-    })
+    } catch (e: any) {
+      console.error(e);
+      setSubmitError(signUpErrorMessage(e, Boolean(google)));
+      if (google && e?.response?.status === 401) setGoogle(null);
+    }
   };
 
   return (
@@ -200,6 +230,7 @@ export default function SignUpClub(props: { disableCustomTheme?: boolean }) {
             onSubmit={handleSubmit}
             sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
           >
+            <GoogleSignUpBlock value={google} onChange={handleGoogle} />
             <FormControl>
               <FormLabel htmlFor="name">Назва клубу</FormLabel>
               <TextField
@@ -230,18 +261,31 @@ export default function SignUpClub(props: { disableCustomTheme?: boolean }) {
             </FormControl>
             <FormControl>
               <FormLabel htmlFor="email">Електронна адреса</FormLabel>
-              <TextField
-                required
-                fullWidth
-                id="email"
-                placeholder="your@email.com"
-                name="email"
-                autoComplete="email"
-                variant="outlined"
-                error={emailError}
-                helperText={emailErrorMessage}
-                color={passwordError ? 'error' : 'primary'}
-              />
+              {google ? (
+                <TextField
+                  key="google-email"
+                  fullWidth
+                  id="email"
+                  name="email"
+                  value={google.email}
+                  helperText="Адреса з Google"
+                  slotProps={{ input: { readOnly: true } }}
+                />
+              ) : (
+                <TextField
+                  key="email"
+                  required
+                  fullWidth
+                  id="email"
+                  placeholder="your@email.com"
+                  name="email"
+                  autoComplete="email"
+                  variant="outlined"
+                  error={emailError}
+                  helperText={emailErrorMessage}
+                  color={passwordError ? 'error' : 'primary'}
+                />
+              )}
             </FormControl>
             <FormControl>
               <FormLabel htmlFor="contact">Контактні дані (у випадку надання некоректних контактних даних клуб може бути заблоковано без попередження)</FormLabel>
@@ -274,9 +318,9 @@ export default function SignUpClub(props: { disableCustomTheme?: boolean }) {
               />
             </FormControl>
             <FormControl>
-              <FormLabel htmlFor="password">Пароль</FormLabel>
+              <FormLabel htmlFor="password">{google ? "Пароль (необов'язково)" : 'Пароль'}</FormLabel>
               <TextField
-                required
+                required={!google}
                 fullWidth
                 name="password"
                 placeholder="••••••"
@@ -294,6 +338,7 @@ export default function SignUpClub(props: { disableCustomTheme?: boolean }) {
             {/*  control={<Checkbox value="allowExtraEmails" color="primary" />}*/}
             {/*  label="I want to receive updates via email."*/}
             {/*/>*/}
+            {submitError && <Alert severity="error">{submitError}</Alert>}
             <Button
               type="submit"
               fullWidth
