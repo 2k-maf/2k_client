@@ -18,6 +18,7 @@
     "@react-spring/web": "9.7.5",
     "@types/react": "19.0.9",
     "@types/react-dom": "19.0.3",
+    "aws4fetch": "^1.0.20",
     "axios": "^1.18.0",
     "clsx": "2.1.1",
     "dayjs": "1.11.13",
@@ -36,7 +37,8 @@
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
-    "react-scripts": "latest"
+    "react-scripts": "latest",
+    "wrangler": "^4.146.0"
   },
   "browserslist": {
     "production": [

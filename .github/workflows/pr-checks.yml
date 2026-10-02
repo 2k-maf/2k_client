@@ -33,6 +33,16 @@ jobs:
       - name: Встановити залежності
         run: pnpm install --frozen-lockfile
 
+      # Pages Function (edge/) не входить у tsconfig і не має власної збірки
+      # CRA, тому перевіряється окремо: тести й пробне пакування wrangler.
+      - name: Тести Pages Function
+        run: node --test edge/*.test.mjs
+
+      - name: Зібрати Pages Function
+        env:
+          WRANGLER_SEND_METRICS: "false"
+        run: pnpm exec wrangler pages functions build --outdir "$RUNNER_TEMP/functions"
+
       # tsconfig.json уже має "noEmit": true, але прапорець ставимо явно:
       # він не дає збірці записати файли, якщо конфіг колись зміниться.
       - name: Перевірити типи

@@ -1,8 +1,8 @@
 import axios from "axios";
 
-// У проді фронтенд і API мають один origin: CloudFront направляє шляхи
-// /auth, /club, /clubs, /hello, /public, /tournament, /tournaments, /user,
-// /users у Lambda, решту — у бакет статики. Порожній baseURL дає відносні
+// У проді фронтенд і API мають один origin: Cloudflare Pages направляє шляхи
+// з public/_routes.json у функцію, а та — у Lambda (edge/proxy.mjs); решта —
+// статика Pages. Порожній baseURL дає відносні
 // запити, тому CORS і абсолютний хост API не потрібні.
 // Локальна розробка задає REACT_APP_API_URL (див. env.example).
 axios.defaults.baseURL = process.env.REACT_APP_API_URL || '';

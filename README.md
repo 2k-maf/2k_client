@@ -3,7 +3,7 @@
 Веб-клієнт рейтингової платформи для клубів гри «Мафія» (Vancouver): клуби, учасники,
 ігри, турніри та підрахунок рейтингу.
 
-React 19 · TypeScript · MUI 6 · Create React App · S3 + CloudFront
+React 19 · TypeScript · MUI 6 · Create React App · Cloudflare Pages
 
 ## Повний локальний запуск
 
@@ -77,7 +77,7 @@ pnpm start
 | `FRONTEND_URL` | `2k_api/.env` | `http://localhost:3005` | посилання у листах відновлення пароля вестимуть на прод |
 
 Базова адреса API читається один раз у [`src/axios.tsx`](src/axios.tsx); фолбек там —
-порожній рядок, тобто той самий origin. У продакшн це правильно: CloudFront направляє
+порожній рядок, тобто той самий origin. У продакшн це правильно: Cloudflare Pages направляє
 кореневі шляхи Express у Lambda, тому змінну в продакшн-збірці **не задають**.
 Локально порожній фолбек означає, що запити підуть у дев-сервер CRA на 3005 і повернуть
 HTML замість JSON. CRA підхоплює `.env` лише при старті: після правки перезапустіть `pnpm start`.
@@ -111,7 +111,64 @@ CORS на API відкритий для всіх джерел, тож прокс
 | `pnpm start` | дев-сервер на порту з `.env` (3005) |
 | `pnpm build` | продакшн-збірка в `build/` |
 | `pnpm test` | тести react-scripts |
+| `node --test edge/*.test.mjs` | тести Pages Function (проксі API й аватарів) |
 | `./dev.sh` · `pwsh -File .\dev.ps1` | піднімає бекенд + фронтенд разом, Ctrl+C гасить обидва |
+
+## Продакшн: Cloudflare Pages
+
+Сайт живе на Cloudflare Pages. CloudFront у новому акаунті AWS недоступний — див. ADR 0006
+у `2k_api`. В AWS лишилися Lambda (API), приватний S3 з аватарами й секрети в SSM.
+
+```text
+браузер → Cloudflare Pages
+          ├─ статика з build/                      (безкоштовно, без ліміту)
+          └─ functions/[[path]].js → edge/proxy.mjs (лише шляхи з public/_routes.json)
+               ├─ API      → Lambda Function URL + x-origin-secret
+               └─ /avatars → приватний S3, підписаний GET, кеш Cloudflare
+```
+
+| Файл | Що робить |
+|---|---|
+| `public/_routes.json` | які шляхи викликають функцію. **Новий кореневий маршрут в API без рядка тут віддаватиме `index.html`** |
+| `edge/proxy.mjs` | проксі API й аватарів; браузерна навігація на `/clubs` отримує `index.html`, а не JSON |
+| `public/_headers` | security headers і річний кеш для `/static/*` |
+| `.github/workflows/deploy.yml` | збірка → `wrangler pages deploy` |
+
+Безкоштовний ліміт — 100 000 викликів функції на добу. Статика його не витрачає.
+
+### Одноразове налаштування
+
+1. Створити проєкт (один раз, локально):
+   ```bash
+   pnpm exec wrangler login
+   pnpm exec wrangler pages project create 2k-client --production-branch main
+   ```
+2. GitHub `2k_client` → Settings → Secrets and variables → Actions:
+   - **Secrets:** `CLOUDFLARE_API_TOKEN` (шаблон «Edit Cloudflare Workers» + Pages:Edit),
+     `CLOUDFLARE_ACCOUNT_ID`.
+   - **Variables:** `CF_PAGES_PROJECT=2k-client`, `SITE_URL=https://2kmaf.ca`.
+     Старі `AWS_REGION`, `AWS_DEPLOY_ROLE`, `S3_BUCKET`, `CF_DISTRIBUTION_ID` видалити.
+3. Змінні функції — Pages → 2k-client → Settings → Variables and Secrets (Production),
+   усі як **Secret**. Значення дає `terraform output pages_settings` у `2k_api`:
+
+   | Змінна | Звідки |
+   |---|---|
+   | `API_ORIGIN` | Function URL Lambda |
+   | `ORIGIN_SECRET` | `terraform output -raw origin_secret` |
+   | `AVATARS_BUCKET`, `AVATARS_REGION` | ім'я бакета аватарів і регіон |
+   | `AVATARS_READER_KEY_ID`, `AVATARS_READER_SECRET` | ключ IAM-користувача `2k-prod-avatars-reader` (README Terraform) |
+
+   Або з терміналу: `pnpm exec wrangler pages secret put ORIGIN_SECRET --project-name 2k-client`.
+4. Pages → 2k-client → Custom domains → додати домен і `www`. DNS і сертифікат Cloudflare
+   створить сам.
+
+### Локальна перевірка функції
+
+```bash
+pnpm build
+printf 'API_ORIGIN=http://127.0.0.1:3000\nORIGIN_SECRET=local\n' > .dev.vars   # локальний API секрет не перевіряє
+pnpm exec wrangler pages dev build
+```
 
 ## Документація
 
