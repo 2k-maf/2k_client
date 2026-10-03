@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import { Link as RouterLink } from 'react-router-dom';
-import { brandColors } from '../../theme/brand';
+import { brandColors, fg, withAlpha } from '../../theme/brand';
 
 export type BrandTab = { label: string; to: string };
 
@@ -27,9 +27,9 @@ export default function BrandTabs({ tabs, activeTo }: { tabs: BrandTab[]; active
               fontSize: 14,
               fontWeight: 700,
               textDecoration: 'none',
-              background: active ? 'rgba(250,43,30,0.12)' : 'transparent',
-              border: `1px solid ${active ? 'rgba(250,43,30,0.5)' : 'rgba(255,255,255,0.12)'}`,
-              color: active ? brandColors.accentHover : 'rgba(242,243,247,0.65)',
+              background: active ? withAlpha(brandColors.accent, 0.12) : 'transparent',
+              border: `1px solid ${active ? withAlpha(brandColors.accent, 0.5) : fg(0.12)}`,
+              color: active ? brandColors.accentHover : fg(0.65),
               '&:hover': { color: brandColors.accentHover },
             }}
           >

@@ -12,7 +12,7 @@ import Box from '@mui/material/Box';
 import FormLabel from '@mui/material/FormLabel';
 import axios from '../axios';
 import { normalizeAuthEmail } from '../utils/email';
-import { brandColors, brandFonts } from '../theme/brand';
+import { brandColors, brandFonts, fg } from '../theme/brand';
 import { publicStaticUrl } from '../utils/mediaUrl';
 
 interface ForgotPasswordProps {
@@ -60,7 +60,7 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
           sx: {
             backgroundImage: 'none',
             backgroundColor: brandColors.panel,
-            border: '1px solid rgba(255,255,255,0.10)',
+            border: `1px solid ${fg(0.1)}`,
             borderRadius: '16px',
             width: '100%',
             maxWidth: 520,

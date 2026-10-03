@@ -928,6 +928,8 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                               p: '.3rem',
                               fontStyle: 'italic',
                               backgroundColor: activeVoting?.candidates?.[i]?.[1] === j ? 'rgb(0, 54, 107)' : 'transparent',
+                              // Темно-синя комірка: успадкований текст світлої теми на ній не читається.
+                              color: activeVoting?.candidates?.[i]?.[1] === j ? '#fff' : 'inherit',
                               // borderColor: 'gray !important',
                               // borderRight: 'var(--Grid-borderWidth) solid',
                               cursor: 'pointer'

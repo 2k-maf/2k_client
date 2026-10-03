@@ -16,7 +16,7 @@ import GoogleButton, { googleEnabled } from './components/GoogleButton';
 import AppTheme from './theme/AppTheme';
 import BrandPageLayout from './components/brand/BrandPageLayout';
 import BrandFormCard from './components/brand/BrandFormCard';
-import { brandColors } from './theme/brand';
+import { brandColors, fg } from './theme/brand';
 import axios from './axios';
 import { normalizeAuthEmail } from './utils/email';
 import { useAuth } from './AuthProvider';
@@ -187,7 +187,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           </Box>
           {googleEnabled && (
             <>
-              <Divider sx={{ fontSize: 13, color: 'rgba(242,243,247,0.6)' }}>або</Divider>
+              <Divider sx={{ fontSize: 13, color: fg(0.6) }}>або</Divider>
               {/* Тип акаунта для Google береться з того самого перемикача, що й для пароля. */}
               <GoogleButton onCredential={handleGoogleCredential} />
               {googleError === 'GOOGLE_NOT_LINKED' ? (
@@ -216,7 +216,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               gap: 2,
               flexWrap: 'wrap',
               fontSize: 13,
-              color: 'rgba(242,243,247,0.6)',
+              color: fg(0.6),
             }}
           >
             <Link

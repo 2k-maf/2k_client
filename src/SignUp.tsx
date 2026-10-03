@@ -16,7 +16,7 @@ import { styled } from '@mui/material/styles';
 import AppTheme from './theme/AppTheme';
 import BrandPageLayout from './components/brand/BrandPageLayout';
 import BrandFormCard from './components/brand/BrandFormCard';
-import { brandColors } from './theme/brand';
+import { brandColors, fg } from './theme/brand';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import Alert from '@mui/material/Alert';
 import axios from "./axios";
@@ -306,7 +306,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
           {/*</Box>*/}
           <Box
             component="span"
-            sx={{ fontSize: 13, color: 'rgba(242,243,247,0.6)', textAlign: 'center' }}
+            sx={{ fontSize: 13, color: fg(0.6), textAlign: 'center' }}
           >
             Вже маєте акаунт?{' '}
             <Link

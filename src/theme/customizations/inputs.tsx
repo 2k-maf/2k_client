@@ -8,7 +8,7 @@ import CheckBoxOutlineBlankRoundedIcon from '@mui/icons-material/CheckBoxOutline
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import { gray, brand } from '../themePrimitives';
-import { brandColors } from '../brand';
+import { brandColors, fg } from '../brand';
 
 export const inputsCustomizations: Components<Theme> = {
   MuiButtonBase: {
@@ -233,7 +233,7 @@ export const inputsCustomizations: Components<Theme> = {
           width: 'auto',
           height: 'auto',
           padding: '2px',
-          '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)', borderColor: 'transparent' },
+          '&:hover': { backgroundColor: fg(0.08), borderColor: 'transparent' },
         },
         ...theme.applyStyles('dark', {
           backgroundColor: gray[800],

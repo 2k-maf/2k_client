@@ -1,5 +1,6 @@
 import { createTheme, alpha, PaletteMode, Shadows } from '@mui/material/styles';
-import { brandColors, brandFonts } from './brand';
+import { brandPalettes, brandFonts } from './brand';
+import type { BrandPalette } from './brand';
 
 declare module '@mui/material/Paper' {
   interface PaperPropsVariantOverrides {
@@ -24,6 +25,12 @@ declare module '@mui/material/styles/createPalette' {
 
   interface Palette {
     baseShadow: string;
+    /** Brand tokens; MUI emits them as `--template-palette-dk-*`. */
+    dk: BrandPalette;
+  }
+
+  interface PaletteOptions {
+    dk?: BrandPalette;
   }
 }
 
@@ -162,17 +169,17 @@ export const getDesignTokens = (mode: PaletteMode) => {
       grey: {
         ...gray,
       },
-      divider: mode === 'dark' ? brandColors.border : alpha(gray[300], 0.4),
+      divider: mode === 'dark' ? brandPalettes.dark.border : alpha(gray[300], 0.4),
       background: {
         default: 'hsl(0, 0%, 99%)',
         paper: 'hsl(220, 35%, 97%)',
-        ...(mode === 'dark' && { default: brandColors.bg, paper: brandColors.panel }),
+        ...(mode === 'dark' && { default: brandPalettes.dark.bg, paper: brandPalettes.dark.panel }),
       },
       text: {
         primary: gray[800],
         secondary: gray[600],
         warning: orange[400],
-        ...(mode === 'dark' && { primary: brandColors.text, secondary: gray[300] }),
+        ...(mode === 'dark' && { primary: brandPalettes.dark.text, secondary: gray[300] }),
       },
       action: {
         hover: alpha(gray[200], 0.2),
@@ -276,13 +283,13 @@ export const colorSchemes = {
       grey: {
         ...gray,
       },
-      divider: alpha(gray[300], 0.4),
+      divider: brandPalettes.light.border,
       background: {
-        default: 'hsl(0, 0%, 99%)',
-        paper: 'hsl(220, 35%, 97%)',
+        default: brandPalettes.light.bg,
+        paper: brandPalettes.light.panel,
       },
       text: {
-        primary: gray[800],
+        primary: brandPalettes.light.text,
         secondary: gray[600],
         warning: orange[400],
       },
@@ -290,6 +297,7 @@ export const colorSchemes = {
         hover: alpha(gray[200], 0.2),
         selected: `${alpha(gray[200], 0.3)}`,
       },
+      dk: brandPalettes.light,
       baseShadow:
         'hsla(220, 30%, 5%, 0.07) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.07) 0px 8px 16px -5px',
     },
@@ -326,19 +334,20 @@ export const colorSchemes = {
       grey: {
         ...gray,
       },
-      divider: brandColors.border,
+      divider: brandPalettes.dark.border,
       background: {
-        default: brandColors.bg,
-        paper: brandColors.panel,
+        default: brandPalettes.dark.bg,
+        paper: brandPalettes.dark.panel,
       },
       text: {
-        primary: brandColors.text,
+        primary: brandPalettes.dark.text,
         secondary: gray[300],
       },
       action: {
         hover: alpha(gray[600], 0.2),
         selected: alpha(gray[600], 0.3),
       },
+      dk: brandPalettes.dark,
       baseShadow:
         'hsla(220, 30%, 5%, 0.7) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.8) 0px 8px 16px -5px',
     },

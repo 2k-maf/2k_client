@@ -1,15 +1,15 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import { brandColors, brandFonts, monoSx } from '../../theme/brand';
+import { brandColors, brandFonts, monoSx, fg, withAlpha } from '../../theme/brand';
 
 export type PillTone = 'positive' | 'negative' | 'neutral' | 'accent' | 'light';
 
 const PILL_TONES: Record<PillTone, { bg: string; color: string }> = {
-  positive: { bg: 'rgba(37,204,128,0.14)', color: brandColors.positive },
-  negative: { bg: 'rgba(250,43,30,0.14)', color: brandColors.negative },
-  neutral: { bg: 'rgba(255,255,255,0.08)', color: 'rgba(242,243,247,0.7)' },
-  accent: { bg: 'rgba(250,43,30,0.14)', color: brandColors.accentHover },
-  light: { bg: 'rgba(255,255,255,0.10)', color: brandColors.band },
+  positive: { bg: withAlpha(brandColors.positive, 0.14), color: brandColors.positive },
+  negative: { bg: withAlpha(brandColors.accent, 0.14), color: brandColors.negative },
+  neutral: { bg: fg(0.08), color: fg(0.7) },
+  accent: { bg: withAlpha(brandColors.accent, 0.14), color: brandColors.accentHover },
+  light: { bg: fg(0.1), color: brandColors.band },
 };
 
 /** Значення-пігулка: бали, команда, колір вибору. */
@@ -64,9 +64,9 @@ export default function DocTable({
             gridTemplateColumns: columns,
             gap: 2,
             py: 1.25,
-            borderBottom: '1px solid rgba(255,255,255,0.12)',
+            borderBottom: `1px solid ${fg(0.12)}`,
             // Ті самі токени, що в BrandTable — шапки таблиць не мають розходитись.
-            ...monoSx(11, 'rgba(242,243,247,0.45)'),
+            ...monoSx(11, fg(0.45)),
             letterSpacing: '0.14em',
           }}
         >
@@ -85,7 +85,7 @@ export default function DocTable({
               gap: 2,
               alignItems: 'center',
               py: 1.75,
-              borderBottom: '1px solid rgba(255,255,255,0.07)',
+              borderBottom: `1px solid ${fg(0.07)}`,
               fontSize: 15,
             }}
           >

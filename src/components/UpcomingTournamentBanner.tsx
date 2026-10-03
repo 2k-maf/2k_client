@@ -10,7 +10,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { Link as RouterLink } from 'react-router-dom';
 import axios from '../axios';
 import { resolveMediaUrl } from '../utils/mediaUrl';
-import { brandColors } from '../theme/brand';
+import { brandColors, fg, withAlpha } from '../theme/brand';
 
 type UpcomingItem = {
   id: string;
@@ -35,10 +35,10 @@ const bannerShellSx = {
   width: 'fit-content',
   maxWidth: 'min(100%, calc(100vw - 24px))',
   borderRadius: 999,
-  border: '1px solid rgba(250,43,30,0.45)',
-  background: `linear-gradient(125deg, rgba(250,43,30,0.28) 0%, ${brandColors.panel} 42%, ${brandColors.panelAlt} 100%)`,
+  border: `1px solid ${withAlpha(brandColors.accent, 0.45)}`,
+  background: `linear-gradient(125deg, ${withAlpha(brandColors.accent, 0.28)} 0%, ${brandColors.panel} 42%, ${brandColors.panelAlt} 100%)`,
   backdropFilter: 'blur(10px)',
-  boxShadow: '0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px rgba(250,43,30,0.12) inset',
+  boxShadow: `0 8px 28px ${withAlpha(brandColors.shadow, 0.45)}, 0 0 0 1px ${withAlpha(brandColors.accent, 0.12)} inset`,
   color: brandColors.text,
 };
 
@@ -54,11 +54,11 @@ const linkSx = {
   whiteSpace: 'nowrap' as const,
   textDecoration: 'underline',
   textUnderlineOffset: 3,
-  textDecorationColor: 'rgba(255,106,94,0.85)',
+  textDecorationColor: withAlpha(brandColors.accentHover, 0.85),
   color: brandColors.accentHover,
   '&:hover': {
-    color: '#fff',
-    textDecorationColor: '#fff',
+    color: brandColors.text,
+    textDecorationColor: brandColors.text,
   },
 };
 
@@ -90,10 +90,10 @@ function DismissButton({ onClick }: { onClick: () => void }) {
       sx={{
         flexShrink: 0,
         p: 0.25,
-        color: 'rgba(242,243,247,0.55)',
+        color: fg(0.55),
         '&:hover': {
           color: brandColors.text,
-          backgroundColor: 'rgba(255,255,255,0.08)',
+          backgroundColor: fg(0.08),
         },
       }}
     >
@@ -179,7 +179,7 @@ export default function UpcomingTournamentBanner() {
             <Box component="span" sx={{ fontWeight: 800 }}>
               {recentCompleted.name}
             </Box>
-            <Box component="span" sx={{ fontWeight: 500, color: 'rgba(242,243,247,0.72)' }}>
+            <Box component="span" sx={{ fontWeight: 500, color: fg(0.72) }}>
               закінчено! Вітаємо переможця
             </Box>
             <Avatar
@@ -190,7 +190,7 @@ export default function UpcomingTournamentBanner() {
                 height: 22,
                 fontSize: '0.7rem',
                 flexShrink: 0,
-                border: '1px solid rgba(250,43,30,0.5)',
+                border: `1px solid ${withAlpha(brandColors.accent, 0.5)}`,
                 bgcolor: brandColors.border,
               }}
             >
@@ -237,7 +237,7 @@ export default function UpcomingTournamentBanner() {
           <Box component="span" sx={{ fontWeight: 800 }}>
             {tournament.name}
           </Box>{' '}
-          <Box component="span" sx={{ fontWeight: 500, color: 'rgba(242,243,247,0.72)' }}>
+          <Box component="span" sx={{ fontWeight: 500, color: fg(0.72) }}>
             — вже скоро!
           </Box>
         </Typography>

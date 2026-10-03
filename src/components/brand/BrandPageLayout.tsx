@@ -2,7 +2,7 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import BrandPage from './BrandPage';
-import { brandFonts, eyebrowSx } from '../../theme/brand';
+import { brandFonts, eyebrowSx, fg } from '../../theme/brand';
 
 type Props = {
   /** Моно-напис над заголовком, напр. «Вхід до клубу». */
@@ -45,7 +45,7 @@ export default function BrandPageLayout({ eyebrow, subtitle, children }: Props) 
               letterSpacing: '-0.045em',
               textTransform: 'uppercase',
               color: 'transparent',
-              WebkitTextStroke: '1.5px rgba(255,255,255,0.55)',
+              WebkitTextStroke: `1.5px ${fg(0.55)}`,
             }}
           >
             Два
@@ -54,7 +54,7 @@ export default function BrandPageLayout({ eyebrow, subtitle, children }: Props) 
           </Typography>
           {subtitle && (
             <Typography
-              sx={{ m: 0, maxWidth: '42ch', fontSize: 16, lineHeight: 1.6, color: 'rgba(242,243,247,0.6)' }}
+              sx={{ m: 0, maxWidth: '42ch', fontSize: 16, lineHeight: 1.6, color: fg(0.6) }}
             >
               {subtitle}
             </Typography>

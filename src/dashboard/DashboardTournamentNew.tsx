@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../axios';
 import { useAuth } from '../AuthProvider';
 import { DEFAULT_TOURNAMENT_YOUTUBE_URL } from '../constants/youtube';
-import { brandColors } from '../theme/brand';
+import { brandColors, fg } from '../theme/brand';
 
 export default function DashboardTournamentNew(props: { disableCustomTheme?: boolean }) {
   const navigate = useNavigate();
@@ -69,12 +69,12 @@ export default function DashboardTournamentNew(props: { disableCustomTheme?: boo
                 maxWidth: 520,
                 p: { xs: 2.5, sm: 3 },
                 background: brandColors.panel,
-                border: '1px solid rgba(255,255,255,0.10)',
+                border: `1px solid ${fg(0.1)}`,
                 borderRadius: '16px',
                 boxSizing: 'border-box',
               }}
             >
-              <Typography sx={{ mb: 2.5, fontSize: 15, color: 'rgba(242,243,247,0.6)' }}>
+              <Typography sx={{ mb: 2.5, fontSize: 15, color: fg(0.6) }}>
                 Заповніть основні дані. Учасників можна додати пізніше на сторінці турніру.
               </Typography>
               <Stack

@@ -17,7 +17,7 @@ import { styled } from '@mui/material/styles';
 import AppTheme from './theme/AppTheme';
 import { GoogleIcon, FacebookIcon } from './components/CustomIcons';
 import SitemarkIcon from "./components/SitemarkIcon";
-import { brandColors } from "./theme/brand";
+import { brandColors, withAlpha } from "./theme/brand";
 import Alert from '@mui/material/Alert';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
@@ -60,7 +60,7 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
     backgroundRepeat: 'no-repeat',
     ...theme.applyStyles('dark', {
       backgroundImage:
-        `radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), ${brandColors.bg})`,
+        `radial-gradient(ellipse 80% 60% at 50% -10%, ${withAlpha(brandColors.accent, 0.1)}, ${brandColors.bg})`,
     }),
   },
 }));

@@ -3,6 +3,7 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import GoogleButton, { googleEnabled, googleProfile } from './GoogleButton';
+import { fg } from '../theme/brand';
 
 /** Дані Google для реєстрації. Credential живе одну годину. */
 export type GoogleSignUpData = { credential: string; email: string; name: string };
@@ -38,7 +39,7 @@ export default function GoogleSignUpBlock({ value, onChange }: Props) {
         text="signup_with"
         onCredential={(credential) => onChange({ credential, ...googleProfile(credential) })}
       />
-      <Divider sx={{ fontSize: 13, color: 'rgba(242,243,247,0.6)' }}>або</Divider>
+      <Divider sx={{ fontSize: 13, color: fg(0.6) }}>або</Divider>
     </>
   );
 }

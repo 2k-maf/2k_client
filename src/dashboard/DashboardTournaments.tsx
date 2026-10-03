@@ -12,7 +12,7 @@ import { Pill, PillTone } from '../components/brand/DocTable';
 import { useAuth } from '../AuthProvider';
 import axios from '../axios';
 import { formatDateUkVancouver } from '../utils/vancouverDate';
-import { brandFonts, monoSx } from '../theme/brand';
+import { brandFonts, monoSx, fg } from '../theme/brand';
 
 type Tournament = {
   id: string;
@@ -121,7 +121,7 @@ export default function DashboardTournaments(props: { disableCustomTheme?: boole
             pb: 2,
           }}
         >
-          <Typography sx={{ m: 0, fontSize: 15, color: 'rgba(242,243,247,0.6)' }}>
+          <Typography sx={{ m: 0, fontSize: 15, color: fg(0.6) }}>
             {user?.authType === 'Клуб'
               ? 'Турніри вашого клубу. Натисніть рядок, щоб відкрити турнір.'
               : 'Турніри, де ви в списку учасників або в розсадці.'}

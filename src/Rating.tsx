@@ -13,7 +13,7 @@ import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import AppTheme from './theme/AppTheme';
 import BrandPage from './components/brand/BrandPage';
 import BrandSearchField from './components/brand/BrandSearchField';
-import { brandColors, brandFonts, monoSx } from './theme/brand';
+import { brandColors, brandFonts, monoSx, fg } from './theme/brand';
 import { useClubRating } from './hooks/useClubRating';
 import { formatFloat1, RatingPlayer } from './utils/podium';
 
@@ -28,7 +28,7 @@ const HEADERS = ['№', 'ГРАВЕЦЬ', 'РЕЙТ', 'ІГРИ', 'ПВ', 'ОП5
 function rankAccent(rank: number) {
   if (rank === 1) return { ring: brandColors.accent, rankColor: brandColors.accent, bg: brandColors.panelAlt };
   if (rank <= 3) return { ring: brandColors.ember, rankColor: brandColors.ember, bg: brandColors.panelAlt };
-  return { ring: 'rgba(255,255,255,0.28)', rankColor: 'rgba(242,243,247,0.35)', bg: 'transparent' };
+  return { ring: fg(0.28), rankColor: fg(0.35), bg: 'transparent' };
 }
 
 const formatSupportFive = (p: RatingPlayer) =>
@@ -102,7 +102,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                 px: 2,
                 py: 1.5,
                 borderRadius: '12px',
-                border: '1px solid rgba(255,255,255,0.10)',
+                border: `1px solid ${fg(0.1)}`,
                 ...monoSx(12, brandColors.text),
                 letterSpacing: '0.12em',
                 whiteSpace: 'nowrap',
@@ -113,7 +113,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
           </Box>
         }
       >
-        <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.14)', overflowX: 'auto' }}>
+        <Box sx={{ borderTop: `1px solid ${fg(0.14)}`, overflowX: 'auto' }}>
           <Box sx={{ minWidth: 860 }}>
             <Box
               sx={{
@@ -122,9 +122,9 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                 gap: 2,
                 px: 1.5,
                 py: 1.75,
-                ...monoSx(11, 'rgba(242,243,247,0.45)'),
+                ...monoSx(11, fg(0.45)),
                 letterSpacing: '0.14em',
-                borderBottom: '1px solid rgba(255,255,255,0.10)',
+                borderBottom: `1px solid ${fg(0.1)}`,
               }}
             >
               {HEADERS.map((h, i) => (
@@ -149,9 +149,9 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                     px: 1.5,
                     py: 2,
                     cursor: 'pointer',
-                    borderBottom: '1px solid rgba(255,255,255,0.07)',
+                    borderBottom: `1px solid ${fg(0.07)}`,
                     background: accent.bg,
-                    '&:hover': { background: '#141a2e' },
+                    '&:hover': { background: brandColors.rowHover },
                   }}
                 >
                   <Box
@@ -177,7 +177,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                         fontFamily: brandFonts.display,
                         fontWeight: 900,
                         fontSize: 15,
-                        color: '#fff',
+                        color: brandColors.text,
                       }}
                     >
                       {player.nickname?.trim()?.[0]?.toUpperCase()}
@@ -199,7 +199,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                         {player.nickname?.trim()}
                       </Box>
                       {title && (
-                        <Box component="span" sx={monoSx(11, 'rgba(242,243,247,0.4)')}>
+                        <Box component="span" sx={monoSx(11, fg(0.4))}>
                           {title}
                         </Box>
                       )}
@@ -214,7 +214,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                       sx={{
                         height: 3,
                         borderRadius: 999,
-                        background: 'rgba(255,255,255,0.08)',
+                        background: fg(0.08),
                         overflow: 'hidden',
                       }}
                     >
@@ -254,7 +254,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                 py: 2.5,
               }}
             >
-              <Box component="span" sx={monoSx(12, 'rgba(242,243,247,0.45)')}>
+              <Box component="span" sx={monoSx(12, fg(0.45))}>
                 {firstShown}—{lastShown} З {filtered.length}
               </Box>
               <Box sx={{ display: 'flex', gap: 1 }}>
@@ -270,9 +270,9 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                       width: 36,
                       height: 36,
                       borderRadius: '12px',
-                      border: '1px solid rgba(255,255,255,0.12)',
+                      border: `1px solid ${fg(0.12)}`,
                       color: brandColors.text,
-                      '&.Mui-disabled': { color: 'rgba(242,243,247,0.25)' },
+                      '&.Mui-disabled': { color: fg(0.25) },
                     }}
                   >
                     {btn.label}
@@ -292,7 +292,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
           {infoPlayer && <Box sx={{ p: 2, minWidth: 180 }}>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>{infoPlayer.nickname}</Typography>
             {roleStatLine(<PeopleIcon sx={{ fontSize: 18, color: brandColors.positive }} />, infoPlayer.citizenWins, infoPlayer.citizenGames, infoPlayer.citizenWinsRate)}
-            {roleStatLine(<GpsFixedIcon sx={{ fontSize: 18, color: 'rgba(242,243,247,0.6)' }} />, infoPlayer.mafiaWins, infoPlayer.mafiaGames, infoPlayer.mafiaWinsRate)}
+            {roleStatLine(<GpsFixedIcon sx={{ fontSize: 18, color: fg(0.6) }} />, infoPlayer.mafiaWins, infoPlayer.mafiaGames, infoPlayer.mafiaWinsRate)}
             {roleStatLine(<LocalPoliceIcon sx={{ fontSize: 18, color: brandColors.accent }} />, infoPlayer.sheriffWins, infoPlayer.sheriffGames, infoPlayer.sheriffWinsRate)}
             {roleStatLine(<Face5Icon sx={{ fontSize: 18, color: brandColors.ember }} />, infoPlayer.donWins, infoPlayer.donGames, infoPlayer.donWinsRate)}
           </Box>}
