@@ -81,16 +81,20 @@ export default function Hero() {
                 m: 0,
                 fontFamily: brandFonts.display,
                 fontWeight: 900,
-                fontSize: 'clamp(52px, 6.5vw, 104px)',
+                fontSize: { xs: 'clamp(36px, 11vw, 52px)', md: 'clamp(52px, 6.5vw, 104px)' },
                 lineHeight: 0.98,
                 letterSpacing: '-0.045em',
                 textTransform: 'uppercase',
                 color: 'transparent',
-                WebkitTextStroke: `1.5px ${fg(0.55)}`,
+                WebkitTextStroke: `2.75px ${fg(0.55)}`,
+                paintOrder: 'stroke fill',
               }}
             >
               Два
-              <br />
+              <Box component="span" sx={{ display: { xs: 'inline', md: 'none' } }}>
+                {' '}
+              </Box>
+              <Box component="br" sx={{ display: { xs: 'none', md: 'block' } }} />
               Кольори
             </Typography>
 
@@ -107,6 +111,7 @@ export default function Hero() {
               <Typography
                 sx={{
                   m: 0,
+                  display: { xs: 'none', md: 'block' },
                   fontSize: 17,
                   lineHeight: 1.6,
                   color: fg(0.7),
