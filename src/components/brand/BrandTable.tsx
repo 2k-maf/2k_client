@@ -158,7 +158,7 @@ export default function BrandTable<T>({
             }}
           >
             <Box component="span" sx={monoSx(12, HEADER_COLOR)}>
-              {firstShown}—{lastShown} З {rows.length}
+              {firstShown}–{lastShown} із {rows.length}
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
               {[
