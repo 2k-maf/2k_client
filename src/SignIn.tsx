@@ -8,8 +8,6 @@ import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
 import Link from '@mui/material/Link';
 import TextField from '@mui/material/TextField';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import ForgotPassword from './components/ForgotPassword';
 import GoogleButton, { googleEnabled } from './components/GoogleButton';
@@ -21,8 +19,16 @@ import axios from './axios';
 import { normalizeAuthEmail } from './utils/email';
 import { useAuth } from './AuthProvider';
 
+/** Текст, коли старий дубль: один логін належить і гравцю, і клубу. */
+const ACCOUNT_CONFLICT_MESSAGE =
+  'Ця адреса належить двом обліковим записам: гравця і клубу. Зверніться до адміністратора.';
+
+/** Чи відповів сервер 409 ACCOUNT_CONFLICT. */
+function isAccountConflict(e: any): boolean {
+  return e?.response?.status === 409 && e?.response?.data?.code === 'ACCOUNT_CONFLICT';
+}
+
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
-  const [authType, setAuthType] = React.useState('users');
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
@@ -46,17 +52,17 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     const email = document.getElementById('email') as HTMLInputElement;
     const password = document.getElementById('password') as HTMLInputElement;
 
+    // Тип акаунта (гравець чи клуб) сервер визначає сам за email.
     await axios.post('/auth/login', {
       email: normalizeAuthEmail(email.value),
       password: password.value,
-      authType,
     }).then(({ data }) => {
       const token = data?.token;
       token && setToken(token)
       navigate('/')
     }).catch((e) => {
       console.error(e);
-      alert('Некоректний логін або пароль');
+      alert(isAccountConflict(e) ? ACCOUNT_CONFLICT_MESSAGE : 'Некоректний логін або пароль');
     });
   };
 
@@ -66,7 +72,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       // 401 тут означає, що сервер не прийняв credential Google, а не завершену сесію.
       const { data } = await axios.post(
         '/auth/google',
-        { credential, authType },
+        { credential },
         { skipAuthRedirect: true },
       );
       const token = data?.token;
@@ -77,6 +83,8 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       const status = e?.response?.status;
       if (status === 404 && e?.response?.data?.code === 'GOOGLE_NOT_LINKED') {
         setGoogleError('GOOGLE_NOT_LINKED');
+      } else if (isAccountConflict(e)) {
+        setGoogleError(ACCOUNT_CONFLICT_MESSAGE);
       } else if (status === 401) {
         setGoogleError('Сервер не прийняв підтвердження Google. Натисніть кнопку Google ще раз.');
       } else {
@@ -160,21 +168,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 color={passwordError ? 'error' : 'primary'}
               />
             </FormControl>
-            <FormControl>
-              <FormLabel id="auth-type-label">Тип облікового запису</FormLabel>
-              <Select
-                labelId="auth-type-label"
-                id="auth-type"
-                value={authType}
-                onChange={(e) => {
-                  setAuthType(e.target.value);
-                  setGoogleError('');
-                }}
-              >
-                <MenuItem value={'users'}>Гравець</MenuItem>
-                <MenuItem value={'clubs'}>Клуб</MenuItem>
-              </Select>
-            </FormControl>
             <Button
               type="submit"
               fullWidth
@@ -188,18 +181,17 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           {googleEnabled && (
             <>
               <Divider sx={{ fontSize: 13, color: fg(0.6) }}>або</Divider>
-              {/* Тип акаунта для Google береться з того самого перемикача, що й для пароля. */}
               <GoogleButton onCredential={handleGoogleCredential} />
               {googleError === 'GOOGLE_NOT_LINKED' ? (
                 <Alert severity="warning">
-                  Цей Google-акаунт не прив'язано до {authType === 'clubs' ? 'жодного клубу' : 'жодного гравця'}.
-                  Увійдіть з паролем і прив'яжіть Google у кабінеті або{' '}
-                  <Link
-                    component={RouterLink}
-                    to={authType === 'clubs' ? '/register-club' : '/register'}
-                    sx={{ fontWeight: 600 }}
-                  >
-                    зареєструйтеся
+                  Цей Google-акаунт не прив'язано до жодного облікового запису.
+                  Увійдіть з паролем і прив'яжіть Google у кабінеті або зареєструйтеся{' '}
+                  <Link component={RouterLink} to="/register" sx={{ fontWeight: 600 }}>
+                    як гравець
+                  </Link>
+                  {' '}чи{' '}
+                  <Link component={RouterLink} to="/register-club" sx={{ fontWeight: 600 }}>
+                    як клуб
                   </Link>
                   .
                 </Alert>
