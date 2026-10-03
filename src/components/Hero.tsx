@@ -51,6 +51,7 @@ export default function Hero() {
               letterSpacing: '0.3em',
               color: fg(0.45),
               writingMode: 'vertical-rl',
+              transform: 'rotate(180deg)',
               textTransform: 'uppercase',
             }}
           >
@@ -86,8 +87,7 @@ export default function Hero() {
                 letterSpacing: '-0.045em',
                 textTransform: 'uppercase',
                 color: 'transparent',
-                WebkitTextStroke: `2.75px ${fg(0.55)}`,
-                paintOrder: 'stroke fill',
+                WebkitTextStroke: `2px ${fg(0.55)}`,
               }}
             >
               Два
@@ -98,11 +98,45 @@ export default function Hero() {
               Кольори
             </Typography>
 
+            {user ? (
+              <Typography
+                sx={{ fontFamily: brandFonts.display, fontWeight: 700, fontSize: 22 }}
+              >
+                Привіт, {user.authType === 'Клуб' ? user.name : user.nickname}!
+              </Typography>
+            ) : (
+              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                <Button
+                  component={RouterLink}
+                  to="/register"
+                  variant="contained"
+                  sx={{ px: 3.25, py: 1.75, borderRadius: '12px', fontSize: 14 }}
+                >
+                  Зареєструватися
+                </Button>
+                <Button
+                  component={RouterLink}
+                  to="/login"
+                  variant="outlined"
+                  sx={{
+                    px: 3.25,
+                    py: 1.75,
+                    borderRadius: '12px',
+                    borderColor: fg(0.2),
+                    color: brandColors.text,
+                    fontWeight: 600,
+                    fontSize: 14,
+                    '&:hover': { borderColor: brandColors.accent, bgcolor: 'transparent' },
+                  }}
+                >
+                  Увійти
+                </Button>
+              </Box>
+            )}
+
             <Box
               sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2.5,
+                display: { xs: 'none', md: 'block' },
                 borderTop: `1px solid ${fg(0.1)}`,
                 pt: 3.5,
                 maxWidth: '56ch',
@@ -111,7 +145,6 @@ export default function Hero() {
               <Typography
                 sx={{
                   m: 0,
-                  display: { xs: 'none', md: 'block' },
                   fontSize: 17,
                   lineHeight: 1.6,
                   color: fg(0.7),
@@ -121,42 +154,6 @@ export default function Hero() {
                 Рейтингова платформа інтелектуально-психологічної гри «Мафія». Сезонний рейтинг,
                 статистика гравців, судейські протоколи.
               </Typography>
-
-              {user ? (
-                <Typography
-                  sx={{ fontFamily: brandFonts.display, fontWeight: 700, fontSize: 22 }}
-                >
-                  Привіт, {user.authType === 'Клуб' ? user.name : user.nickname}!
-                </Typography>
-              ) : (
-                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <Button
-                    component={RouterLink}
-                    to="/register"
-                    variant="contained"
-                    sx={{ px: 3.25, py: 1.75, borderRadius: '12px', fontSize: 14 }}
-                  >
-                    Зареєструватися
-                  </Button>
-                  <Button
-                    component={RouterLink}
-                    to="/login"
-                    variant="outlined"
-                    sx={{
-                      px: 3.25,
-                      py: 1.75,
-                      borderRadius: '12px',
-                      borderColor: fg(0.2),
-                      color: brandColors.text,
-                      fontWeight: 600,
-                      fontSize: 14,
-                      '&:hover': { borderColor: brandColors.accent, bgcolor: 'transparent' },
-                    }}
-                  >
-                    Увійти
-                  </Button>
-                </Box>
-              )}
             </Box>
           </Box>
 
