@@ -8,7 +8,7 @@ import BrandTable, { BrandColumn } from './components/brand/BrandTable';
 import BrandSearchField from './components/brand/BrandSearchField';
 import RemoteAvatar from './components/brand/RemoteAvatar';
 import axios from './axios';
-import { brandFonts, monoSx } from './theme/brand';
+import { brandFonts, monoSx, fg } from './theme/brand';
 
 type Member = {
   id: number;
@@ -114,7 +114,7 @@ export default function MembersList(props: { disableCustomTheme?: boolean }) {
                 px: 2,
                 py: 1.5,
                 borderRadius: '12px',
-                border: '1px solid rgba(255,255,255,0.10)',
+                border: `1px solid ${fg(0.1)}`,
                 ...monoSx(12),
                 letterSpacing: '0.12em',
                 whiteSpace: 'nowrap',

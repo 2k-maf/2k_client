@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import { brandColors, brandFonts } from '../../theme/brand';
+import { brandColors, brandFonts, fg, withAlpha } from '../../theme/brand';
 import { publicStaticUrl } from '../../utils/mediaUrl';
 
 /** Картка форми з макета: знак, заголовок і вміст. */
@@ -15,13 +15,13 @@ export default function BrandFormCard({
     <Box
       sx={{
         background: brandColors.panel,
-        border: '1px solid rgba(255,255,255,0.10)',
+        border: `1px solid ${fg(0.1)}`,
         borderRadius: '16px',
         p: { xs: 3, md: 4.5 },
         display: 'flex',
         flexDirection: 'column',
         gap: 3,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+        boxShadow: `0 8px 24px ${withAlpha(brandColors.shadow, 0.3)}`,
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75 }}>

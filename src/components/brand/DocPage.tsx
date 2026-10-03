@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import BrandPage from './BrandPage';
 import BrandTabs, { BrandTab } from './BrandTabs';
-import { brandColors, brandFonts } from '../../theme/brand';
+import { brandColors, brandFonts, fg } from '../../theme/brand';
 
 export type DocTab = BrandTab;
 
@@ -24,7 +24,7 @@ export function DocSection({
         gridTemplateColumns: { xs: '40px minmax(0,1fr)', md: '64px minmax(0,1fr)' },
         gap: 3,
         py: 4,
-        borderTop: '1px solid rgba(255,255,255,0.12)',
+        borderTop: `1px solid ${fg(0.12)}`,
       }}
     >
       <Box
@@ -35,7 +35,7 @@ export function DocSection({
           fontWeight: 900,
           fontSize: { xs: 28, md: 40 },
           lineHeight: 0.9,
-          color: 'rgba(255,255,255,0.14)',
+          color: fg(0.14),
         }}
       >
         {String(index).padStart(2, '0')}
@@ -68,7 +68,7 @@ export function DocText({ children }: { children: React.ReactNode }) {
         maxWidth: '70ch',
         fontSize: 16,
         lineHeight: 1.65,
-        color: 'rgba(242,243,247,0.72)',
+        color: fg(0.72),
         textWrap: 'pretty',
         '& strong': { color: brandColors.text },
       }}
@@ -98,7 +98,7 @@ export function DocCard({
   labelColor = brandColors.text,
   title,
   filled = true,
-  borderColor = 'rgba(255,255,255,0.10)',
+  borderColor = fg(0.1),
   children,
 }: {
   label?: string;
@@ -141,7 +141,7 @@ export function DocCard({
           {title}
         </Box>
       )}
-      <Box sx={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(242,243,247,0.7)' }}>{children}</Box>
+      <Box sx={{ fontSize: 14, lineHeight: 1.6, color: fg(0.7) }}>{children}</Box>
     </Box>
   );
 }

@@ -4,7 +4,7 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../AuthProvider';
-import { brandColors, brandFonts } from '../theme/brand';
+import { brandColors, brandFonts, fg, withAlpha } from '../theme/brand';
 import { useClubRating } from '../hooks/useClubRating';
 import PodiumStack from './brand/PodiumStack';
 
@@ -49,7 +49,7 @@ export default function Hero() {
               fontFamily: brandFonts.mono,
               fontSize: 11,
               letterSpacing: '0.3em',
-              color: 'rgba(242,243,247,0.45)',
+              color: fg(0.45),
               writingMode: 'vertical-rl',
               textTransform: 'uppercase',
             }}
@@ -61,7 +61,7 @@ export default function Hero() {
             sx={{
               width: '1px',
               flex: 1,
-              background: 'linear-gradient(rgba(250,43,30,0.7), rgba(250,43,30,0))',
+              background: `linear-gradient(${withAlpha(brandColors.accent, 0.7)}, ${withAlpha(brandColors.accent, 0)})`,
             }}
           />
         </Box>
@@ -86,7 +86,7 @@ export default function Hero() {
                 letterSpacing: '-0.045em',
                 textTransform: 'uppercase',
                 color: 'transparent',
-                WebkitTextStroke: '1.5px rgba(255,255,255,0.55)',
+                WebkitTextStroke: `1.5px ${fg(0.55)}`,
               }}
             >
               Два
@@ -99,7 +99,7 @@ export default function Hero() {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 2.5,
-                borderTop: '1px solid rgba(255,255,255,0.10)',
+                borderTop: `1px solid ${fg(0.1)}`,
                 pt: 3.5,
                 maxWidth: '56ch',
               }}
@@ -109,7 +109,7 @@ export default function Hero() {
                   m: 0,
                   fontSize: 17,
                   lineHeight: 1.6,
-                  color: 'rgba(242,243,247,0.7)',
+                  color: fg(0.7),
                   textWrap: 'pretty',
                 }}
               >
@@ -141,7 +141,7 @@ export default function Hero() {
                       px: 3.25,
                       py: 1.75,
                       borderRadius: '12px',
-                      borderColor: 'rgba(255,255,255,0.20)',
+                      borderColor: fg(0.2),
                       color: brandColors.text,
                       fontWeight: 600,
                       fontSize: 14,
@@ -170,7 +170,7 @@ export default function Hero() {
                   fontFamily: brandFonts.mono,
                   fontSize: 11,
                   letterSpacing: '0.14em',
-                  color: 'rgba(242,243,247,0.5)',
+                  color: fg(0.5),
                 }}
               >
                 П'ЄДЕСТАЛ СЕЗОНУ {new Date().getFullYear()}

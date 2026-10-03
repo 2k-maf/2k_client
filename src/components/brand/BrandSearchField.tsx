@@ -1,6 +1,6 @@
 import * as React from 'react';
 import InputBase from '@mui/material/InputBase';
-import { brandColors } from '../../theme/brand';
+import { brandColors, fg } from '../../theme/brand';
 
 type Props = {
   value: string;
@@ -23,7 +23,7 @@ export default function BrandSearchField({ value, onChange, placeholder, label }
         py: 1.5,
         borderRadius: '12px',
         background: brandColors.panel,
-        border: '1px solid rgba(255,255,255,0.10)',
+        border: `1px solid ${fg(0.1)}`,
         fontSize: 14,
         minWidth: 220,
         color: brandColors.text,

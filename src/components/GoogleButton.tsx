@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import { jwtDecode } from 'jwt-decode';
+import { fg } from '../theme/brand';
 
 // Публічний Client ID OAuth. Без нього інтерфейс Google не показуємо зовсім.
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
@@ -123,7 +124,7 @@ export default function GoogleButton({ onCredential, text = 'signin_with' }: Pro
   if (!googleEnabled) return null;
   if (failed) {
     return (
-      <Box sx={{ fontSize: 13, textAlign: 'center', color: 'rgba(242,243,247,0.6)' }}>
+      <Box sx={{ fontSize: 13, textAlign: 'center', color: fg(0.6) }}>
         Кнопка Google не завантажилася. Скористайтеся паролем.
       </Box>
     );

@@ -10,7 +10,7 @@ export default function SitemarkIcon({
   size = 34,
   withWordmark = true,
 }: {
-  variant?: 'navy' | 'red';
+  variant?: 'navy' | 'red' | 'band';
   size?: number;
   withWordmark?: boolean;
 }) {

@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import AppTheme from './theme/AppTheme';
 import DocPage, { DocSection, DocText, DocCardGrid, DocCard, DocTab } from './components/brand/DocPage';
 import DocTable, { Pill } from './components/brand/DocTable';
-import { brandColors } from './theme/brand';
+import { brandColors, fg, withAlpha } from './theme/brand';
 
 export const RULES_TABS: DocTab[] = [
   { label: 'Класична мафія', to: '/rules' },
@@ -95,14 +95,14 @@ export default function Rules(props: { disableCustomTheme?: boolean }) {
 
         <DocSection index={7} title="Умови перемоги">
           <DocCardGrid>
-            <DocCard title="Мирні" filled={false} borderColor="rgba(255,255,255,0.14)">
+            <DocCard title="Мирні" filled={false} borderColor={fg(0.14)}>
               <Box component="span">Вилучено всю мафію разом з Доном.</Box>
             </DocCard>
             <DocCard
               title="Мафія"
               labelColor={brandColors.accentHover}
               filled={false}
-              borderColor="rgba(250,43,30,0.4)"
+              borderColor={withAlpha(brandColors.accent, 0.4)}
             >
               <Box component="span">
                 Кількість мафії дорівнює кількості мирних, що залишились.

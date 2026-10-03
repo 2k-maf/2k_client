@@ -28,7 +28,7 @@ export default function AppTheme(props: AppThemeProps) {
             colorSchemeSelector: 'data-mui-color-scheme',
             cssVarPrefix: 'template',
           },
-          // The Dva Kol'ory design is dark-only.
+          // Темна схема — оригінал бренду; світлу користувач вмикає сам.
           defaultColorScheme: 'dark',
           colorSchemes, // Recently added in v6 for building light & dark mode app, see https://mui.com/material-ui/customization/palette/#color-schemes
           typography,
@@ -53,6 +53,9 @@ export default function AppTheme(props: AppThemeProps) {
       defaultMode="dark"
       // A fresh key so a 'light' value stored before the rebrand is ignored.
       modeStorageKey="dva-kolory-mode"
+      // Застосунок рендериться лише в браузері. Без цього перший кадр завжди
+      // темний, а збережена світла чи системна схема вмикається кадром пізніше.
+      noSsr
       disableTransitionOnChange
     >
       {children}

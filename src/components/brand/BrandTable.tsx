@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
-import { brandColors, monoSx } from '../../theme/brand';
+import { brandColors, monoSx, fg } from '../../theme/brand';
 
 export type BrandColumn<T> = {
   /** Ключ React і назва поля за замовчуванням. */
@@ -32,8 +32,8 @@ type Props<T> = {
   highlightRow?: (row: T) => boolean;
 };
 
-const HEADER_COLOR = 'rgba(242,243,247,0.45)';
-const ROW_BORDER = '1px solid rgba(255,255,255,0.07)';
+const HEADER_COLOR = fg(0.45);
+const ROW_BORDER = `1px solid ${fg(0.07)}`;
 
 function StateRow({ children }: { children: React.ReactNode }) {
   return (
@@ -69,7 +69,7 @@ export default function BrandTable<T>({
   const lastShown = safePage * pageSize + pageRows.length;
 
   return (
-    <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.14)', overflowX: 'auto' }}>
+    <Box sx={{ borderTop: `1px solid ${fg(0.14)}`, overflowX: 'auto' }}>
       <Box sx={{ minWidth }}>
         <Box
           sx={{
@@ -80,7 +80,7 @@ export default function BrandTable<T>({
             py: 1.75,
             ...monoSx(11, HEADER_COLOR),
             letterSpacing: '0.14em',
-            borderBottom: '1px solid rgba(255,255,255,0.10)',
+            borderBottom: `1px solid ${fg(0.1)}`,
           }}
         >
           {columns.map((column) => (
@@ -123,7 +123,7 @@ export default function BrandTable<T>({
                 background: highlightRow?.(row) ? brandColors.panelAlt : 'transparent',
                 fontWeight: highlightRow?.(row) ? 700 : 400,
                 cursor: onRowClick ? 'pointer' : 'default',
-                '&:hover': { background: '#141a2e' },
+                '&:hover': { background: brandColors.rowHover },
                 '&:focus-visible': {
                   outline: `2px solid ${brandColors.accentHover}`,
                   outlineOffset: '-2px',
@@ -174,9 +174,9 @@ export default function BrandTable<T>({
                     width: 36,
                     height: 36,
                     borderRadius: '12px',
-                    border: '1px solid rgba(255,255,255,0.12)',
+                    border: `1px solid ${fg(0.12)}`,
                     color: brandColors.text,
-                    '&.Mui-disabled': { color: 'rgba(242,243,247,0.25)' },
+                    '&.Mui-disabled': { color: fg(0.25) },
                   }}
                 >
                   {btn.label}

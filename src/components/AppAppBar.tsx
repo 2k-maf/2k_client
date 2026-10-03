@@ -16,7 +16,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import StarIcon from '@mui/icons-material/Star';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import Avatar from '@mui/material/Avatar';
-import ColorModeIconDropdown from '../theme/ColorModeIconDropdown';
+import ColorModeToggle from '../theme/ColorModeToggle';
 import Sitemark from './SitemarkIcon';
 import UpcomingTournamentBanner from './UpcomingTournamentBanner';
 import { OutlinedActionIconButton } from './OutlinedActionIconButton';
@@ -24,11 +24,11 @@ import {useAuth} from "../AuthProvider";
 import {useNavigate, useLocation, Link as RouterLink} from "react-router-dom";
 import axios from "../axios";
 import { brand } from '../theme/themePrimitives';
-import { brandColors, brandFonts } from '../theme/brand';
+import { brandColors, brandFonts, withAlpha } from '../theme/brand';
 import Typography from "@mui/material/Typography";
 import {useEffect, useMemo} from "react";
 
-/** Кільце навколо аватара — інакше світлі фото зливаються з пісочною смугою хедера. */
+/** Кільце навколо аватара — інакше фото зливається зі смугою хедера. */
 const headerAvatarSx = {
   width: 28,
   height: 28,
@@ -42,7 +42,7 @@ const headerAvatarSx = {
  */
 const HEADER_HEIGHT = 60;
 
-/** Світла смуга хедера з макета: пісочне тло, чорнильний текст. */
+/** Контрастна смуга хедера: пісочна в темній схемі, чорнильна в світлій. */
 const StyledToolbar = styled(Toolbar)(({theme}) => ({
   display: 'flex',
   alignItems: 'center',
@@ -60,21 +60,21 @@ const StyledToolbar = styled(Toolbar)(({theme}) => ({
     '&:hover': { color: brandColors.accent, backgroundColor: 'transparent' },
   },
   '& .MuiButton-outlined': {
-    borderColor: alpha(brandColors.ink, 0.25),
-    backgroundColor: alpha(brandColors.ink, 0.06),
+    borderColor: withAlpha(brandColors.ink, 0.25),
+    backgroundColor: withAlpha(brandColors.ink, 0.06),
     backgroundImage: 'none',
-    '&:hover': { backgroundColor: alpha(brandColors.ink, 0.1) },
+    '&:hover': { backgroundColor: withAlpha(brandColors.ink, 0.1) },
   },
-  // Тема в темному режимі дає іконковим кнопкам темне тло; на світлій смузі
-  // хедера це темне на темному. Фарбуємо їх так само, як контурні кнопки поруч.
+  // Тема дає іконковим кнопкам тло сторінки, а смуга хедера має протилежний
+  // тон. Фарбуємо їх так само, як контурні кнопки поруч.
   '& .MuiIconButton-root': {
     color: brandColors.ink,
-    borderColor: alpha(brandColors.ink, 0.25),
-    backgroundColor: alpha(brandColors.ink, 0.06),
+    borderColor: withAlpha(brandColors.ink, 0.25),
+    backgroundColor: withAlpha(brandColors.ink, 0.06),
     backgroundImage: 'none',
     '&:hover': {
-      backgroundColor: alpha(brandColors.ink, 0.12),
-      borderColor: alpha(brandColors.ink, 0.4),
+      backgroundColor: withAlpha(brandColors.ink, 0.12),
+      borderColor: withAlpha(brandColors.ink, 0.4),
     },
   },
 }));
@@ -196,7 +196,7 @@ export default function AppAppBar() {
       <Container maxWidth={false} sx={{ px: { xs: 2, md: 3 } }}>
         <StyledToolbar variant="dense" disableGutters>
           <Box sx={{flexGrow: 1, display: 'flex', alignItems: 'center', px: 0, gap: 3}}>
-            <Sitemark variant="navy" size={30}/>
+            <Sitemark variant="band" size={30}/>
             <Box sx={{display: 'none', '@media (min-width: 940px)': {display: 'flex'}, gap: 0.5, overflow: 'hidden', '& .MuiButton-root': {whiteSpace: 'nowrap', minWidth: 'auto', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis'}}}>
               <Button startIcon={<StarIcon/>} variant={navVariant('/clubs-rating')}
                       onClick={() => navigateWithConfirm('/clubs-rating')}
@@ -250,36 +250,32 @@ export default function AppAppBar() {
                   to={`/tournaments/${liveTournament.id}`}
                   size="small"
                   variant="outlined"
-                  sx={(theme) => {
-                    const isDark = theme.palette.mode === 'dark';
-                    return {
-                      ml: 0.5,
-                      maxWidth: 220,
-                      flexShrink: 0,
-                      color: isDark ? brand[100] : brand[700],
-                      borderColor: alpha(brand[300], isDark ? 0.45 : 0.55),
-                      bgcolor: isDark ? alpha(brand[900], 0.5) : alpha(brand[100], 0.5),
-                      '&:hover': {
-                        borderColor: isDark ? brand[600] : brand[400],
-                        bgcolor: isDark ? alpha(brand[900], 0.65) : alpha(brand[200], 0.7),
-                        color: isDark ? brand[100] : brand[700],
-                      },
-                    };
+                  // Кнопка стоїть на смузі хедера, а не на тлі сторінки, тож її
+                  // вигляд не залежить від схеми: власне темне тло дає контраст
+                  // і на пісочній, і на чорнильній смузі.
+                  sx={{
+                    ml: 0.5,
+                    maxWidth: 220,
+                    flexShrink: 0,
+                    color: brand[100],
+                    borderColor: alpha(brand[300], 0.45),
+                    bgcolor: alpha(brand[900], 0.5),
+                    '&:hover': {
+                      borderColor: brand[600],
+                      bgcolor: alpha(brand[900], 0.65),
+                      color: brand[100],
+                    },
                   }}
                   startIcon={
                     <Box
                       aria-hidden
-                      sx={(theme) => {
-                        const isDark = theme.palette.mode === 'dark';
-                        const dot = isDark ? brand[300] : brand[500];
-                        return {
-                          width: 9,
-                          height: 9,
-                          borderRadius: '50%',
-                          bgcolor: dot,
-                          boxShadow: `0 0 10px ${alpha(brand[400], isDark ? 0.55 : 0.45)}`,
-                          animation: `${liveDotPulse} 1.15s ease-in-out infinite`,
-                        };
+                      sx={{
+                        width: 9,
+                        height: 9,
+                        borderRadius: '50%',
+                        bgcolor: brand[300],
+                        boxShadow: `0 0 10px ${alpha(brand[400], 0.55)}`,
+                        animation: `${liveDotPulse} 1.15s ease-in-out infinite`,
                       }}
                     />
                   }
@@ -305,6 +301,10 @@ export default function AppAppBar() {
               alignItems: 'center',
             }}
           >
+            {/* Службові іконки стоять перед блоком акаунта, а акаунт — на правому
+                краї. Так перемикач теми не сусідить з «Вийти» і не дає помилкового
+                виходу з акаунта. */}
+            <ColorModeToggle/>
             {
               user && <Button onClick={() => navigateWithConfirm('/profile')} color="primary" variant="text" size="small" sx={{gap: 1, lineHeight: 1.2, py: 0.5, maxWidth: 180, overflow: 'hidden'}}>
                     {user.avatarUrl && <Avatar src={user.avatarUrl} sx={headerAvatarSx}/>}
@@ -337,10 +337,9 @@ export default function AppAppBar() {
                     Зареєструватися
                 </Button>
             }
-            {/*<ColorModeIconDropdown/>*/}
           </Box>
           <Box sx={{display: 'flex', '@media (min-width: 940px)': {display: 'none'}, gap: 1}}>
-            {/*<ColorModeIconDropdown size="medium"/>*/}
+            <ColorModeToggle size="medium"/>
             <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
               <MenuIcon/>
             </IconButton>

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import { brandColors, brandFonts, monoSx } from '../../theme/brand';
+import { brandColors, brandFonts, monoSx, fg } from '../../theme/brand';
 
 type Props = {
   /** Іконка розділу — суто декоративна. */
@@ -19,7 +19,7 @@ export default function ProfileCard({ icon, label, title, hint, children }: Prop
     <Box
       sx={{
         background: brandColors.panel,
-        border: '1px solid rgba(255,255,255,0.10)',
+        border: `1px solid ${fg(0.1)}`,
         borderRadius: '16px',
         p: 2.75,
         display: 'flex',
@@ -44,7 +44,7 @@ export default function ProfileCard({ icon, label, title, hint, children }: Prop
         {title}
       </Box>
       {hint && (
-        <Box component="span" sx={{ fontSize: 14, lineHeight: 1.55, color: 'rgba(242,243,247,0.6)' }}>
+        <Box component="span" sx={{ fontSize: 14, lineHeight: 1.55, color: fg(0.6) }}>
           {hint}
         </Box>
       )}

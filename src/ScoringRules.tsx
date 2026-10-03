@@ -6,7 +6,7 @@ import AppTheme from './theme/AppTheme';
 import DocPage, { DocSection, DocText } from './components/brand/DocPage';
 import DocTable, { Pill } from './components/brand/DocTable';
 import { RULES_TABS } from './Rules';
-import { brandColors, brandFonts } from './theme/brand';
+import { brandColors, brandFonts, fg } from './theme/brand';
 
 const TWO_COLUMNS = 'minmax(0,1fr) 140px';
 const OP5_COLUMNS = 'minmax(0,0.8fr) minmax(0,1fr) 140px';
@@ -75,7 +75,7 @@ export default function ScoringRules(props: { disableCustomTheme?: boolean }) {
           <Box
             sx={{
               background: brandColors.panel,
-              border: '1px solid rgba(255,255,255,0.10)',
+              border: `1px solid ${fg(0.1)}`,
               borderRadius: '16px',
               px: 3,
               py: 2.5,

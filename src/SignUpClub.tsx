@@ -15,10 +15,9 @@ import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import AppTheme from './theme/AppTheme';
-import ColorModeSelect from './theme/ColorModeSelect';
 import { GoogleIcon, FacebookIcon } from './components/CustomIcons';
 import SitemarkIcon from "./components/SitemarkIcon";
-import { brandColors } from "./theme/brand";
+import { brandColors, withAlpha } from "./theme/brand";
 import Alert from '@mui/material/Alert';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
@@ -61,7 +60,7 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
     backgroundRepeat: 'no-repeat',
     ...theme.applyStyles('dark', {
       backgroundImage:
-        `radial-gradient(ellipse 80% 60% at 50% -10%, rgba(250,43,30,0.10), ${brandColors.bg})`,
+        `radial-gradient(ellipse 80% 60% at 50% -10%, ${withAlpha(brandColors.accent, 0.1)}, ${brandColors.bg})`,
     }),
   },
 }));
@@ -205,7 +204,6 @@ export default function SignUpClub(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      {/*<ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />*/}
       <SignUpContainer direction="column" justifyContent="space-between">
         <Button
           href={'/'}

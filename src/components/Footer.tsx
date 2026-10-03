@@ -6,7 +6,7 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import { SvgIconProps } from '@mui/material/SvgIcon';
-import { brandColors, brandFonts } from '../theme/brand';
+import { brandColors, brandFonts, fg } from '../theme/brand';
 import { publicStaticUrl } from '../utils/mediaUrl';
 
 const INSTAGRAM_URL = 'https://www.instagram.com/theukrainianmafia.vancouver/';
@@ -47,11 +47,11 @@ function SocialSquare({
         width: 44,
         height: 44,
         borderRadius: '12px',
-        border: '1px solid rgba(255,255,255,0.10)',
+        border: `1px solid ${fg(0.1)}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: 'rgba(242,243,247,0.7)',
+        color: fg(0.7),
         textDecoration: 'none',
         '&:hover': { borderColor: brandColors.accent, color: brandColors.accentHover },
       }}
@@ -132,7 +132,7 @@ export default function Footer() {
           gap: 4,
           flexWrap: 'wrap',
           pt: 3,
-          borderTop: '1px solid rgba(255,255,255,0.10)',
+          borderTop: `1px solid ${fg(0.1)}`,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
@@ -152,7 +152,7 @@ export default function Footer() {
               sx={{
                 fontFamily: brandFonts.mono,
                 fontSize: 14,
-                color: 'rgba(242,243,247,0.65)',
+                color: fg(0.65),
                 textDecoration: 'none',
                 '&:hover': { color: brandColors.accentHover },
               }}
@@ -167,7 +167,7 @@ export default function Footer() {
           <SocialSquare href={TELEGRAM_URL} label="Telegram" Icon={TelegramIcon} />
         </Box>
       </Box>
-      <Box component="span" sx={{ fontSize: 12, color: 'rgba(242,243,247,0.45)' }}>
+      <Box component="span" sx={{ fontSize: 12, color: fg(0.45) }}>
         © Dva Kol'ory Vancouver Mafia Club {new Date().getFullYear()}
       </Box>
       </Box>

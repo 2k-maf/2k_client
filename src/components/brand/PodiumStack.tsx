@@ -2,7 +2,7 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import Skeleton from '@mui/material/Skeleton';
 import Avatar from '@mui/material/Avatar';
-import { brandColors, brandFonts } from '../../theme/brand';
+import { brandColors, brandFonts, fg, withAlpha } from '../../theme/brand';
 import { Podium, PodiumWinner } from '../../utils/podium';
 
 type CardStyle = {
@@ -26,43 +26,42 @@ const GHOST_BOTTOM = -10;
 
 /** Прозорість слова-привида. Одне значення на всі картки. */
 const GHOST_ALPHA = 0.25;
-const ghost = (rgb: string) => `rgba(${rgb},${GHOST_ALPHA})`;
 
 const CARD_STYLES: CardStyle[] = [
   {
     ghost: 'Чемпіон',
-    ghostColor: ghost('250,43,30'),
+    ghostColor: withAlpha(brandColors.accent, GHOST_ALPHA),
     ghostSize: 64,
     ghostSide: 'right',
     rotate: -2.5,
     ring: brandColors.accent,
     background: brandColors.panelAlt,
-    border: '1px solid rgba(250,43,30,0.5)',
+    border: `1px solid ${withAlpha(brandColors.accent, 0.5)}`,
     avatarSize: 60,
     nameSize: 30,
   },
   {
     ghost: 'MVP',
-    ghostColor: ghost('255,255,255'),
+    ghostColor: fg(GHOST_ALPHA),
     ghostSize: 72,
     ghostSide: 'left',
     rotate: 2,
-    ring: 'rgba(255,255,255,0.55)',
+    ring: fg(0.55),
     background: brandColors.panel,
-    border: '1px solid rgba(255,255,255,0.12)',
+    border: `1px solid ${fg(0.12)}`,
     avatarSize: 56,
     nameSize: 26,
     alignEnd: true,
   },
   {
     ghost: 'Топ мафія',
-    ghostColor: ghost('255,138,94'),
+    ghostColor: withAlpha(brandColors.ember, GHOST_ALPHA),
     ghostSize: 52,
     ghostSide: 'right',
     rotate: -1.5,
     ring: brandColors.ember,
     background: brandColors.panel,
-    border: '1px solid rgba(255,255,255,0.12)',
+    border: `1px solid ${fg(0.12)}`,
     avatarSize: 56,
     nameSize: 26,
   },
@@ -83,7 +82,7 @@ const cardSx = (style: CardStyle, index: number) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: style.alignEnd ? 'flex-end' : 'flex-start',
-  boxShadow: '0 8px 24px rgba(0,0,0,0.32)',
+  boxShadow: `0 8px 24px ${withAlpha(brandColors.shadow, 0.32)}`,
   position: 'relative',
   zIndex: CARD_STYLES.length - index,
   overflow: 'hidden',
@@ -114,7 +113,7 @@ function PodiumBadge({
           fontFamily: brandFonts.display,
           fontWeight: 900,
           fontSize: style.avatarSize / 2.7,
-          color: '#fff',
+          color: brandColors.text,
         }}
       >
         {letter}
@@ -185,7 +184,7 @@ function PodiumRow({ winner, style, index }: { winner: PodiumWinner; style: Card
               fontFamily: brandFonts.mono,
               fontSize: 12,
               lineHeight: 1.5,
-              color: 'rgba(242,243,247,0.6)',
+              color: fg(0.6),
             }}
           >
             {winner.stat}
@@ -206,20 +205,20 @@ function PodiumRowSkeleton({ style, index }: { style: CardStyle; index: number }
           animation="wave"
           width={style.avatarSize}
           height={style.avatarSize}
-          sx={{ bgcolor: 'rgba(255,255,255,0.06)', flex: 'none' }}
+          sx={{ bgcolor: fg(0.06), flex: 'none' }}
         />
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2, flex: 1, maxWidth: 220 }}>
           <Skeleton
             variant="rounded"
             animation="wave"
             height={style.nameSize * 0.8}
-            sx={{ bgcolor: 'rgba(255,255,255,0.07)', width: '65%' }}
+            sx={{ bgcolor: fg(0.07), width: '65%' }}
           />
           <Skeleton
             variant="rounded"
             animation="wave"
             height={12}
-            sx={{ bgcolor: 'rgba(255,255,255,0.05)', width: '90%' }}
+            sx={{ bgcolor: fg(0.05), width: '90%' }}
           />
         </Box>
       </Box>
