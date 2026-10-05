@@ -19,7 +19,19 @@ export type RatingPlayer = {
   [key: string]: any;
 };
 
-export type RatingStats = { avgGames?: number; yearStats?: any; [key: string]: any };
+export type RatingStats = {
+  avgGames?: number;
+  yearStats?: any;
+  /** Назва діючого rating_periods.name, напр. «Сезон Весна 2026». */
+  periodName?: string | null;
+  [key: string]: any;
+};
+
+/** Підпис сезону для UI: upper-case mono, без зайвого префікса якщо name уже з «Сезон». */
+export function formatSeasonLabel(periodName?: string | null, fallback = 'Сезон'): string {
+  const name = (periodName || '').trim();
+  return name || fallback;
+}
 
 export type PodiumWinner = { nickname: string; stat: string; avatarUrl?: string };
 

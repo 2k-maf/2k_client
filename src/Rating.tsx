@@ -15,7 +15,7 @@ import BrandPage from './components/brand/BrandPage';
 import BrandSearchField from './components/brand/BrandSearchField';
 import { brandColors, brandFonts, monoSx, fg } from './theme/brand';
 import { useClubRating } from './hooks/useClubRating';
-import { formatFloat1, RatingPlayer } from './utils/podium';
+import { formatFloat1, formatSeasonLabel, RatingPlayer } from './utils/podium';
 
 const PAGE_SIZE = 15;
 
@@ -46,7 +46,8 @@ const roleStatLine = (icon: React.ReactNode, wins: number, games: number, rate: 
 );
 
 export default function Rating(props: { disableCustomTheme?: boolean }) {
-  const { players, podium } = useClubRating();
+  const { players, podium, stats } = useClubRating();
+  const seasonLabel = formatSeasonLabel(stats.periodName).toUpperCase();
   const [infoAnchor, setInfoAnchor] = useState<null | HTMLElement>(null);
   const [infoPlayer, setInfoPlayer] = useState<any>(null);
   const [query, setQuery] = useState('');
@@ -108,7 +109,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                 whiteSpace: 'nowrap',
               }}
             >
-              СЕЗОН {new Date().getFullYear()}
+              {seasonLabel}
             </Box>
           </Box>
         }

@@ -6,11 +6,13 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../AuthProvider';
 import { brandColors, brandFonts, fg, withAlpha } from '../theme/brand';
 import { useClubRating } from '../hooks/useClubRating';
+import { formatSeasonLabel } from '../utils/podium';
 import PodiumStack from './brand/PodiumStack';
 
 export default function Hero() {
   const { user } = useAuth();
-  const { podium, loading } = useClubRating();
+  const { podium, loading, stats } = useClubRating();
+  const seasonLabel = formatSeasonLabel(stats.periodName).toUpperCase();
 
   return (
     <Box
@@ -175,7 +177,7 @@ export default function Hero() {
                   color: fg(0.5),
                 }}
               >
-                П'ЄДЕСТАЛ СЕЗОНУ {new Date().getFullYear()}
+                П'ЄДЕСТАЛ · {seasonLabel}
               </Box>
               <Box
                 component={RouterLink}
@@ -190,7 +192,7 @@ export default function Hero() {
                 Весь рейтинг →
               </Box>
             </Box>
-            <PodiumStack podium={podium} loading={loading} />
+            <PodiumStack podium={podium} loading={loading} periodName={stats.periodName} />
           </Box>
         </Box>
       </Box>

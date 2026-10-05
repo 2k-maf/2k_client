@@ -6,7 +6,7 @@ export type ClubRatingPayload = {
   stats: RatingStats;
 };
 
-const storageKey = (clubId: string) => `club-rating:v1:${clubId}`;
+const storageKey = (clubId: string) => `club-rating:v2:${clubId}`;
 
 function canUseStorage(): boolean {
   try {
