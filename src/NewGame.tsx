@@ -200,8 +200,32 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     setHideRoles(false);
     setBonusAnchorEl(null);
     setBonusPlayerN(0);
+    setKilledShowInfo(false);
     localStorage.removeItem(STORAGE_KEY);
     if (tournamentStorageKey) localStorage.removeItem(tournamentStorageKey);
+  };
+
+  /** Підтвердження + очищення localStorage; для рейтингової гри знову тягнемо розсадку вечора / останньої гри. */
+  const resetFormWithConfirm = async () => {
+    if (readOnlyTournament || tournamentHidden) return;
+    if (!window.confirm('Скинути форму гри? Поточний прогрес і кеш у браузері буде видалено.')) {
+      return;
+    }
+    resetGame();
+    if (!isRatingGame) return;
+    try {
+      const { data: lastGame } = await axios.get('/club/last-game-players');
+      if (!lastGame.players?.length) return;
+      const restored = createInitialPlayers();
+      lastGame.players.forEach((p: any) => {
+        if (p.seat >= 1 && p.seat <= 10) {
+          restored[p.seat] = { ...restored[p.seat], title: p.title, id: p.id || '' };
+        }
+      });
+      setPlayers(restored);
+    } catch (e) {
+      console.error('Failed to reload seating after reset', e);
+    }
   };
 
   const setPlayerNickname = (n: number, title: string, id: string) => {
@@ -683,6 +707,16 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
           >
             Перемога мирних
           </Button>
+          {!readOnlyTournament && !tournamentHidden && (
+            <Button
+              onClick={() => void resetFormWithConfirm()}
+              variant="outlined"
+              color="warning"
+              size="small"
+            >
+              Скинути форму
+            </Button>
+          )}
           {winState && user?.authType === 'Клуб' && isRatingGame && (
             <Button onClick={submitGame} variant="contained" color="success" size="small">
               Зберегти гру
