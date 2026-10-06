@@ -1,5 +1,6 @@
 import React from 'react';
 import {BrowserRouter, Routes, Route, Navigate, useParams} from "react-router-dom";
+// Cache-bust: новий хеш main.*.js після отруєного CF-кешу SPA-fallback на /static/*.
 import MarketingPage from "./MarketingPage";
 import SignUp from "./SignUp";
 import SignIn from "./SignIn";

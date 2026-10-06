@@ -81,13 +81,23 @@ jobs:
           echo "Очікуваний бандл: $BUNDLE"
           # Публікація на edge розходиться за секунди, але не миттєво.
           for i in 1 2 3 4 5 6; do
-            if curl -sfL "${{ vars.SITE_URL }}" | grep -q "$BUNDLE"; then
-              echo "Сайт віддає нову збірку"
-              exit 0
+            html=$(curl -sfL "${{ vars.SITE_URL }}?t=$(date +%s)$i" || true)
+            if echo "$html" | grep -q "$BUNDLE"; then
+              # Критично: перевірити саме JS, не лише згадку в index.
+              # Інакше SPA-fallback HTML на відсутній /static/* може закешуватись
+              # як immutable і «вбити» сайт (MIME text/html замість JS).
+              ctype=$(curl -sL -o /tmp/bundle-check.bin -w '%{content_type}' \
+                "${{ vars.SITE_URL }}/${BUNDLE}?t=$(date +%s)$i" || true)
+              echo "Content-Type бандла: $ctype"
+              if echo "$ctype" | grep -qi 'javascript\|ecmascript'; then
+                echo "Сайт віддає нову збірку (index + JS OK)"
+                exit 0
+              fi
+              echo "index посилається на бандл, але відповідь ще не JS — повтор"
             fi
             sleep 10
           done
-          echo "index.html на сайті не посилається на $BUNDLE"
+          echo "index.html на сайті не посилається на $BUNDLE або бандл не JS"
           exit 1
 
       # API через функцію: /hello не потребує ні бази, ні авторизації.
