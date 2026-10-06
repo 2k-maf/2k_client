@@ -7,7 +7,7 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import AppTheme from "./theme/AppTheme";
-import { brandColors, brandFonts } from "./theme/brand";
+import { brandColors, brandFonts, fg } from "./theme/brand";
 import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
@@ -167,6 +167,18 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
 
   const gameLockedAfterWin = Boolean(winState && !(editingSavedTournamentGame && isTournamentGame));
 
+  /** Чи є що скидати: не лише дефолтні «Гість N». */
+  const formCanReset = useMemo(() => {
+    if (winState || activeVoting) return true;
+    return Object.values(players).some((p: any) => {
+      if (!p) return false;
+      if (p.id) return true;
+      if (p.warnings || p.role || p.killed || p.bonusPoints) return true;
+      const title = String(p.title || '').trim();
+      return Boolean(title && !title.startsWith('Гість'));
+    });
+  }, [players, winState, activeVoting]);
+
   useEffect(() => {
     if (!isRatingGame) return;
     const hasRealPlayers = Object.values(players).some(
@@ -209,7 +221,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
 
   /** Підтвердження + очищення localStorage; для рейтингової гри знову тягнемо розсадку вечора / останньої гри. */
   const resetFormWithConfirm = async () => {
-    if (readOnlyTournament || tournamentHidden) return;
+    if (readOnlyTournament || tournamentHidden || !formCanReset) return;
     if (!window.confirm('Скинути форму? Локальний кеш гри в браузері буде очищено.')) {
       return;
     }
@@ -693,17 +705,31 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
           {!readOnlyTournament && !tournamentHidden && (
             <IconButton
               aria-label="Скинути форму"
-              title="Скинути форму"
+              title={formCanReset ? 'Скинути форму' : 'Форма вже порожня'}
               onClick={() => void resetFormWithConfirm()}
+              disabled={!formCanReset}
               size="small"
               sx={{
                 position: 'absolute',
                 top: 0,
                 right: 0,
                 zIndex: 1,
-                color: brandColors.text,
-                opacity: 0.55,
-                '&:hover': { opacity: 1, bgcolor: 'transparent' },
+                border: 'none',
+                bgcolor: 'transparent',
+                backgroundImage: 'none',
+                color: formCanReset ? brandColors.accent : fg(0.28),
+                opacity: 1,
+                '&:hover': {
+                  bgcolor: 'transparent',
+                  backgroundImage: 'none',
+                  color: formCanReset ? brandColors.accentHover : fg(0.28),
+                },
+                '&.Mui-disabled': {
+                  border: 'none',
+                  bgcolor: 'transparent',
+                  color: fg(0.28),
+                  opacity: 1,
+                },
               }}
             >
               <RefreshIcon fontSize="small" />
