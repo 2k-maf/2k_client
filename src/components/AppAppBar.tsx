@@ -32,7 +32,7 @@ import {useEffect, useMemo} from "react";
 const headerAvatarSx = {
   width: 28,
   height: 28,
-  border: `1.5px solid ${brandColors.ink}`,
+  border: `1px solid ${brandColors.ink}`,
   bgcolor: brandColors.band,
 } as const;
 
@@ -193,10 +193,23 @@ export default function AppAppBar() {
         mt: 'var(--template-frame-height, 0px)',
       }}
     >
-      <Container maxWidth={false} sx={{ px: { xs: 2, md: 3 } }}>
-        <StyledToolbar variant="dense" disableGutters>
-          <Box sx={{flexGrow: 1, display: 'flex', alignItems: 'center', px: 0, gap: 3}}>
-            <Sitemark variant="band" size={30}/>
+      <Container maxWidth={false} sx={{ px: isGameRoute ? { xs: 1, md: 2 } : { xs: 2, md: 3 } }}>
+        <StyledToolbar
+          variant="dense"
+          disableGutters
+          sx={isGameRoute ? { py: 0, paddingTop: 0, paddingBottom: 0 } : undefined}
+        >
+          <Box
+            sx={{
+              flexGrow: isGameRoute ? 0 : 1,
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              px: 0,
+              gap: isGameRoute ? 1 : 3,
+            }}
+          >
+            <Sitemark variant="band" size={isGameRoute ? 26 : 30}/>
             <Box sx={{display: 'none', '@media (min-width: 940px)': {display: 'flex'}, gap: 0.5, overflow: 'hidden', '& .MuiButton-root': {whiteSpace: 'nowrap', minWidth: 'auto', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis'}}}>
               <Button startIcon={<StarIcon/>} variant={navVariant('/clubs-rating')}
                       onClick={() => navigateWithConfirm('/clubs-rating')}
@@ -287,18 +300,53 @@ export default function AppAppBar() {
               ) : null}
             </Box>
           </Box>
-          {
-            isGameRoute &&
-              <Typography color={stopWatch <= 0 ? 'error' :  stopWatch <= 10 ? 'warning': 'default' } onClick={startStopWatch} sx={{ mr: 3, cursor: 'pointer', lineHeight: 1 }} variant='h2'>
+          {isGameRoute ? (
+            <Box
+              role="button"
+              tabIndex={0}
+              aria-label="Скинути таймер на 60 секунд"
+              onClick={startStopWatch}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  startStopWatch();
+                }
+              }}
+              sx={{
+                flex: 1,
+                alignSelf: 'stretch',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: 0,
+                cursor: 'pointer',
+                userSelect: 'none',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <Typography
+                component="span"
+                color={stopWatch <= 0 ? 'error' : stopWatch <= 10 ? 'warning' : 'inherit'}
+                sx={{
+                  fontFamily: brandFonts.display,
+                  fontWeight: 900,
+                  fontSize: 48,
+                  lineHeight: 1,
+                  letterSpacing: '-0.04em',
+                  pointerEvents: 'none',
+                }}
+              >
                 {stopWatchFmt}
               </Typography>
-          }
+            </Box>
+          ) : null}
           <Box
             sx={{
               display: 'none',
               '@media (min-width: 940px)': {display: 'flex'},
               gap: 1,
               alignItems: 'center',
+              flexShrink: 0,
             }}
           >
             {/* Службові іконки стоять перед блоком акаунта, а акаунт — на правому
@@ -338,7 +386,7 @@ export default function AppAppBar() {
                 </Button>
             }
           </Box>
-          <Box sx={{display: 'flex', '@media (min-width: 940px)': {display: 'none'}, gap: 1}}>
+          <Box sx={{display: 'flex', '@media (min-width: 940px)': {display: 'none'}, gap: 1, flexShrink: 0}}>
             <ColorModeToggle size="medium"/>
             <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
               <MenuIcon/>
