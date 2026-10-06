@@ -208,7 +208,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   /** Підтвердження + очищення localStorage; для рейтингової гри знову тягнемо розсадку вечора / останньої гри. */
   const resetFormWithConfirm = async () => {
     if (readOnlyTournament || tournamentHidden) return;
-    if (!window.confirm('Скинути форму гри? Поточний прогрес і кеш у браузері буде видалено.')) {
+    if (!window.confirm('Скинути форму? Локальний кеш гри в браузері буде очищено.')) {
       return;
     }
     resetGame();

@@ -83,15 +83,18 @@ jobs:
           for i in 1 2 3 4 5 6; do
             html=$(curl -sfL "${{ vars.SITE_URL }}?t=$(date +%s)$i" || true)
             if echo "$html" | grep -q "$BUNDLE"; then
-              # Критично: перевірити саме JS, не лише згадку в index.
-              # Інакше SPA-fallback HTML на відсутній /static/* може закешуватись
-              # як immutable і «вбити» сайт (MIME text/html замість JS).
+              // Без ?t=: саме цей URL кешує CF. Cache-bust ховає отруєний HIT.
               ctype=$(curl -sL -o /tmp/bundle-check.bin -w '%{content_type}' \
-                "${{ vars.SITE_URL }}/${BUNDLE}?t=$(date +%s)$i" || true)
+                "${{ vars.SITE_URL }}/${BUNDLE}" || true)
               echo "Content-Type бандла: $ctype"
               if echo "$ctype" | grep -qi 'javascript\|ecmascript'; then
-                echo "Сайт віддає нову збірку (index + JS OK)"
-                exit 0
+                # Додатково: перші байти мають бути JS, не <!doctype html>
+                if head -c 40 /tmp/bundle-check.bin | grep -qi '<!doctype\|<html'; then
+                  echo "Відповідь виглядає як HTML при JS Content-Type — повтор"
+                else
+                  echo "Сайт віддає нову збірку (index + JS OK)"
+                  exit 0
+                fi
               fi
               echo "index посилається на бандл, але відповідь ще не JS — повтор"
             fi
