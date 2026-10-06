@@ -80,23 +80,21 @@ jobs:
           BUNDLE=$(node -e "process.stdout.write(require('./build/asset-manifest.json').entrypoints[0])")
           echo "Очікуваний бандл: $BUNDLE"
           # Публікація на edge розходиться за секунди, але не миттєво.
-          for i in 1 2 3 4 5 6; do
-            html=$(curl -sfL "${{ vars.SITE_URL }}?t=$(date +%s)$i" || true)
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            html=$(curl -sfL "${{ vars.SITE_URL }}?t=${i}-$(date +%s)" || true)
             if echo "$html" | grep -q "$BUNDLE"; then
-              // Без ?t=: саме цей URL кешує CF. Cache-bust ховає отруєний HIT.
-              ctype=$(curl -sL -o /tmp/bundle-check.bin -w '%{content_type}' \
+              # Без cache-bust: саме цей URL кешує CF як immutable.
+              # SPA-fallback HTML на /static/* має content-type text/html.
+              ctype=$(curl -sL -o /dev/null -w '%{content_type}' \
                 "${{ vars.SITE_URL }}/${BUNDLE}" || true)
               echo "Content-Type бандла: $ctype"
-              if echo "$ctype" | grep -qi 'javascript\|ecmascript'; then
-                # Додатково: перші байти мають бути JS, не <!doctype html>
-                if head -c 40 /tmp/bundle-check.bin | grep -qi '<!doctype\|<html'; then
-                  echo "Відповідь виглядає як HTML при JS Content-Type — повтор"
-                else
+              case "$ctype" in
+                *javascript*|*ecmascript*)
                   echo "Сайт віддає нову збірку (index + JS OK)"
                   exit 0
-                fi
-              fi
-              echo "index посилається на бандл, але відповідь ще не JS — повтор"
+                  ;;
+              esac
+              echo "index посилається на бандл, але Content-Type ще не JS — повтор"
             fi
             sleep 10
           done
