@@ -573,7 +573,12 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         setClubUsers(() => array || []);
 
         const savedHasRealPlayers = saved && Object.values(saved.players || {}).some(
-          (p: any) => p.id && !p.title?.startsWith('Гість')
+          (p: any) => {
+            if (!p?.title) return false;
+            // Зареєстрований або гість з кастомним ніком (не дефолтний «Гість N»).
+            if (p.id) return true;
+            return !String(p.title).startsWith('Гість');
+          }
         );
         if (isRatingGame && !savedHasRealPlayers) {
           try {
