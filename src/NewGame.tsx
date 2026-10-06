@@ -24,6 +24,8 @@ import {Autocomplete, createFilterOptions, Popover} from "@mui/material";
 import Box from "@mui/material/Box";
 import { invalidateClubRatingCache } from "./utils/clubRatingCache";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import {useAuth} from "./AuthProvider";
 import {vancouverTodayYmd} from "./utils/vancouverDate";
 
@@ -680,54 +682,79 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             ) : null}
           </Box>
         )}
-        <Box sx={{mt: 2, display: 'flex', justifyContent: 'space-between', flexGrow: 1, gap: 1, flexWrap: 'wrap'}}>
-          <Button
-            onClick={() =>
-              !readOnlyTournament &&
-              (!winState || (editingSavedTournamentGame && isTournamentGame)) &&
-              win('mafia')
-            }
-            variant="outlined"
-            color={winState === 'mafia' ? 'secondary' : 'info'}
-            size="small"
-            disabled={readOnlyTournament || Boolean(winState && !(editingSavedTournamentGame && isTournamentGame))}
-          >
-            Перемога мафії
-          </Button>
-          <Button
-            onClick={() =>
-              !readOnlyTournament &&
-              (!winState || (editingSavedTournamentGame && isTournamentGame)) &&
-              win('citizens')
-            }
-            variant="outlined"
-            color={winState === 'citizens' ? 'secondary' : 'info'}
-            size="small"
-            disabled={readOnlyTournament || Boolean(winState && !(editingSavedTournamentGame && isTournamentGame))}
-          >
-            Перемога мирних
-          </Button>
+        <Box
+          sx={{
+            position: 'relative',
+            width: '100%',
+            maxWidth: 1200,
+            mt: 2,
+          }}
+        >
           {!readOnlyTournament && !tournamentHidden && (
-            <Button
+            <IconButton
+              aria-label="Скинути форму"
+              title="Скинути форму"
               onClick={() => void resetFormWithConfirm()}
-              variant="outlined"
-              color="warning"
               size="small"
+              sx={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                zIndex: 1,
+                color: brandColors.text,
+                opacity: 0.55,
+                '&:hover': { opacity: 1, bgcolor: 'transparent' },
+              }}
             >
-              Скинути форму
-            </Button>
+              <RefreshIcon fontSize="small" />
+            </IconButton>
           )}
-          {winState && user?.authType === 'Клуб' && isRatingGame && (
-            <Button onClick={submitGame} variant="contained" color="success" size="small">
-              Зберегти гру
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 1,
+              flexWrap: 'wrap',
+              pr: { xs: 5, sm: 0 },
+            }}
+          >
+            <Button
+              onClick={() =>
+                !readOnlyTournament &&
+                (!winState || (editingSavedTournamentGame && isTournamentGame)) &&
+                win('mafia')
+              }
+              variant="outlined"
+              color={winState === 'mafia' ? 'secondary' : 'info'}
+              size="small"
+              disabled={readOnlyTournament || Boolean(winState && !(editingSavedTournamentGame && isTournamentGame))}
+            >
+              Перемога мафії
             </Button>
-          )}
-          {winState && user?.authType === 'Клуб' && isTournamentGame && !readOnlyTournament && (
-            <Button onClick={submitGame} variant="contained" color="success" size="small">
-              {editingSavedTournamentGame ? 'Зберегти зміни' : 'Зберегти гру'}
+            <Button
+              onClick={() =>
+                !readOnlyTournament &&
+                (!winState || (editingSavedTournamentGame && isTournamentGame)) &&
+                win('citizens')
+              }
+              variant="outlined"
+              color={winState === 'citizens' ? 'secondary' : 'info'}
+              size="small"
+              disabled={readOnlyTournament || Boolean(winState && !(editingSavedTournamentGame && isTournamentGame))}
+            >
+              Перемога мирних
             </Button>
-          )}
-        </Box>
+            {winState && user?.authType === 'Клуб' && isRatingGame && (
+              <Button onClick={submitGame} variant="contained" color="success" size="small">
+                Зберегти гру
+              </Button>
+            )}
+            {winState && user?.authType === 'Клуб' && isTournamentGame && !readOnlyTournament && (
+              <Button onClick={submitGame} variant="contained" color="success" size="small">
+                {editingSavedTournamentGame ? 'Зберегти зміни' : 'Зберегти гру'}
+              </Button>
+            )}
+          </Box>
         <Grid minHeight={30} container columns={12} sx={{
           p: 0,
           // fontSize: '16px !important',
@@ -887,6 +914,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             ))
           }
         </Grid>
+        </Box>
 
         {Object.values(players).some((p: any) => p.killed === 1) && (
           <Button
