@@ -41,6 +41,19 @@ export default function AppTheme(props: AppThemeProps) {
             ...feedbackCustomizations,
             ...navigationCustomizations,
             ...surfacesCustomizations,
+            MuiCssBaseline: {
+              styleOverrides: {
+                // Користувач попросив систему зменшити рух: вимикаємо пульсацію й переходи.
+                '@media (prefers-reduced-motion: reduce)': {
+                  '*, *::before, *::after': {
+                    animationDuration: '0.01ms !important',
+                    animationIterationCount: '1 !important',
+                    transitionDuration: '0.01ms !important',
+                    scrollBehavior: 'auto !important',
+                  },
+                },
+              },
+            },
             ...themeComponents,
           },
         });
