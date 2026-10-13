@@ -21,6 +21,7 @@ import { brandColors, withAlpha } from "./theme/brand";
 import Alert from '@mui/material/Alert';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
+import { usePageTitle } from './hooks/usePageTitle';
 import GoogleSignUpBlock, { GoogleSignUpData, signUpErrorMessage } from './components/GoogleSignUp';
 
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -66,6 +67,7 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignUpClub(props: { disableCustomTheme?: boolean }) {
+  usePageTitle('Реєстрація клубу');
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [contactError, setContactError] = React.useState(false);

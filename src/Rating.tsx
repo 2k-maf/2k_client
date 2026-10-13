@@ -13,6 +13,8 @@ import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import AppTheme from './theme/AppTheme';
 import BrandPage from './components/brand/BrandPage';
 import BrandSearchField from './components/brand/BrandSearchField';
+import AbbrLegend from './components/brand/AbbrLegend';
+import { Link as RouterLink } from 'react-router-dom';
 import { brandColors, brandFonts, monoSx, fg } from './theme/brand';
 import { useClubRating } from './hooks/useClubRating';
 import { formatFloat1, formatSeasonLabel, RatingPlayer } from './utils/podium';
@@ -24,11 +26,45 @@ const GRID_COLUMNS = '56px minmax(0,1fr) 148px 128px 72px 84px 84px';
 
 const HEADERS = ['№', 'ГРАВЕЦЬ', 'РЕЙТ', 'ІГРИ', 'ПВ', 'ОП5', 'ДБ'];
 
+/** Розшифровка скорочень заголовків: підказка при наведенні і легенда під таблицею. */
+const HEADER_HINTS: Record<string, string> = {
+  РЕЙТ: 'рейтинг',
+  ПВ: 'перший вбитий',
+  ОП5: "опорна п'ятірка",
+  ДБ: 'додаткові бали від судді',
+};
+
+const LEGEND = ['ПВ', 'ОП5', 'ДБ'].map((term) => ({ term, text: HEADER_HINTS[term] }));
+
+/**
+ * Нижче md рядок — картка у два яруси: зверху гравець і рейтинг, знизу статистика.
+ * Раніше таблиця 860px гортала вбік, і на телефоні було видно 3 колонки із 7.
+ */
+const MOBILE_COLUMNS = '28px minmax(0,1.6fr) repeat(3, minmax(0,1fr))';
+
+/** Місце комірки в картці на телефоні. Від md комірка стоїть у своїй колонці таблиці. */
+const mobileCell = (column: string, row: string) => ({
+  gridColumn: { xs: column, md: 'auto' },
+  gridRow: { xs: row, md: 'auto' },
+});
+
+/** Комірка статистики: на телефоні підписи стоять в один рядок, навіть коли значення переноситься. */
+const mobileStatCell = (column: string) => ({ ...mobileCell(column, '2'), alignSelf: { xs: 'start', md: 'auto' } });
+
+/** Підпис статистики на телефоні, де рядка заголовків немає. Читач екрана теж його чує. */
+function MobileLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <Box component="span" sx={{ display: { xs: 'block', md: 'none' }, ...monoSx(10, fg(0.6)), letterSpacing: '0.14em' }}>
+      {children}
+    </Box>
+  );
+}
+
 /** Перші три місця виділені кольором, решта — приглушені. */
 function rankAccent(rank: number) {
   if (rank === 1) return { ring: brandColors.accent, rankColor: brandColors.accent, bg: brandColors.panelAlt };
   if (rank <= 3) return { ring: brandColors.ember, rankColor: brandColors.ember, bg: brandColors.panelAlt };
-  return { ring: fg(0.28), rankColor: fg(0.35), bg: 'transparent' };
+  return { ring: fg(0.28), rankColor: fg(0.5), bg: 'transparent' };
 }
 
 const formatSupportFive = (p: RatingPlayer) =>
@@ -46,16 +82,15 @@ const roleStatLine = (icon: React.ReactNode, wins: number, games: number, rate: 
 );
 
 export default function Rating(props: { disableCustomTheme?: boolean }) {
-  const { players, podium, stats } = useClubRating();
+  const { players, podium, stats, loading } = useClubRating();
   const seasonLabel = formatSeasonLabel(stats.periodName).toUpperCase();
   const [infoAnchor, setInfoAnchor] = useState<null | HTMLElement>(null);
   const [infoPlayer, setInfoPlayer] = useState<any>(null);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(0);
 
-  const openInfo = useCallback((e: React.MouseEvent<HTMLElement>, row: any) => {
-    e.stopPropagation();
-    setInfoAnchor(e.currentTarget);
+  const openInfo = useCallback((anchor: HTMLElement, row: any) => {
+    setInfoAnchor(anchor);
     setInfoPlayer(row);
   }, []);
 
@@ -115,37 +150,52 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
         }
       >
         <Box sx={{ borderTop: `1px solid ${fg(0.14)}`, overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 860 }}>
+          <Box sx={{ minWidth: { xs: 0, md: 860 } }}>
+            {/* Сітка з div: ролі ARIA повертають читачу екрана рядки й колонки таблиці. */}
+            <Box role="table" aria-label="Рейтинг гравців клубу">
             <Box
+              role="row"
               sx={{
-                display: 'grid',
+                display: { xs: 'none', md: 'grid' },
                 gridTemplateColumns: GRID_COLUMNS,
                 gap: 2,
                 px: 1.5,
                 py: 1.75,
-                ...monoSx(11, fg(0.45)),
+                ...monoSx(11, fg(0.6)),
                 letterSpacing: '0.14em',
                 borderBottom: `1px solid ${fg(0.1)}`,
               }}
             >
               {HEADERS.map((h, i) => (
-                <Box key={h} component="span" sx={{ textAlign: i >= 4 ? 'right' : 'left' }}>
-                  {h}
+                <Box key={h} component="span" role="columnheader" sx={{ textAlign: i >= 4 ? 'right' : 'left' }}>
+                  {HEADER_HINTS[h] ? (
+                    <Box component="abbr" title={HEADER_HINTS[h]} sx={{ textDecoration: 'none', cursor: 'help' }}>
+                      {h}
+                    </Box>
+                  ) : h}
                 </Box>
               ))}
             </Box>
 
-            {pageRows.map((player) => {
+            {!loading && pageRows.map((player) => {
               const accent = rankAccent(player.rank);
               const title = titleFor(player);
               return (
                 <Box
                   key={player.id}
-                  onClick={(e) => openInfo(e, player)}
+                  role="row"
+                  // Рядок відкриває статистику за ролями — і мишею, і з клавіатури.
+                  tabIndex={0}
+                  onClick={(e) => openInfo(e.currentTarget, player)}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    openInfo(e.currentTarget, player);
+                  }}
                   sx={{
                     display: 'grid',
-                    gridTemplateColumns: GRID_COLUMNS,
-                    gap: 2,
+                    gridTemplateColumns: { xs: MOBILE_COLUMNS, md: GRID_COLUMNS },
+                    gap: { xs: 1, md: 2 },
                     alignItems: 'center',
                     px: 1.5,
                     py: 2,
@@ -153,11 +203,17 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                     borderBottom: `1px solid ${fg(0.07)}`,
                     background: accent.bg,
                     '&:hover': { background: brandColors.rowHover },
+                    '&:focus-visible': {
+                      outline: `2px solid ${brandColors.accentHover}`,
+                      outlineOffset: '-2px',
+                    },
                   }}
                 >
                   <Box
                     component="span"
+                    role="cell"
                     sx={{
+                      ...mobileCell('1', '1 / span 2'),
                       fontFamily: brandFonts.display,
                       fontWeight: 900,
                       fontSize: 22,
@@ -166,7 +222,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                   >
                     {player.rank}
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75, minWidth: 0 }}>
+                  <Box role="cell" sx={{ ...mobileCell('2 / span 3', '1'), display: 'flex', alignItems: 'center', gap: 1.75, minWidth: 0 }}>
                     <Avatar
                       src={player.avatarUrl || undefined}
                       sx={{
@@ -200,13 +256,13 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                         {player.nickname?.trim()}
                       </Box>
                       {title && (
-                        <Box component="span" sx={monoSx(11, fg(0.4))}>
+                        <Box component="span" sx={monoSx(11, fg(0.6))}>
                           {title}
                         </Box>
                       )}
                     </Box>
                   </Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  <Box role="cell" sx={{ ...mobileCell('5', '1'), display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                     <Box component="span" sx={{ ...monoSx(16, brandColors.text), fontWeight: 700 }}>
                       {formatFloat1(player.rating)}
                     </Box>
@@ -230,23 +286,35 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                       />
                     </Box>
                   </Box>
-                  <Box component="span" sx={monoSx(13)}>
+                  <Box component="span" role="cell" sx={{ ...mobileStatCell('2'), ...monoSx(13) }}>
+                    <MobileLabel>{HEADERS[3]}</MobileLabel>
                     {player.totalWins}/{player.totalGames} ({formatFloat1(player.totalWinsRate)}%)
                   </Box>
-                  <Box component="span" sx={{ ...monoSx(13), textAlign: 'right' }}>
+                  <Box component="span" role="cell" sx={{ ...mobileStatCell('3'), ...monoSx(13), textAlign: { xs: 'left', md: 'right' } }}>
+                    <MobileLabel>{HEADERS[4]}</MobileLabel>
                     {player.firsDie}
                   </Box>
-                  <Box component="span" sx={{ ...monoSx(13), textAlign: 'right' }}>
+                  <Box component="span" role="cell" sx={{ ...mobileStatCell('4'), ...monoSx(13), textAlign: { xs: 'left', md: 'right' } }}>
+                    <MobileLabel>{HEADERS[5]}</MobileLabel>
                     {formatSupportFive(player)}
                   </Box>
-                  <Box component="span" sx={{ ...monoSx(13), textAlign: 'right' }}>
+                  <Box component="span" role="cell" sx={{ ...mobileStatCell('5'), ...monoSx(13), textAlign: { xs: 'left', md: 'right' } }}>
+                    <MobileLabel>{HEADERS[6]}</MobileLabel>
                     {formatBonus(player)}
                   </Box>
                 </Box>
               );
             })}
+            </Box>
 
-            <Box
+            {/* Той самий стан, що й у BrandTable: без нього під час завантаження сторінка показувала «0—0 З 0». */}
+            {(loading || filtered.length === 0) && (
+              <Box role="status" sx={{ px: 1.5, py: 5, textAlign: 'center', ...monoSx(13, fg(0.6)) }}>
+                {loading ? 'Завантаження…' : query ? 'Гравця не знайдено.' : 'Рейтинг поки порожній.'}
+              </Box>
+            )}
+
+            {!loading && filtered.length > 0 && <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -255,18 +323,19 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                 py: 2.5,
               }}
             >
-              <Box component="span" sx={monoSx(12, fg(0.45))}>
-                {firstShown}—{lastShown} З {filtered.length}
+              <Box component="span" sx={monoSx(12, fg(0.6))}>
+                {firstShown}–{lastShown} із {filtered.length}
               </Box>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 {[
-                  { label: '‹', disabled: safePage === 0, go: () => setPage(safePage - 1) },
-                  { label: '›', disabled: safePage >= pageCount - 1, go: () => setPage(safePage + 1) },
+                  { label: '‹', name: 'Попередня сторінка', disabled: safePage === 0, go: () => setPage(safePage - 1) },
+                  { label: '›', name: 'Наступна сторінка', disabled: safePage >= pageCount - 1, go: () => setPage(safePage + 1) },
                 ].map((btn) => (
                   <IconButton
                     key={btn.label}
                     onClick={btn.go}
                     disabled={btn.disabled}
+                    aria-label={btn.name}
                     sx={{
                       width: 36,
                       height: 36,
@@ -280,9 +349,15 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                   </IconButton>
                 ))}
               </Box>
-            </Box>
+            </Box>}
           </Box>
         </Box>
+
+        <AbbrLegend items={LEGEND}>
+          <Box component={RouterLink} to="/scoring" sx={{ color: brandColors.accentHover, fontWeight: 700, textDecoration: 'none' }}>
+            Як рахуються бали →
+          </Box>
+        </AbbrLegend>
 
         <Popover
           open={Boolean(infoAnchor)}

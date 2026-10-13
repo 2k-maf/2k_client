@@ -39,6 +39,7 @@ import LeaderboardOutlinedIcon from '@mui/icons-material/LeaderboardOutlined';
 import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
 import { downloadSeatingAsPng } from './utils/seatingPngExport';
 import { resolveTournamentYoutubeHref } from './constants/youtube';
+import { notify } from './components/feedback/feedback';
 
 type PublicPlayer = { id: string; nickname: string; avatarUrl: string | null };
 type PublicSlot = { seatIndex: number; players: PublicPlayer[] };
@@ -439,7 +440,7 @@ export default function PublicTournamentPage(props: { disableCustomTheme?: boole
       await downloadSeatingAsPng(el, `rozasadka-${id}.png`);
     } catch (e) {
       console.error(e);
-      alert('Не вдалося зберегти картинку розсадки');
+      notify.error('Не вдалося зберегти картинку розсадки');
     } finally {
       setSeatingDownloadBusy(false);
     }
@@ -502,10 +503,10 @@ export default function PublicTournamentPage(props: { disableCustomTheme?: boole
       if (next != null && body.status === 'in_progress') {
         navigate(`/profile/tournament/${id}/game/${next}`);
       } else {
-        alert('Немає гри без збереженого результату (перевірте статус турніру).');
+        notify.info('Немає гри без збереженого результату (перевірте статус турніру).');
       }
     } catch {
-      alert('Не вдалося отримати актуальні дані турніру.');
+      notify.error('Не вдалося отримати актуальні дані турніру.');
     } finally {
       setLiveGameLoading(false);
     }

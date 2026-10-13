@@ -7,6 +7,7 @@ import { feedbackCustomizations } from './customizations/feedback';
 import { navigationCustomizations } from './customizations/navigation';
 import { surfacesCustomizations } from './customizations/surfaces';
 import { colorSchemes, typography, shadows, shape } from './themePrimitives';
+import { FeedbackHost } from '../components/feedback/feedback';
 
 interface AppThemeProps {
   children: React.ReactNode;
@@ -40,12 +41,36 @@ export default function AppTheme(props: AppThemeProps) {
             ...feedbackCustomizations,
             ...navigationCustomizations,
             ...surfacesCustomizations,
+            MuiCssBaseline: {
+              styleOverrides: {
+                // iOS збільшує сторінку, коли фокус потрапляє в поле з текстом менше 16px.
+                // Раніше це блокував maximum-scale=1 у viewport, але він вимикав і
+                // масштабування пальцями. Тепер поле на сенсорному екрані має 16px.
+                '@media (pointer: coarse)': {
+                  '.MuiInputBase-root .MuiInputBase-input': { fontSize: 16 },
+                },
+                // Користувач попросив систему зменшити рух: вимикаємо пульсацію й переходи.
+                '@media (prefers-reduced-motion: reduce)': {
+                  '*, *::before, *::after': {
+                    animationDuration: '0.01ms !important',
+                    animationIterationCount: '1 !important',
+                    transitionDuration: '0.01ms !important',
+                    scrollBehavior: 'auto !important',
+                  },
+                },
+              },
+            },
             ...themeComponents,
           },
         });
   }, [disableCustomTheme, themeComponents]);
   if (disableCustomTheme) {
-    return <React.Fragment>{children}</React.Fragment>;
+    return (
+      <React.Fragment>
+        {children}
+        <FeedbackHost />
+      </React.Fragment>
+    );
   }
   return (
     <ThemeProvider
@@ -59,6 +84,7 @@ export default function AppTheme(props: AppThemeProps) {
       disableTransitionOnChange
     >
       {children}
+      <FeedbackHost />
     </ThemeProvider>
   );
 }

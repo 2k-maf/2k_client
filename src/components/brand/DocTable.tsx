@@ -66,7 +66,7 @@ export default function DocTable({
             py: 1.25,
             borderBottom: `1px solid ${fg(0.12)}`,
             // Ті самі токени, що в BrandTable — шапки таблиць не мають розходитись.
-            ...monoSx(11, fg(0.45)),
+            ...monoSx(11, fg(0.6)),
             letterSpacing: '0.14em',
           }}
         >

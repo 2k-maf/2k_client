@@ -24,6 +24,7 @@ import axios from '../axios';
 import { invalidateClubRatingCache } from '../utils/clubRatingCache';
 import { resolveMediaUrl } from '../utils/mediaUrl';
 import { brandColors } from '../theme/brand';
+import { notify } from '../components/feedback/feedback';
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
@@ -70,30 +71,30 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
     if (!clubSelectId) return;
     try {
       await axios.post('/club/join', { clubId: clubSelectId });
-      alert('Ви успішно додані до клубу');
+      notify.success('Ви успішно додані до клубу');
     } catch (e: any) {
-      alert(e?.response?.data?.message || 'Помилка при додаванні до клубу');
+      notify.error(e?.response?.data?.message || 'Помилка при додаванні до клубу');
     }
   };
 
   const handleCreateRatingPeriod = async () => {
     if (!periodName.trim()) {
-      alert('Необхідно вказати назву рейтингового періоду');
+      notify.error('Необхідно вказати назву рейтингового періоду');
       return;
     }
     try {
       await axios.post('/club/rating-period', { name: periodName.trim() });
       invalidateClubRatingCache();
       setPeriodName('');
-      alert('Ви успішно створили рейтинговий період');
+      notify.success('Ви успішно створили рейтинговий період');
     } catch (e: any) {
-      alert(e?.response?.data?.message || 'Помилка при створенні рейтингового періоду');
+      notify.error(e?.response?.data?.message || 'Помилка при створенні рейтингового періоду');
     }
   };
 
   const handleChangeNickname = async () => {
     if (!nickname.trim()) {
-      alert('Необхідно вказати новий нікнейм');
+      notify.error('Необхідно вказати новий нікнейм');
       return;
     }
     try {
@@ -101,9 +102,9 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
       data?.token && setToken(data.token);
       invalidateClubRatingCache();
       setNickname('');
-      alert('Оновлено');
+      notify.success('Нікнейм оновлено');
     } catch (e: any) {
-      alert(e?.response?.data?.message || 'Помилка при оновлені нікнейму');
+      notify.error(e?.response?.data?.message || 'Помилка при оновленні нікнейму');
     }
   };
 
@@ -111,7 +112,7 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
     const file = event.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_AVATAR_BYTES) {
-      alert('Файл занадто великий (макс. 2MB)');
+      notify.error('Файл занадто великий (макс. 2MB)');
       return;
     }
     const reader = new FileReader();
@@ -120,9 +121,9 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
         const { data } = await axios.post('/user/avatar', { image: reader.result });
         data?.token && setToken(data.token);
         invalidateClubRatingCache();
-        alert(isClub ? 'Логотип клубу збережено' : 'Аватар оновлено');
+        notify.success(isClub ? 'Логотип клубу збережено' : 'Аватар оновлено');
       } catch (e: any) {
-        alert(e?.response?.data?.error || 'Помилка при завантаженні');
+        notify.error(e?.response?.data?.error || 'Помилка при завантаженні');
       }
     };
     reader.readAsDataURL(file);
@@ -133,7 +134,7 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <ProfilePage title={isClub ? user?.name || 'Профіль клубу' : user?.nickname || 'Профіль'}>
+      <ProfilePage title={isClub ? user?.name || 'Профіль клубу' : user?.nickname || 'Профіль'} documentTitle="Кабінет">
         <ProfileCardGrid>
           <ProfileCard
             icon={<AccountBoxIcon />}

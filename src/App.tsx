@@ -25,6 +25,7 @@ import ResetPassword from "./ResetPassword";
 import {BudgetRedirect} from "./Budget";
 import {CalendarRedirect} from "./Calendar";
 import PublicTournamentPage from "./PublicTournamentPage";
+import NotFound from "./NotFound";
 
 /** Окремий інстанс NewGame на кожну гру турніру — після збереження / зміни URL форма не тягне стан попередньої гри. */
 function DashboardTournamentGame() {
@@ -69,6 +70,7 @@ const App = () => {
           <Route path="profile/tournaments/:id" element={<PrivateRoute Component={DashboardTournamentDetail}/>} />
           <Route path="profile/tournament/:tournamentId/game/:gameIndex" element={<PrivateRoute Component={DashboardTournamentGame}/>} />
           <Route path="new-game-rating" element={<PrivateRoute Component={NewGame}/>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

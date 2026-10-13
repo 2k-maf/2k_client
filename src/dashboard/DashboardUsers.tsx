@@ -10,6 +10,7 @@ import BrandTable, { BrandColumn } from '../components/brand/BrandTable';
 import BrandSearchField from '../components/brand/BrandSearchField';
 import axios from '../axios';
 import { brandColors, brandFonts, monoSx } from '../theme/brand';
+import { notify } from '../components/feedback/feedback';
 
 type ClubMember = {
   id: number;
@@ -57,7 +58,7 @@ export default function DashboardUsers(props: { disableCustomTheme?: boolean }) 
         await axios.put(`/club/users/${member._id}/host`, { host });
         setMembers((prev) => prev.map((m) => (m._id === member._id ? { ...m, isHost: host } : m)));
       } catch (e: any) {
-        alert(e?.response?.data?.error || 'Значок не змінено');
+        notify.error(e?.response?.data?.error || 'Значок не змінено');
       } finally {
         setSavingId(null);
       }

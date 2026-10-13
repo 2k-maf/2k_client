@@ -167,7 +167,7 @@ export default function Footer() {
           <SocialSquare href={TELEGRAM_URL} label="Telegram" Icon={TelegramIcon} />
         </Box>
       </Box>
-      <Box component="span" sx={{ fontSize: 12, color: fg(0.45) }}>
+      <Box component="span" sx={{ fontSize: 12, color: fg(0.6) }}>
         © Dva Kol'ory Vancouver Mafia Club {new Date().getFullYear()}
       </Box>
       </Box>

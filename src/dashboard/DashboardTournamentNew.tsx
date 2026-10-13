@@ -14,6 +14,7 @@ import axios from '../axios';
 import { useAuth } from '../AuthProvider';
 import { DEFAULT_TOURNAMENT_YOUTUBE_URL } from '../constants/youtube';
 import { brandColors, fg } from '../theme/brand';
+import { notify } from '../components/feedback/feedback';
 
 export default function DashboardTournamentNew(props: { disableCustomTheme?: boolean }) {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function DashboardTournamentNew(props: { disableCustomTheme?: boo
 
   const submit = async () => {
     if (!name.trim()) {
-      alert('Вкажіть назву');
+      notify.error('Вкажіть назву');
       return;
     }
     setSaving(true);
@@ -53,7 +54,7 @@ export default function DashboardTournamentNew(props: { disableCustomTheme?: boo
       else navigate('/profile/tournaments');
     } catch (e: any) {
       console.error(e);
-      alert(e?.response?.data?.error || 'Помилка збереження');
+      notify.error(e?.response?.data?.error || 'Помилка збереження');
     } finally {
       setSaving(false);
     }

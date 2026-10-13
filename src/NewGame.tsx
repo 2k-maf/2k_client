@@ -7,7 +7,7 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import AppTheme from "./theme/AppTheme";
-import { brandColors, brandFonts, fg } from "./theme/brand";
+import { brandColors, brandFonts, fg, withAlpha } from "./theme/brand";
 import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
@@ -26,10 +26,42 @@ import { invalidateClubRatingCache } from "./utils/clubRatingCache";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import {useAuth} from "./AuthProvider";
 import {vancouverTodayYmd} from "./utils/vancouverDate";
+import AbbrLegend from "./components/brand/AbbrLegend";
+import { confirmAction, notify } from "./components/feedback/feedback";
 
 const filter = createFilterOptions();
+
+/**
+ * Палець ведучого потребує зони дотику ≥44px. Лише для сенсорних екранів:
+ * на десктопі з мишею сітка протоколу лишається щільною, як була.
+ */
+const touchTargetSx = {
+  '@media (pointer: coarse)': {
+    minHeight: 44,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+} as const;
+
+/**
+ * Пропси клітинки протоколу, яку натискає ведучий. Клітинка лишається `Grid`,
+ * щоб не змінити вигляд, але клавіатура і читач екрана бачать її як кнопку.
+ */
+const cellButton = (label: string, onActivate: (el: HTMLElement) => void) => ({
+  role: 'button',
+  tabIndex: 0,
+  'aria-label': label,
+  onClick: (e: React.MouseEvent<HTMLElement>) => onActivate(e.currentTarget),
+  onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    onActivate(e.currentTarget);
+  },
+});
 
 const RolesPoolDefault = [1, 2, 3, 4]
 const RolesPoolMap: Record<number, string> = {
@@ -192,6 +224,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const [bonusAnchorEl, setBonusAnchorEl] = React.useState<HTMLElement | null>(null);
   const [bonusPlayerN, setBonusPlayerN] = React.useState<number>(0);
   const [killedShowInfo, setKilledShowInfo] = React.useState(false);
+  const [legendAnchorEl, setLegendAnchorEl] = React.useState<HTMLElement | null>(null);
 
   /** Збережену гру можна правити й після вибору переможця. */
   const editingSaved = isEditingRatingGame || (editingSavedTournamentGame && isTournamentGame);
@@ -252,7 +285,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   /** Підтвердження + очищення localStorage; для рейтингової гри знову тягнемо розсадку вечора / останньої гри. */
   const resetFormWithConfirm = async () => {
     if (readOnlyTournament || tournamentHidden || !formCanReset) return;
-    if (!window.confirm('Скинути форму? Локальний кеш гри в браузері буде очищено.')) {
+    if (!(await confirmAction('Скинути форму? Локальний кеш гри в браузері буде очищено.', 'Скинути'))) {
       return;
     }
     resetGame();
@@ -275,7 +308,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const setPlayerNickname = (n: number, title: string, id: string) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (gameLockedAfterWin && !(isTournamentGame && players[n]?.pendingTeamIds?.length)) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     const next = {...players[n], title, id};
@@ -287,7 +320,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     if (readOnlyTournament || tournamentHidden) return;
     if (!n) return;
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     setPlayers({...players, [n]: {...players[n], warnings: (players[n].warnings + 1) % 5}});
@@ -299,7 +332,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       return setHideRoles(!hideRoles);
     }
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     const currentRole = players[n].role || 0;
@@ -312,7 +345,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const killPlayer = (n: number) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     const hasFirstKilled = Object.values(players).some((p: any) => p.n !== n && p.killed === 1);
@@ -367,9 +400,9 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     });
   }, [isRatingGame, winState]);
 
-  const openBonusPopover = (e: React.MouseEvent<HTMLElement>, n: number) => {
+  const openBonusPopover = (anchor: HTMLElement, n: number) => {
     if (readOnlyTournament || tournamentHidden) return;
-    setBonusAnchorEl(e.currentTarget);
+    setBonusAnchorEl(anchor);
     setBonusPlayerN(n);
   };
 
@@ -383,7 +416,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const supportFive = (n: number, i: number) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     const current = {...(players[n].bestTurn || {})};
@@ -410,7 +443,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const promoteVote = (n: number) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     if (!n) return;
@@ -431,7 +464,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const voteForPlayer = (candidateIndex: number, votes: number) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     if (!activeVoting) return;
@@ -448,15 +481,15 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const win = (winner: string) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (winState && !editingSaved) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     if (rolesPool.length !== 4) {
-      alert('Не всім розподілено ролі');
+      notify.error('Не всім розподілено ролі');
       return;
     }
     if (Object.values(players).filter((player: any) => player.title).length < 10) {
-      alert('Не всім розподілено нікнейми');
+      notify.error('Не всім розподілено нікнейми');
       return
     }
     if (!isTournamentGame) {
@@ -464,7 +497,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         (seat) => players[seat]?.title && !String(players[seat].title).startsWith('Гість') && !players[seat].id
       );
       if (missingId) {
-        alert('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
+        notify.error('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
         return;
       }
     }
@@ -496,15 +529,16 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         (seat) => effective[seat]?.title && !String(effective[seat].title).startsWith('Гість') && !effective[seat].id
       );
       if (missingId) {
-        alert('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
+        notify.error('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
         return;
       }
     }
-    if (!confirm(
+    if (!(await confirmAction(
       editingSaved
         ? (isTournamentGame ? 'Зберегти зміни в цій грі турніру?' : 'Зберегти зміни в цій грі?')
-        : 'Відправити результати гри?'
-    )) return;
+        : 'Відправити результати гри?',
+      editingSaved ? 'Зберегти' : 'Відправити',
+    ))) return;
     const playersPayload = Object.values(effective).map((p: any) => ({
       ...p,
       bestTurn: Object.entries(p.bestTurn || {}).map(([seat, color]) => ({n: Number(seat), color})),
@@ -521,11 +555,11 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         if (editingSaved) {
           await axios.put('/club/tournament-game', payload);
           if (tournamentStorageKey) localStorage.removeItem(tournamentStorageKey);
-          alert('Зміни збережено');
+          notify.success('Зміни збережено');
         } else {
           await axios.post('/club/tournament-game', payload);
           if (tournamentStorageKey) localStorage.removeItem(tournamentStorageKey);
-          alert('Гру збережено');
+          notify.success('Гру збережено');
           try {
             const { data: tour } = await axios.get(`/tournament/${tournamentId}`);
             if (tour.nextGameIndex != null) {
@@ -538,7 +572,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
           }
         }
       } catch (e: any) {
-        alert(e?.response?.data?.error || e?.message || 'Помилка збереження');
+        notify.error(e?.response?.data?.error || e?.message || 'Помилка збереження');
       }
       return;
     }
@@ -550,16 +584,16 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         await axios.post('/club/rating-game', payload);
       }
     } catch (e: any) {
-      alert(e?.response?.data?.error || e?.message || 'Помилка збереження');
+      notify.error(e?.response?.data?.error || e?.message || 'Помилка збереження');
       return;
     }
     invalidateClubRatingCache();
     if (isEditingRatingGame) {
-      alert('Зміни збережено');
+      notify.success('Зміни збережено');
       navigate('/profile/hosts');
       return;
     }
-    alert('Гру збережено');
+    notify.success('Гру збережено');
     resetGame();
   }
 
@@ -608,7 +642,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
           }
 
           if (user?.authType !== 'Клуб') {
-            alert('Проводити гру може лише клуб');
+            notify.error('Проводити гру може лише клуб');
             navigate(`/profile/tournaments/${tournamentId}`);
             return;
           }
@@ -623,7 +657,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             return;
           }
           if (tour.status !== 'in_progress') {
-            alert('Турнір не активний');
+            notify.error('Турнір не активний');
             navigate(`/profile/tournaments/${tournamentId}`);
             return;
           }
@@ -691,7 +725,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       } catch (e: any) {
         console.error(e);
         if (isEditingRatingGame) {
-          alert(e?.response?.data?.error || 'Гру не вдалося відкрити');
+          notify.error(e?.response?.data?.error || 'Гру не вдалося відкрити');
           navigate('/profile/hosts');
         }
       }
@@ -713,6 +747,9 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     return Object.values(players).filter((player: any) => player.killed).map((player: any) => player.killed)
   }, [players]);
 
+  /** Скидання форми є не в усіх режимах: перегляд турніру і редагування збереженої гри його не мають. */
+  const showResetButton = !readOnlyTournament && !tournamentHidden && !isEditingRatingGame;
+
   const bonusWinnerOpts = isTournamentGame ? BONUS_TOURNAMENT_WIN : BONUS_RATING_WIN;
   const bonusLoserOpts = isTournamentGame ? BONUS_TOURNAMENT_LOSS : BONUS_RATING_LOSS;
   const penaltyWinnerOpts = isTournamentGame ? PENALTY_TOURNAMENT_WIN : [];
@@ -722,7 +759,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     return (
       <AppTheme {...props}>
         <CssBaseline enableColorScheme />
-        <BrandPage>
+        <BrandPage documentTitle="Турнірна гра">
           <Typography sx={{ textAlign: 'center' }}>
             Результати цієї гри приховані до завершення турніру.
           </Typography>
@@ -760,7 +797,59 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             mt: 2,
           }}
         >
-          {!readOnlyTournament && !tournamentHidden && !isEditingRatingGame && (
+          <IconButton
+            aria-label="Позначення колонок"
+            title="Позначення колонок"
+            aria-haspopup="dialog"
+            aria-expanded={Boolean(legendAnchorEl)}
+            aria-controls={legendAnchorEl ? 'protocol-legend' : undefined}
+            onClick={(e) => setLegendAnchorEl(e.currentTarget)}
+            size="small"
+            sx={{
+              position: 'absolute',
+              top: 0,
+              // Праворуч стоїть скидання форми, якщо воно є в цьому режимі.
+              right: showResetButton ? 34 : 0,
+              zIndex: 1,
+              border: 'none',
+              bgcolor: 'transparent',
+              backgroundImage: 'none',
+              color: fg(0.75),
+              '&:hover': { bgcolor: 'transparent', backgroundImage: 'none', color: brandColors.text },
+            }}
+          >
+            <HelpOutlineIcon fontSize="small" />
+          </IconButton>
+          <Popover
+            id="protocol-legend"
+            open={Boolean(legendAnchorEl)}
+            anchorEl={legendAnchorEl}
+            onClose={() => setLegendAnchorEl(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            {/* Легенда на вимогу: під сіткою вона розривала протокол і голосування. */}
+            <Box sx={{ py: 1.5, pr: 1.5, maxWidth: 300 }}>
+              <AbbrLegend
+                items={[
+                  { term: <ThumbUpIcon titleAccess="Голосування" sx={{ fontSize: 16 }} />, text: 'номер гравця — виставити на голосування' },
+                  { term: 'Ф', text: 'фоли' },
+                  { term: 'Р', text: 'роль; заголовок ховає ролі' },
+                  { term: <HeartBrokenIcon titleAccess="Перший вбитий" sx={{ fontSize: 16 }} />, text: 'перший вбитий' },
+                ]}
+              />
+              {/* Підписи ролей беремо з RolesPoolMap, тож легенда не розійдеться з колонкою «Р». */}
+              <AbbrLegend
+                items={[
+                  { term: `${RolesPoolMap[1]}, ${RolesPoolMap[2]}`, text: 'мафія' },
+                  { term: RolesPoolMap[3], text: 'дон мафії' },
+                  { term: RolesPoolMap[4], text: 'шериф' },
+                  { term: '—', text: 'порожня клітинка: мирний' },
+                ]}
+              />
+            </Box>
+          </Popover>
+          {showResetButton && (
             <IconButton
               aria-label="Скинути форму"
               title={formCanReset ? 'Скинути форму' : 'Форма вже порожня'}
@@ -799,7 +888,8 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
               justifyContent: 'center',
               gap: 1,
               flexWrap: 'wrap',
-              pr: { xs: 5, sm: 0 },
+              // Місце під кнопки «?» і скидання праворуч від кнопок перемоги.
+              pr: { xs: showResetButton ? 9 : 5, sm: 0 },
             }}
           >
             <Button
@@ -810,6 +900,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
               }
               variant="outlined"
               color={winState === 'mafia' ? 'secondary' : 'info'}
+              aria-pressed={winState === 'mafia'}
               size="small"
               disabled={readOnlyTournament || gameLockedAfterWin}
             >
@@ -823,6 +914,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
               }
               variant="outlined"
               color={winState === 'citizens' ? 'secondary' : 'info'}
+              aria-pressed={winState === 'citizens'}
               size="small"
               disabled={readOnlyTournament || gameLockedAfterWin}
             >
@@ -862,7 +954,8 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
               <React.Fragment key={n}>
                 {
                   (players[n]?.killed !== 1 || (n !== 0 && killedShowInfo)) && <>
-                        <Grid onClick={() => promoteVote(n)} sx={{cursor: 'pointer', p: '.2rem'}}
+                        <Grid {...(n !== 0 && cellButton(`Виставити гравця ${n} на голосування`, () => promoteVote(n)))}
+                              sx={{cursor: n !== 0 ? 'pointer' : 'default', p: '.2rem'}}
                               size={{xs: 1.5, sm: 1, lg: 1}}>
                           {n === 0 ? <ThumbUpIcon/> : n}
                         </Grid>
@@ -888,7 +981,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                               if (inputValue !== '' && !isExisting) {
                                 filtered.push({
                                   inputValue,
-                                  title: `Add "${inputValue}"`,
+                                  title: `Додати «${inputValue}»`,
                                 });
                               }
 
@@ -897,7 +990,6 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                             selectOnFocus
                             clearOnBlur
                             handleHomeEndKeys
-                            id="free-solo-with-text-demo"
                             options={(() => {
                               const pending = (players[n] as any)?.pendingTeamIds as string[] | undefined;
                               const base = pending?.length
@@ -924,42 +1016,50 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                               );
                             }}
                             renderInput={(params) => (
-                              <TextField {...params} />
+                              <TextField
+                                {...params}
+                                inputProps={{ ...params.inputProps, 'aria-label': `Нік гравця ${n}` }}
+                              />
                             )}
                           />}
                         </Grid>
                         <Grid sx={{
                           p: n === 0 ? '.5rem' : '.1rem',
-                          backgroundColor: players[n]?.warnings === 3 ? 'rgba(255,165,0, 0.2)' : players[n]?.warnings === 4 ? 'rgba(255,0,0, 0.3)' : 'transparent',
-                          cursor: 'pointer'
-                        }} onClick={() => addWarning(n)} size={{xs: 1.75, sm: 2, lg: 1.5}}>
+                          // 3 і 4 фоли мають бути видно з першого погляду: фон ≥3:1 до тла сторінки (WCAG 1.4.11).
+                          backgroundColor: players[n]?.warnings === 3 ? withAlpha(brandColors.ember, 0.75) : players[n]?.warnings === 4 ? withAlpha(brandColors.accent, 0.85) : 'transparent',
+                          cursor: n !== 0 ? 'pointer' : 'default'
+                        }} {...(n !== 0 && cellButton(`Фол гравцю ${n}, зараз ${players[n].warnings}`, () => addWarning(n)))}
+                          size={{xs: 1.75, sm: 2, lg: 1.5}}>
                           {n === 0 ? "Ф" : new Array(players[n].warnings).fill('⚠️').join('  ')}
                         </Grid>
                         <Grid sx={{
                           p: '.5rem',
                           fontWeight: n !== 0 ? 800 : '',
                           cursor: 'pointer',
-                        }} size={{xs: 2, sm: 1, lg: 1.5}} onClick={() => addRole(n)}>
+                        }} size={{xs: 2, sm: 1, lg: 1.5}}
+                          {...cellButton(n === 0 ? (hideRoles ? 'Показати ролі' : 'Сховати ролі') : `Змінити роль гравця ${n}`, () => addRole(n))}>
                           {n === 0 ? 'Р' : hideRoles ? '?' : `${RolesPoolMap[Number(players[n].role)] ?? ''} `}
                         </Grid>
                     </>
                 }
                 {
                   n !== 0 && players[n]?.killed === 1 && !killedShowInfo &&
-                    <Grid container columns={12} sx={{p: '.3rem', backgroundColor: 'rgba(200, 200, 210, 0.25)'}} size={{xs: 10.75, sm: 11.5, lg: 11.5}}>
+                    <Grid container columns={12} sx={{p: '.3rem', backgroundColor: fg(0.12)}} size={{xs: 10.75, sm: 11.5, lg: 11.5}}>
                       {
                         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => {
                           const color = players[n].bestTurn?.[i];
                           return <Grid key={i} sx={{
-                            backgroundColor: color === 'black' ? 'rgba(0, 0, 0, 1)'
-                              : color === 'red' ? 'rgba(180, 0, 0, 0.6)'
+                            // Чорна й червона — кольори карт гри, а не теми. Червона — акцент бренду.
+                            backgroundColor: color === 'black' ? '#000'
+                              : color === 'red' ? brandColors.accent
                               : 'transparent',
                             color: color ? '#fff' : 'inherit',
-                            borderColor: 'gray !important',
+                            ...touchTargetSx,
+                            borderColor: `${fg(0.3)} !important`,
                             borderRight: 'var(--Grid-borderWidth) solid',
                             cursor: 'pointer',
                             fontWeight: color ? 700 : 400,
-                          }} size={{xs: 12 / 10}} onClick={() => supportFive(n, i)}>
+                          }} size={{xs: 12 / 10}} {...cellButton(`Кращий хід гравця ${n}: місце ${i}`, () => supportFive(n, i))}>
                             {i}
                           </Grid>
                         })
@@ -975,17 +1075,17 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                   opacity: !winState && n !== 0 && killedPool.includes(1) && players[n]?.killed !== 1 ? 0.3 : 1,
                   fontSize: players[n]?.killed === 1 && !winState ? '0.7rem' : 'inherit',
                 }} size={{xs: 1.25, sm: 0.5, lg: 0.5}}
-                   onClick={(e: any) => {
-                     if (!n) return;
-                     if (winState) {
-                       openBonusPopover(e, n);
-                     } else {
-                       killPlayer(n);
-                     }
-                   }}>
+                   {...(n !== 0 && cellButton(
+                     winState
+                       ? `Бонус гравцю ${n}`
+                       : players[n]?.killed === 1
+                         ? `Зняти з гравця ${n} позначку першого вбитого`
+                         : `Позначити гравця ${n} першим вбитим`,
+                     (el) => (winState ? openBonusPopover(el, n) : killPlayer(n)),
+                   ))}>
                   {winState && n !== 0
                     ? (players[n].bonusPoints
-                      ? <span style={{fontSize: '0.7rem', color: players[n].bonusPoints > 0 ? '#4caf50' : '#f44336'}}>{players[n].bonusPoints > 0 ? '+' : ''}{players[n].bonusPoints}</span>
+                      ? <span style={{fontSize: '0.7rem', color: players[n].bonusPoints > 0 ? brandColors.positive : brandColors.negative}}>{players[n].bonusPoints > 0 ? '+' : ''}{players[n].bonusPoints}</span>
                       : <ThumbUpIcon sx={{fontSize: '0.9rem', opacity: 0.5}}/>)
                     : n === 0
                       ? <HeartBrokenIcon/>
@@ -1071,25 +1171,26 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                 }}>
                   {
                     activeVoting?.candidates.map(([candidate]: [number, number], i: number) => {
-                      return <>
+                      return <React.Fragment key={candidate}>
                         <Grid sx={{cursor: 'pointer', p: '.3rem'}} size={{xs: 1}}> <strong>{candidate}</strong> </Grid>
                         {
                           [1, 2, 3, 4, 5, 6].map((j) => {
-                            return <Grid sx={{
+                            return <Grid key={j} sx={{
                               p: '.3rem',
                               fontStyle: 'italic',
-                              backgroundColor: activeVoting?.candidates?.[i]?.[1] === j ? 'rgb(0, 54, 107)' : 'transparent',
-                              // Темно-синя комірка: успадкований текст світлої теми на ній не читається.
-                              color: activeVoting?.candidates?.[i]?.[1] === j ? '#fff' : 'inherit',
+                              // Обрана кількість голосів — інверсія теми: контрастна і в темній, і в світлій схемі.
+                              backgroundColor: activeVoting?.candidates?.[i]?.[1] === j ? brandColors.text : 'transparent',
+                              color: activeVoting?.candidates?.[i]?.[1] === j ? brandColors.bg : 'inherit',
                               // borderColor: 'gray !important',
                               // borderRight: 'var(--Grid-borderWidth) solid',
-                              cursor: 'pointer'
-                            }} size={{xs: 11 / 6}} onClick={() => voteForPlayer(i, j)}>
+                              cursor: 'pointer',
+                              ...touchTargetSx,
+                            }} size={{xs: 11 / 6}} {...cellButton(`${j === 6 ? '6 і більше' : j} голосів за гравця ${candidate}`, () => voteForPlayer(i, j))}>
                               {j === 6 ? '6+' : j }
                             </Grid>
                           })
                         }
-                      </>
+                      </React.Fragment>
                     })
                   }
                 </Grid>
