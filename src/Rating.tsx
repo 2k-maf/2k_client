@@ -42,7 +42,7 @@ const mobileStatCell = (column: string) => ({ ...mobileCell(column, '2'), alignS
 /** Підпис статистики на телефоні, де рядка заголовків немає. Читач екрана теж його чує. */
 function MobileLabel({ children }: { children: React.ReactNode }) {
   return (
-    <Box component="span" sx={{ display: { xs: 'block', md: 'none' }, ...monoSx(10, fg(0.45)), letterSpacing: '0.14em' }}>
+    <Box component="span" sx={{ display: { xs: 'block', md: 'none' }, ...monoSx(10, fg(0.6)), letterSpacing: '0.14em' }}>
       {children}
     </Box>
   );
@@ -52,7 +52,7 @@ function MobileLabel({ children }: { children: React.ReactNode }) {
 function rankAccent(rank: number) {
   if (rank === 1) return { ring: brandColors.accent, rankColor: brandColors.accent, bg: brandColors.panelAlt };
   if (rank <= 3) return { ring: brandColors.ember, rankColor: brandColors.ember, bg: brandColors.panelAlt };
-  return { ring: fg(0.28), rankColor: fg(0.35), bg: 'transparent' };
+  return { ring: fg(0.28), rankColor: fg(0.5), bg: 'transparent' };
 }
 
 const formatSupportFive = (p: RatingPlayer) =>
@@ -149,7 +149,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                 gap: 2,
                 px: 1.5,
                 py: 1.75,
-                ...monoSx(11, fg(0.45)),
+                ...monoSx(11, fg(0.6)),
                 letterSpacing: '0.14em',
                 borderBottom: `1px solid ${fg(0.1)}`,
               }}
@@ -240,7 +240,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                         {player.nickname?.trim()}
                       </Box>
                       {title && (
-                        <Box component="span" sx={monoSx(11, fg(0.4))}>
+                        <Box component="span" sx={monoSx(11, fg(0.6))}>
                           {title}
                         </Box>
                       )}
@@ -293,7 +293,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
 
             {/* Той самий стан, що й у BrandTable: без нього під час завантаження сторінка показувала «0—0 З 0». */}
             {(loading || filtered.length === 0) && (
-              <Box role="status" sx={{ px: 1.5, py: 5, textAlign: 'center', ...monoSx(13, fg(0.45)) }}>
+              <Box role="status" sx={{ px: 1.5, py: 5, textAlign: 'center', ...monoSx(13, fg(0.6)) }}>
                 {loading ? 'Завантаження…' : query ? 'Гравця не знайдено.' : 'Рейтинг поки порожній.'}
               </Box>
             )}
@@ -307,7 +307,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                 py: 2.5,
               }}
             >
-              <Box component="span" sx={monoSx(12, fg(0.45))}>
+              <Box component="span" sx={monoSx(12, fg(0.6))}>
                 {firstShown}–{lastShown} із {filtered.length}
               </Box>
               <Box sx={{ display: 'flex', gap: 1 }}>

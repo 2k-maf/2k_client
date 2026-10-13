@@ -32,6 +32,13 @@ const darkPalette = {
   accent: '#fa2b1e',
   /** Accent hover; accent as link text */
   accentHover: '#ff6a5e',
+  /**
+   * Тло головної кнопки під білим текстом. #fa2b1e дає з білим 3.9:1, цей — 4.7:1 (WCAG AA).
+   * Акцент лишається для кілець, ліній і великих цифр.
+   */
+  cta: '#e0261a',
+  /** Тло головної кнопки під курсором: темніше, бо світліший accentHover з білим давав 2.9:1. */
+  ctaHover: '#c8180c',
   /** Secondary accent, warnings */
   ember: '#ff8a5e',
   /** Positive figures */
@@ -56,6 +63,8 @@ const lightPalette: BrandPalette = {
   accent: '#fa2b1e',
   // Тексти посилань на пісочному тлі: #ff6a5e дає контраст 2.4:1, цей — 5.2:1.
   accentHover: '#c8180c',
+  cta: '#e0261a',
+  ctaHover: '#c8180c',
   ember: '#b4461a',
   positive: '#0f7a4a',
   negative: '#c0262d',

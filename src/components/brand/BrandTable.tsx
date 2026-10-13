@@ -32,7 +32,7 @@ type Props<T> = {
   highlightRow?: (row: T) => boolean;
 };
 
-const HEADER_COLOR = fg(0.45);
+const HEADER_COLOR = fg(0.6);
 const ROW_BORDER = `1px solid ${fg(0.07)}`;
 
 function StateRow({ children }: { children: React.ReactNode }) {

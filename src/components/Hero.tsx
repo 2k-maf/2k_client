@@ -56,7 +56,7 @@ export default function Hero() {
               fontFamily: brandFonts.mono,
               fontSize: 11,
               letterSpacing: '0.3em',
-              color: fg(0.45),
+              color: fg(0.6),
               writingMode: 'vertical-rl',
               transform: 'rotate(180deg)',
               textTransform: 'uppercase',
@@ -185,7 +185,7 @@ export default function Hero() {
                   fontFamily: brandFonts.mono,
                   fontSize: 11,
                   letterSpacing: '0.14em',
-                  color: fg(0.5),
+                  color: fg(0.6),
                 }}
               >
                 П'ЄДЕСТАЛ · {seasonLabel}

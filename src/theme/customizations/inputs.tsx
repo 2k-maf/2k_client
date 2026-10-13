@@ -59,17 +59,17 @@ export const inputsCustomizations: Components<Theme> = {
             // Головна CTA бренду Dva Kol'ory — суцільний червоний, без градієнта.
             style: {
               color: '#fff',
-              backgroundColor: brandColors.accent,
+              backgroundColor: brandColors.cta,
               backgroundImage: 'none',
               boxShadow: 'none',
               border: 'none',
               fontWeight: 700,
               '&:hover': {
-                backgroundColor: brandColors.accentHover,
+                backgroundColor: brandColors.ctaHover,
                 boxShadow: 'none',
               },
               '&:active': {
-                backgroundColor: brandColors.accent,
+                backgroundColor: brandColors.cta,
               },
             },
           },

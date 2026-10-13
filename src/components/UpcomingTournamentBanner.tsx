@@ -102,7 +102,7 @@ function DismissButton({ onClick }: { onClick: () => void }) {
       sx={{
         flexShrink: 0,
         p: 0.25,
-        color: fg(0.55),
+        color: fg(0.6),
         '&:hover': {
           color: brandColors.text,
           backgroundColor: fg(0.08),
