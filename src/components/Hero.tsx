@@ -147,9 +147,9 @@ export default function Hero() {
               </Box>
             )}
 
+            {/* Опис видно і на телефоні: без нього новий відвідувач не дізнається, що це за сайт. */}
             <Box
               sx={{
-                display: { xs: 'none', md: 'block' },
                 borderTop: `1px solid ${fg(0.1)}`,
                 pt: 3.5,
                 maxWidth: '56ch',

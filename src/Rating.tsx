@@ -24,6 +24,30 @@ const GRID_COLUMNS = '56px minmax(0,1fr) 148px 128px 72px 84px 84px';
 
 const HEADERS = ['№', 'ГРАВЕЦЬ', 'РЕЙТ', 'ІГРИ', 'ПВ', 'ОП5', 'ДБ'];
 
+/**
+ * Нижче md рядок — картка у два яруси: зверху гравець і рейтинг, знизу статистика.
+ * Раніше таблиця 860px гортала вбік, і на телефоні було видно 3 колонки із 7.
+ */
+const MOBILE_COLUMNS = '28px minmax(0,1.6fr) repeat(3, minmax(0,1fr))';
+
+/** Місце комірки в картці на телефоні. Від md комірка стоїть у своїй колонці таблиці. */
+const mobileCell = (column: string, row: string) => ({
+  gridColumn: { xs: column, md: 'auto' },
+  gridRow: { xs: row, md: 'auto' },
+});
+
+/** Комірка статистики: на телефоні підписи стоять в один рядок, навіть коли значення переноситься. */
+const mobileStatCell = (column: string) => ({ ...mobileCell(column, '2'), alignSelf: { xs: 'start', md: 'auto' } });
+
+/** Підпис статистики на телефоні, де рядка заголовків немає. Читач екрана теж його чує. */
+function MobileLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <Box component="span" sx={{ display: { xs: 'block', md: 'none' }, ...monoSx(10, fg(0.45)), letterSpacing: '0.14em' }}>
+      {children}
+    </Box>
+  );
+}
+
 /** Перші три місця виділені кольором, решта — приглушені. */
 function rankAccent(rank: number) {
   if (rank === 1) return { ring: brandColors.accent, rankColor: brandColors.accent, bg: brandColors.panelAlt };
@@ -114,13 +138,13 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
         }
       >
         <Box sx={{ borderTop: `1px solid ${fg(0.14)}`, overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 860 }}>
+          <Box sx={{ minWidth: { xs: 0, md: 860 } }}>
             {/* Сітка з div: ролі ARIA повертають читачу екрана рядки й колонки таблиці. */}
             <Box role="table" aria-label="Рейтинг гравців клубу">
             <Box
               role="row"
               sx={{
-                display: 'grid',
+                display: { xs: 'none', md: 'grid' },
                 gridTemplateColumns: GRID_COLUMNS,
                 gap: 2,
                 px: 1.5,
@@ -154,8 +178,8 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                   }}
                   sx={{
                     display: 'grid',
-                    gridTemplateColumns: GRID_COLUMNS,
-                    gap: 2,
+                    gridTemplateColumns: { xs: MOBILE_COLUMNS, md: GRID_COLUMNS },
+                    gap: { xs: 1, md: 2 },
                     alignItems: 'center',
                     px: 1.5,
                     py: 2,
@@ -173,6 +197,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                     component="span"
                     role="cell"
                     sx={{
+                      ...mobileCell('1', '1 / span 2'),
                       fontFamily: brandFonts.display,
                       fontWeight: 900,
                       fontSize: 22,
@@ -181,7 +206,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                   >
                     {player.rank}
                   </Box>
-                  <Box role="cell" sx={{ display: 'flex', alignItems: 'center', gap: 1.75, minWidth: 0 }}>
+                  <Box role="cell" sx={{ ...mobileCell('2 / span 3', '1'), display: 'flex', alignItems: 'center', gap: 1.75, minWidth: 0 }}>
                     <Avatar
                       src={player.avatarUrl || undefined}
                       sx={{
@@ -221,7 +246,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                       )}
                     </Box>
                   </Box>
-                  <Box role="cell" sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  <Box role="cell" sx={{ ...mobileCell('5', '1'), display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                     <Box component="span" sx={{ ...monoSx(16, brandColors.text), fontWeight: 700 }}>
                       {formatFloat1(player.rating)}
                     </Box>
@@ -245,16 +270,20 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                       />
                     </Box>
                   </Box>
-                  <Box component="span" role="cell" sx={monoSx(13)}>
+                  <Box component="span" role="cell" sx={{ ...mobileStatCell('2'), ...monoSx(13) }}>
+                    <MobileLabel>{HEADERS[3]}</MobileLabel>
                     {player.totalWins}/{player.totalGames} ({formatFloat1(player.totalWinsRate)}%)
                   </Box>
-                  <Box component="span" role="cell" sx={{ ...monoSx(13), textAlign: 'right' }}>
+                  <Box component="span" role="cell" sx={{ ...mobileStatCell('3'), ...monoSx(13), textAlign: { xs: 'left', md: 'right' } }}>
+                    <MobileLabel>{HEADERS[4]}</MobileLabel>
                     {player.firsDie}
                   </Box>
-                  <Box component="span" role="cell" sx={{ ...monoSx(13), textAlign: 'right' }}>
+                  <Box component="span" role="cell" sx={{ ...mobileStatCell('4'), ...monoSx(13), textAlign: { xs: 'left', md: 'right' } }}>
+                    <MobileLabel>{HEADERS[5]}</MobileLabel>
                     {formatSupportFive(player)}
                   </Box>
-                  <Box component="span" role="cell" sx={{ ...monoSx(13), textAlign: 'right' }}>
+                  <Box component="span" role="cell" sx={{ ...mobileStatCell('5'), ...monoSx(13), textAlign: { xs: 'left', md: 'right' } }}>
+                    <MobileLabel>{HEADERS[6]}</MobileLabel>
                     {formatBonus(player)}
                   </Box>
                 </Box>

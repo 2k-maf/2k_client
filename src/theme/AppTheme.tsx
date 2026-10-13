@@ -43,6 +43,12 @@ export default function AppTheme(props: AppThemeProps) {
             ...surfacesCustomizations,
             MuiCssBaseline: {
               styleOverrides: {
+                // iOS збільшує сторінку, коли фокус потрапляє в поле з текстом менше 16px.
+                // Раніше це блокував maximum-scale=1 у viewport, але він вимикав і
+                // масштабування пальцями. Тепер поле на сенсорному екрані має 16px.
+                '@media (pointer: coarse)': {
+                  '.MuiInputBase-root .MuiInputBase-input': { fontSize: 16 },
+                },
                 // Користувач попросив систему зменшити рух: вимикаємо пульсацію й переходи.
                 '@media (prefers-reduced-motion: reduce)': {
                   '*, *::before, *::after': {

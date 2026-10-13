@@ -33,6 +33,19 @@ import { confirmAction, notify } from "./components/feedback/feedback";
 const filter = createFilterOptions();
 
 /**
+ * Палець ведучого потребує зони дотику ≥44px. Лише для сенсорних екранів:
+ * на десктопі з мишею сітка протоколу лишається щільною, як була.
+ */
+const touchTargetSx = {
+  '@media (pointer: coarse)': {
+    minHeight: 44,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+} as const;
+
+/**
  * Пропси клітинки протоколу, яку натискає ведучий. Клітинка лишається `Grid`,
  * щоб не змінити вигляд, але клавіатура і читач екрана бачать її як кнопку.
  */
@@ -980,6 +993,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                               : color === 'red' ? 'rgba(180, 0, 0, 0.6)'
                               : 'transparent',
                             color: color ? '#fff' : 'inherit',
+                            ...touchTargetSx,
                             borderColor: 'gray !important',
                             borderRight: 'var(--Grid-borderWidth) solid',
                             cursor: 'pointer',
@@ -1108,7 +1122,8 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                               color: activeVoting?.candidates?.[i]?.[1] === j ? '#fff' : 'inherit',
                               // borderColor: 'gray !important',
                               // borderRight: 'var(--Grid-borderWidth) solid',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              ...touchTargetSx,
                             }} size={{xs: 11 / 6}} {...cellButton(`${j === 6 ? '6 і більше' : j} голосів за гравця ${candidate}`, () => voteForPlayer(i, j))}>
                               {j === 6 ? '6+' : j }
                             </Grid>

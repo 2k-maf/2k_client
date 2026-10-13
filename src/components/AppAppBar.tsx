@@ -19,6 +19,8 @@ import RemoteAvatar from './brand/RemoteAvatar';
 import ColorModeToggle from '../theme/ColorModeToggle';
 import Sitemark from './SitemarkIcon';
 import { OutlinedActionIconButton } from './OutlinedActionIconButton';
+import GoogleSignIn from './GoogleSignIn';
+import { googleEnabled } from './GoogleButton';
 import {useAuth} from "../AuthProvider";
 import {useNavigate, useLocation, Link as RouterLink} from "react-router-dom";
 import axios from "../axios";
@@ -503,8 +505,9 @@ export default function AppAppBar() {
                 <Divider sx={{my: 3}}/>
                 {
                   !user && <>
+                        {/* Головна дія виділена, як і на десктопі. Під нею — вхід через Google, як на головній. */}
                         <Box sx={drawerActionSx}>
-                            <Button component={RouterLink} {...navLink('/register', closeDrawer)} color="primary" variant="outlined" fullWidth>
+                            <Button component={RouterLink} {...navLink('/register', closeDrawer)} color="primary" variant="contained" fullWidth>
                                 Зареєструватися
                             </Button>
                         </Box>
@@ -513,6 +516,11 @@ export default function AppAppBar() {
                                 Увійти
                             </Button>
                         </Box>
+                        {googleEnabled && (
+                          <Box sx={drawerActionSx}>
+                            <GoogleSignIn onSignedIn={closeDrawer} />
+                          </Box>
+                        )}
                     </>
                 }
                 {
