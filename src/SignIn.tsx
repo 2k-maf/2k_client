@@ -7,7 +7,7 @@ import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
 import Link from '@mui/material/Link';
 import TextField from '@mui/material/TextField';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import ForgotPassword from './components/ForgotPassword';
 import { googleEnabled } from './components/GoogleButton';
 import GoogleSignIn, { ACCOUNT_CONFLICT_MESSAGE, isAccountConflict } from './components/GoogleSignIn';
@@ -18,6 +18,7 @@ import { brandColors, fg } from './theme/brand';
 import axios from './axios';
 import { normalizeAuthEmail } from './utils/email';
 import { useAuth } from './AuthProvider';
+import { notify } from './components/feedback/feedback';
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
   const [emailError, setEmailError] = React.useState(false);
@@ -25,8 +26,12 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
   const { setToken } = useAuth();
   const navigate = useNavigate();
+  // PrivateRoute передає сторінку, яку користувач відкривав до входу.
+  const from = (useLocation().state as { from?: string } | null)?.from || '/';
+  const goToTarget = () => navigate(from, { replace: true });
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -38,21 +43,26 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // Без перевірки тут запит ішов навіть з порожньою формою.
+    if (submitting || !validateInputs()) return;
     const email = document.getElementById('email') as HTMLInputElement;
     const password = document.getElementById('password') as HTMLInputElement;
 
-    // Тип акаунта (гравець чи клуб) сервер визначає сам за email.
-    await axios.post('/auth/login', {
-      email: normalizeAuthEmail(email.value),
-      password: password.value,
-    }).then(({ data }) => {
-      const token = data?.token;
-      token && setToken(token)
-      navigate('/')
-    }).catch((e) => {
+    setSubmitting(true);
+    try {
+      // Тип акаунта (гравець чи клуб) сервер визначає сам за email.
+      const { data } = await axios.post('/auth/login', {
+        email: normalizeAuthEmail(email.value),
+        password: password.value,
+      });
+      data?.token && setToken(data.token);
+      goToTarget();
+    } catch (e) {
       console.error(e);
-      alert(isAccountConflict(e) ? ACCOUNT_CONFLICT_MESSAGE : 'Некоректний логін або пароль');
-    });
+      notify.error(isAccountConflict(e) ? ACCOUNT_CONFLICT_MESSAGE : 'Некоректний логін або пароль');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const validateInputs = () => {
@@ -73,7 +83,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
     if (!password.value || password.value.length < 6) {
       setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
+      setPasswordErrorMessage('Пароль має містити щонайменше 6 символів');
       isValid = false;
     } else {
       setPasswordError(false);
@@ -134,7 +144,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
+              loading={submitting}
               sx={{ py: 1.75, fontSize: 15 }}
             >
               Увійти
@@ -143,7 +153,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           {googleEnabled && (
             <>
               <Divider sx={{ fontSize: 13, color: fg(0.6) }}>або</Divider>
-              <GoogleSignIn onSignedIn={() => navigate('/')} />
+              <GoogleSignIn onSignedIn={goToTarget} />
             </>
           )}
           <Box
