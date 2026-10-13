@@ -12,7 +12,8 @@
     "/user",
     "/user/*",
     "/users",
-    "/avatars/*"
+    "/avatars/*",
+    "/static/*"
   ],
   "exclude": []
 }

@@ -105,11 +105,39 @@ test('аватар: запис заборонено', async () => {
     assert.equal(calls.length, 0);
 });
 
-test('_routes.json містить усі кореневі маршрути API й аватари', () => {
+test('_routes.json містить усі кореневі маршрути API, аватари й /static/*', () => {
     const routes = JSON.parse(readFileSync(new URL('../public/_routes.json', import.meta.url), 'utf8'));
-    for (const p of ['/auth/*', '/clubs', '/club/*', '/user', '/user/*', '/users', '/tournaments', '/tournament/*', '/public/*', '/avatars/*']) {
+    for (const p of ['/auth/*', '/clubs', '/club/*', '/user', '/user/*', '/users', '/tournaments', '/tournament/*', '/public/*', '/avatars/*', '/static/*']) {
         assert.ok(routes.include.includes(p), `немає ${p}`);
     }
-    // Статика не має викликати функцію — інакше згорає безкоштовний ліміт.
-    for (const p of ['/*', '/static/*', '/']) assert.ok(!routes.include.includes(p), `зайвий ${p}`);
+    // Решта статики (index.html, картинки з public/) не має викликати функцію —
+    // інакше згорає безкоштовний ліміт. /static/* — виняток, див. serveStatic.
+    for (const p of ['/*', '/']) assert.ok(!routes.include.includes(p), `зайвий ${p}`);
+});
+
+test('static: справжній файл віддається як є, з immutable і без запиту в Lambda', async () => {
+    const env = { ...ENV, ASSETS: { fetch: async () => new Response('console.log(1)', {
+        headers: { 'content-type': 'application/javascript', 'cache-control': 'public, max-age=31536000, immutable' },
+    }) } };
+    const res = await handle(new Request('https://site.test/static/js/main.abc.js'), env, CTX);
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('content-type'), 'application/javascript');
+    assert.equal(res.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+    assert.equal(await res.text(), 'console.log(1)');
+    assert.equal(calls.length, 0);
+});
+
+test('static: SPA-fallback на відсутній бандл стає 404 без кешу', async () => {
+    // ENV.ASSETS віддає index.html на будь-який шлях — як Pages у режимі SPA.
+    const res = await handle(new Request('https://site.test/static/js/main.missing.js'), ENV, CTX);
+    assert.equal(res.status, 404);
+    assert.equal(res.headers.get('cache-control'), 'no-store');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(calls.length, 0);
+});
+
+test('static: 304 без content-type проходить як є', async () => {
+    const env = { ...ENV, ASSETS: { fetch: async () => new Response(null, { status: 304 }) } };
+    const res = await handle(new Request('https://site.test/static/css/main.abc.css'), env, CTX);
+    assert.equal(res.status, 304);
 });
