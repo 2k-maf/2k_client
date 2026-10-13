@@ -37,7 +37,7 @@ const ROW_BORDER = `1px solid ${fg(0.07)}`;
 
 function StateRow({ children }: { children: React.ReactNode }) {
   return (
-    <Box sx={{ px: 1.5, py: 5, textAlign: 'center', ...monoSx(13, HEADER_COLOR) }}>{children}</Box>
+    <Box role="status" sx={{ px: 1.5, py: 5, textAlign: 'center', ...monoSx(13, HEADER_COLOR) }}>{children}</Box>
   );
 }
 
@@ -71,7 +71,10 @@ export default function BrandTable<T>({
   return (
     <Box sx={{ borderTop: `1px solid ${fg(0.14)}`, overflowX: 'auto' }}>
       <Box sx={{ minWidth }}>
+        {/* Сітка з div: ролі ARIA повертають читачу екрана рядки й колонки таблиці. */}
+        <Box role="table">
         <Box
+          role="row"
           sx={{
             display: 'grid',
             gridTemplateColumns: gridColumns,
@@ -84,21 +87,18 @@ export default function BrandTable<T>({
           }}
         >
           {columns.map((column) => (
-            <Box key={column.key} component="span" sx={{ textAlign: column.align ?? 'left' }}>
+            <Box key={column.key} component="span" role="columnheader" sx={{ textAlign: column.align ?? 'left' }}>
               {column.header}
             </Box>
           ))}
         </Box>
-
-        {loading && <StateRow>Завантаження…</StateRow>}
-        {!loading && rows.length === 0 && <StateRow>{emptyText}</StateRow>}
 
         {!loading &&
           pageRows.map((row) => (
             <Box
               key={getRowKey(row)}
               // Клавіатура має відкривати рядок так само, як миша.
-              role={onRowClick ? 'button' : undefined}
+              role="row"
               tabIndex={onRowClick ? 0 : undefined}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={
@@ -134,6 +134,7 @@ export default function BrandTable<T>({
                 <Box
                   key={column.key}
                   component="span"
+                  role="cell"
                   sx={{
                     textAlign: column.align ?? 'left',
                     minWidth: 0,
@@ -146,6 +147,10 @@ export default function BrandTable<T>({
               ))}
             </Box>
           ))}
+        </Box>
+
+        {loading && <StateRow>Завантаження…</StateRow>}
+        {!loading && rows.length === 0 && <StateRow>{emptyText}</StateRow>}
 
         {paginated && !loading && rows.length > 0 && (
           <Box

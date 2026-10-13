@@ -46,16 +46,15 @@ const roleStatLine = (icon: React.ReactNode, wins: number, games: number, rate: 
 );
 
 export default function Rating(props: { disableCustomTheme?: boolean }) {
-  const { players, podium, stats } = useClubRating();
+  const { players, podium, stats, loading } = useClubRating();
   const seasonLabel = formatSeasonLabel(stats.periodName).toUpperCase();
   const [infoAnchor, setInfoAnchor] = useState<null | HTMLElement>(null);
   const [infoPlayer, setInfoPlayer] = useState<any>(null);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(0);
 
-  const openInfo = useCallback((e: React.MouseEvent<HTMLElement>, row: any) => {
-    e.stopPropagation();
-    setInfoAnchor(e.currentTarget);
+  const openInfo = useCallback((anchor: HTMLElement, row: any) => {
+    setInfoAnchor(anchor);
     setInfoPlayer(row);
   }, []);
 
@@ -116,7 +115,10 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
       >
         <Box sx={{ borderTop: `1px solid ${fg(0.14)}`, overflowX: 'auto' }}>
           <Box sx={{ minWidth: 860 }}>
+            {/* Сітка з div: ролі ARIA повертають читачу екрана рядки й колонки таблиці. */}
+            <Box role="table" aria-label="Рейтинг гравців клубу">
             <Box
+              role="row"
               sx={{
                 display: 'grid',
                 gridTemplateColumns: GRID_COLUMNS,
@@ -129,19 +131,27 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
               }}
             >
               {HEADERS.map((h, i) => (
-                <Box key={h} component="span" sx={{ textAlign: i >= 4 ? 'right' : 'left' }}>
+                <Box key={h} component="span" role="columnheader" sx={{ textAlign: i >= 4 ? 'right' : 'left' }}>
                   {h}
                 </Box>
               ))}
             </Box>
 
-            {pageRows.map((player) => {
+            {!loading && pageRows.map((player) => {
               const accent = rankAccent(player.rank);
               const title = titleFor(player);
               return (
                 <Box
                   key={player.id}
-                  onClick={(e) => openInfo(e, player)}
+                  role="row"
+                  // Рядок відкриває статистику за ролями — і мишею, і з клавіатури.
+                  tabIndex={0}
+                  onClick={(e) => openInfo(e.currentTarget, player)}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    openInfo(e.currentTarget, player);
+                  }}
                   sx={{
                     display: 'grid',
                     gridTemplateColumns: GRID_COLUMNS,
@@ -153,10 +163,15 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                     borderBottom: `1px solid ${fg(0.07)}`,
                     background: accent.bg,
                     '&:hover': { background: brandColors.rowHover },
+                    '&:focus-visible': {
+                      outline: `2px solid ${brandColors.accentHover}`,
+                      outlineOffset: '-2px',
+                    },
                   }}
                 >
                   <Box
                     component="span"
+                    role="cell"
                     sx={{
                       fontFamily: brandFonts.display,
                       fontWeight: 900,
@@ -166,7 +181,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                   >
                     {player.rank}
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75, minWidth: 0 }}>
+                  <Box role="cell" sx={{ display: 'flex', alignItems: 'center', gap: 1.75, minWidth: 0 }}>
                     <Avatar
                       src={player.avatarUrl || undefined}
                       sx={{
@@ -206,7 +221,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                       )}
                     </Box>
                   </Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  <Box role="cell" sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                     <Box component="span" sx={{ ...monoSx(16, brandColors.text), fontWeight: 700 }}>
                       {formatFloat1(player.rating)}
                     </Box>
@@ -230,23 +245,31 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                       />
                     </Box>
                   </Box>
-                  <Box component="span" sx={monoSx(13)}>
+                  <Box component="span" role="cell" sx={monoSx(13)}>
                     {player.totalWins}/{player.totalGames} ({formatFloat1(player.totalWinsRate)}%)
                   </Box>
-                  <Box component="span" sx={{ ...monoSx(13), textAlign: 'right' }}>
+                  <Box component="span" role="cell" sx={{ ...monoSx(13), textAlign: 'right' }}>
                     {player.firsDie}
                   </Box>
-                  <Box component="span" sx={{ ...monoSx(13), textAlign: 'right' }}>
+                  <Box component="span" role="cell" sx={{ ...monoSx(13), textAlign: 'right' }}>
                     {formatSupportFive(player)}
                   </Box>
-                  <Box component="span" sx={{ ...monoSx(13), textAlign: 'right' }}>
+                  <Box component="span" role="cell" sx={{ ...monoSx(13), textAlign: 'right' }}>
                     {formatBonus(player)}
                   </Box>
                 </Box>
               );
             })}
+            </Box>
 
-            <Box
+            {/* Той самий стан, що й у BrandTable: без нього під час завантаження сторінка показувала «0—0 З 0». */}
+            {(loading || filtered.length === 0) && (
+              <Box role="status" sx={{ px: 1.5, py: 5, textAlign: 'center', ...monoSx(13, fg(0.45)) }}>
+                {loading ? 'Завантаження…' : query ? 'Гравця не знайдено.' : 'Рейтинг поки порожній.'}
+              </Box>
+            )}
+
+            {!loading && filtered.length > 0 && <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -256,17 +279,18 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
               }}
             >
               <Box component="span" sx={monoSx(12, fg(0.45))}>
-                {firstShown}—{lastShown} З {filtered.length}
+                {firstShown}–{lastShown} із {filtered.length}
               </Box>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 {[
-                  { label: '‹', disabled: safePage === 0, go: () => setPage(safePage - 1) },
-                  { label: '›', disabled: safePage >= pageCount - 1, go: () => setPage(safePage + 1) },
+                  { label: '‹', name: 'Попередня сторінка', disabled: safePage === 0, go: () => setPage(safePage - 1) },
+                  { label: '›', name: 'Наступна сторінка', disabled: safePage >= pageCount - 1, go: () => setPage(safePage + 1) },
                 ].map((btn) => (
                   <IconButton
                     key={btn.label}
                     onClick={btn.go}
                     disabled={btn.disabled}
+                    aria-label={btn.name}
                     sx={{
                       width: 36,
                       height: 36,
@@ -280,7 +304,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                   </IconButton>
                 ))}
               </Box>
-            </Box>
+            </Box>}
           </Box>
         </Box>
 
