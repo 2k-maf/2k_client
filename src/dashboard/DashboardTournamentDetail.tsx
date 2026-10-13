@@ -23,6 +23,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import { dateInputValueFromApi } from '../utils/vancouverDate';
 import { downloadSeatingAsPng } from '../utils/seatingPngExport';
 import { DEFAULT_TOURNAMENT_YOUTUBE_URL } from '../constants/youtube';
+import { confirmAction, notify } from '../components/feedback/feedback';
 
 /** Число в моно-шрифті — колонки рейтингу мають вирівнюватись по розряду. */
 const num = (value: any) => (
@@ -193,7 +194,7 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
       } catch (e: any) {
         console.error(e);
         setAutosaveState('error');
-        alert(e?.response?.data?.error || 'Не вдалося зберегти зміни');
+        notify.error(e?.response?.data?.error || 'Не вдалося зберегти зміни');
       }
     }, 750);
     return () => window.clearTimeout(t);
@@ -214,25 +215,25 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
       await axios.post(`/club/tournament/${id}/start`);
       await refresh();
     } catch (e: any) {
-      alert(e?.response?.data?.error || 'Помилка');
+      notify.error(e?.response?.data?.error || 'Помилка');
     }
   };
 
   const completeTournament = async () => {
     if (!id || !isClub) return;
-    if (!confirm('Завершити турнір?')) return;
+    if (!(await confirmAction('Завершити турнір?', 'Завершити'))) return;
     try {
       await axios.post(`/club/tournament/${id}/complete`);
       await refresh();
     } catch (e: any) {
-      alert(e?.response?.data?.error || 'Помилка');
+      notify.error(e?.response?.data?.error || 'Помилка');
     }
   };
 
   const onGenerateSeating = async () => {
     if (!id || !isClub || !tournament) return;
     if (participantRows.filter((r) => r.u1).length !== 10) {
-      alert('Для розсадки потрібно рівно 10 команд/учасників (заповніть усі рядки).');
+      notify.error('Для розсадки потрібно рівно 10 команд/учасників (заповніть усі рядки).');
       return;
     }
     const participants = participantRows
@@ -247,13 +248,13 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
         error?: string;
       }>(`/club/tournament/${id}/seating/generate`, { participants });
       await refresh();
-      alert(
+      notify.success(
         data.relaxedConstraints
           ? 'Розсадку збережено на сервері. Для однієї або кількох ігор не вдалося уникнути повтору того ж місця — там використано випадкову перестановку.'
           : 'Розсадку згенеровано на сервері та збережено'
       );
     } catch (e: any) {
-      alert(e?.response?.data?.error || 'Помилка');
+      notify.error(e?.response?.data?.error || 'Помилка');
     }
   };
 
@@ -264,7 +265,7 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
       await downloadSeatingAsPng(el, `seating-${id}.png`);
     } catch (e) {
       console.error(e);
-      alert('Не вдалося зробити скріншот');
+      notify.error('Не вдалося зробити скріншот');
     }
   };
 

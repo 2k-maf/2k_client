@@ -7,6 +7,7 @@ import { feedbackCustomizations } from './customizations/feedback';
 import { navigationCustomizations } from './customizations/navigation';
 import { surfacesCustomizations } from './customizations/surfaces';
 import { colorSchemes, typography, shadows, shape } from './themePrimitives';
+import { FeedbackHost } from '../components/feedback/feedback';
 
 interface AppThemeProps {
   children: React.ReactNode;
@@ -45,7 +46,12 @@ export default function AppTheme(props: AppThemeProps) {
         });
   }, [disableCustomTheme, themeComponents]);
   if (disableCustomTheme) {
-    return <React.Fragment>{children}</React.Fragment>;
+    return (
+      <React.Fragment>
+        {children}
+        <FeedbackHost />
+      </React.Fragment>
+    );
   }
   return (
     <ThemeProvider
@@ -59,6 +65,7 @@ export default function AppTheme(props: AppThemeProps) {
       disableTransitionOnChange
     >
       {children}
+      <FeedbackHost />
     </ThemeProvider>
   );
 }

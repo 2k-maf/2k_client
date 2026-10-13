@@ -18,6 +18,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { Link } from 'react-router-dom';
 import axios from '../axios';
 import { resolveMediaUrl } from '../utils/mediaUrl';
+import { notify } from './feedback/feedback';
 
 type PublicPlayer = { id: string; nickname: string; avatarUrl: string | null };
 type PublicSlot = { seatIndex: number; players: PublicPlayer[] };
@@ -389,7 +390,7 @@ export default function TournamentCheerTab({ tournamentId, slots, currentUserId,
       setMessage('');
       await load();
     } catch (e: any) {
-      alert(e?.response?.data?.error || e?.message || 'Помилка відправки');
+      notify.error(e?.response?.data?.error || e?.message || 'Помилка відправки');
     } finally {
       setSending(false);
     }

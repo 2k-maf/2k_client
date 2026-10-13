@@ -28,6 +28,7 @@ import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {useAuth} from "./AuthProvider";
 import {vancouverTodayYmd} from "./utils/vancouverDate";
+import { confirmAction, notify } from "./components/feedback/feedback";
 
 const filter = createFilterOptions();
 
@@ -252,7 +253,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   /** Підтвердження + очищення localStorage; для рейтингової гри знову тягнемо розсадку вечора / останньої гри. */
   const resetFormWithConfirm = async () => {
     if (readOnlyTournament || tournamentHidden || !formCanReset) return;
-    if (!window.confirm('Скинути форму? Локальний кеш гри в браузері буде очищено.')) {
+    if (!(await confirmAction('Скинути форму? Локальний кеш гри в браузері буде очищено.', 'Скинути'))) {
       return;
     }
     resetGame();
@@ -275,7 +276,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const setPlayerNickname = (n: number, title: string, id: string) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (gameLockedAfterWin && !(isTournamentGame && players[n]?.pendingTeamIds?.length)) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     const next = {...players[n], title, id};
@@ -287,7 +288,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     if (readOnlyTournament || tournamentHidden) return;
     if (!n) return;
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     setPlayers({...players, [n]: {...players[n], warnings: (players[n].warnings + 1) % 5}});
@@ -299,7 +300,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       return setHideRoles(!hideRoles);
     }
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     const currentRole = players[n].role || 0;
@@ -312,7 +313,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const killPlayer = (n: number) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     const hasFirstKilled = Object.values(players).some((p: any) => p.n !== n && p.killed === 1);
@@ -383,7 +384,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const supportFive = (n: number, i: number) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     const current = {...(players[n].bestTurn || {})};
@@ -410,7 +411,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const promoteVote = (n: number) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     if (!n) return;
@@ -431,7 +432,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const voteForPlayer = (candidateIndex: number, votes: number) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (gameLockedAfterWin) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     if (!activeVoting) return;
@@ -448,15 +449,15 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const win = (winner: string) => {
     if (readOnlyTournament || tournamentHidden) return;
     if (winState && !editingSaved) {
-      alert('Гра закінчена');
+      notify.info('Гра закінчена');
       return;
     }
     if (rolesPool.length !== 4) {
-      alert('Не всім розподілено ролі');
+      notify.error('Не всім розподілено ролі');
       return;
     }
     if (Object.values(players).filter((player: any) => player.title).length < 10) {
-      alert('Не всім розподілено нікнейми');
+      notify.error('Не всім розподілено нікнейми');
       return
     }
     if (!isTournamentGame) {
@@ -464,7 +465,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         (seat) => players[seat]?.title && !String(players[seat].title).startsWith('Гість') && !players[seat].id
       );
       if (missingId) {
-        alert('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
+        notify.error('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
         return;
       }
     }
@@ -496,15 +497,16 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         (seat) => effective[seat]?.title && !String(effective[seat].title).startsWith('Гість') && !effective[seat].id
       );
       if (missingId) {
-        alert('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
+        notify.error('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
         return;
       }
     }
-    if (!confirm(
+    if (!(await confirmAction(
       editingSaved
         ? (isTournamentGame ? 'Зберегти зміни в цій грі турніру?' : 'Зберегти зміни в цій грі?')
-        : 'Відправити результати гри?'
-    )) return;
+        : 'Відправити результати гри?',
+      editingSaved ? 'Зберегти' : 'Відправити',
+    ))) return;
     const playersPayload = Object.values(effective).map((p: any) => ({
       ...p,
       bestTurn: Object.entries(p.bestTurn || {}).map(([seat, color]) => ({n: Number(seat), color})),
@@ -521,11 +523,11 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         if (editingSaved) {
           await axios.put('/club/tournament-game', payload);
           if (tournamentStorageKey) localStorage.removeItem(tournamentStorageKey);
-          alert('Зміни збережено');
+          notify.success('Зміни збережено');
         } else {
           await axios.post('/club/tournament-game', payload);
           if (tournamentStorageKey) localStorage.removeItem(tournamentStorageKey);
-          alert('Гру збережено');
+          notify.success('Гру збережено');
           try {
             const { data: tour } = await axios.get(`/tournament/${tournamentId}`);
             if (tour.nextGameIndex != null) {
@@ -538,7 +540,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
           }
         }
       } catch (e: any) {
-        alert(e?.response?.data?.error || e?.message || 'Помилка збереження');
+        notify.error(e?.response?.data?.error || e?.message || 'Помилка збереження');
       }
       return;
     }
@@ -550,16 +552,16 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         await axios.post('/club/rating-game', payload);
       }
     } catch (e: any) {
-      alert(e?.response?.data?.error || e?.message || 'Помилка збереження');
+      notify.error(e?.response?.data?.error || e?.message || 'Помилка збереження');
       return;
     }
     invalidateClubRatingCache();
     if (isEditingRatingGame) {
-      alert('Зміни збережено');
+      notify.success('Зміни збережено');
       navigate('/profile/hosts');
       return;
     }
-    alert('Гру збережено');
+    notify.success('Гру збережено');
     resetGame();
   }
 
@@ -608,7 +610,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
           }
 
           if (user?.authType !== 'Клуб') {
-            alert('Проводити гру може лише клуб');
+            notify.error('Проводити гру може лише клуб');
             navigate(`/profile/tournaments/${tournamentId}`);
             return;
           }
@@ -623,7 +625,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             return;
           }
           if (tour.status !== 'in_progress') {
-            alert('Турнір не активний');
+            notify.error('Турнір не активний');
             navigate(`/profile/tournaments/${tournamentId}`);
             return;
           }
@@ -691,7 +693,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       } catch (e: any) {
         console.error(e);
         if (isEditingRatingGame) {
-          alert(e?.response?.data?.error || 'Гру не вдалося відкрити');
+          notify.error(e?.response?.data?.error || 'Гру не вдалося відкрити');
           navigate('/profile/hosts');
         }
       }

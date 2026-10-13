@@ -26,6 +26,7 @@ import { brand } from '../theme/themePrimitives';
 import { brandColors, brandFonts, withAlpha } from '../theme/brand';
 import Typography from "@mui/material/Typography";
 import {useEffect, useMemo} from "react";
+import { confirmAction } from './feedback/feedback';
 
 /** Кільце навколо аватара — інакше фото зливається зі смугою хедера. Літера-заглушка — кольору тексту смуги. */
 const headerAvatarSx = {
@@ -175,9 +176,9 @@ export default function AppAppBar() {
     setOpen(newOpen);
   };
 
-  const navigateWithConfirm = (path: string)=>  {
+  const navigateWithConfirm = async (path: string) => {
     if (path === '/new-game-rating' && window.location.pathname.endsWith('new-game-rating')) {
-      if (!confirm("Ви починаєте нову гру. Дані діючої рейтингової гри не будуть збережені.")) return;
+      if (!(await confirmAction('Ви починаєте нову гру. Дані діючої рейтингової гри не будуть збережені.', 'Почати нову'))) return;
       localStorage.removeItem('ratingGameState');
       window.location.reload();
       return;
