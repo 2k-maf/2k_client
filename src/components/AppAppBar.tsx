@@ -27,6 +27,7 @@ import axios from "../axios";
 import { brand } from '../theme/themePrimitives';
 import { brandColors, brandFonts, withAlpha } from '../theme/brand';
 import Typography from "@mui/material/Typography";
+import useMediaQuery from '@mui/material/useMediaQuery';
 import {useEffect} from "react";
 import { confirmAction } from './feedback/feedback';
 
@@ -86,6 +87,8 @@ const StyledToolbar = styled(Toolbar)(({theme}) => ({
 
 /** Тривалість промови гравця на таймері ведучого, секунди. */
 const SPEECH_SECONDS = 60;
+/** Коротка промова: виправдання на голосуванні. Запускає окрема кнопка «30». */
+const SHORT_SPEECH_SECONDS = 30;
 
 const liveDotPulse = keyframes`
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -163,8 +166,8 @@ export default function AppAppBar() {
     return () => window.clearInterval(t);
   }, [fetchLiveTournament]);
 
-  const startStopWatch = () => {
-    setStopWatch(SPEECH_SECONDS);
+  const startStopWatch = (seconds = SPEECH_SECONDS) => {
+    setStopWatch(seconds);
     setStopWatchRunning(true);
   }
 
@@ -175,6 +178,9 @@ export default function AppAppBar() {
   const isActive = (route: string) => pathname === route || pathname.startsWith(`${route}/`);
   const navVariant = (route: string) => (isActive(route) ? 'outlined' : 'text');
   const isGameRoute = isActive('/new-game') || isActive('/new-game-rating');
+  // На сторінці гри шапка вміщує таймер і кнопку «30». На вузькому екрані для них
+  // бракує місця, тож текстова назва поруч зі знаком ховається.
+  const isNarrow = useMediaQuery('(max-width:599.95px)', { noSsr: true });
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -243,7 +249,7 @@ export default function AppAppBar() {
               gap: isGameRoute ? 1 : 3,
             }}
           >
-            <Sitemark variant="band" size={isGameRoute ? 26 : 30}/>
+            <Sitemark variant="band" size={isGameRoute ? 26 : 30} withWordmark={!(isGameRoute && isNarrow)}/>
             <Box component="nav" aria-label="Головна навігація" sx={{display: 'none', '@media (min-width: 940px)': {display: 'flex'}, gap: 0.5, overflow: 'hidden', '& .MuiButton-root': {whiteSpace: 'nowrap', minWidth: 'auto', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis'}}}>
               <Button startIcon={<StarIcon/>} variant={navVariant('/clubs-rating')}
                       component={RouterLink} {...navLink('/clubs-rating')}
@@ -340,11 +346,13 @@ export default function AppAppBar() {
             </Box>
           </Box>
           {isGameRoute ? (
+            <Box sx={{ flex: 1, alignSelf: 'stretch', display: 'flex', alignItems: 'center', minWidth: 0 }}>
+            {/* Велике число — 60 с, як і раніше. Зона дотику — уся вільна ширина шапки. */}
             <Box
               role="button"
               tabIndex={0}
-              aria-label="Скинути таймер на 60 секунд"
-              onClick={startStopWatch}
+              aria-label={`Запустити таймер на ${SPEECH_SECONDS} секунд`}
+              onClick={() => startStopWatch()}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
@@ -377,6 +385,16 @@ export default function AppAppBar() {
               >
                 {stopWatchFmt}
               </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              size="small"
+              aria-label={`Запустити таймер на ${SHORT_SPEECH_SECONDS} секунд`}
+              onClick={() => startStopWatch(SHORT_SPEECH_SECONDS)}
+              sx={{ minWidth: 44, height: 36, px: 1, flexShrink: 0, fontFamily: brandFonts.mono, fontWeight: 700 }}
+            >
+              {SHORT_SPEECH_SECONDS}
+            </Button>
             </Box>
           ) : null}
           <Box
