@@ -838,6 +838,15 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                   { term: <HeartBrokenIcon titleAccess="Перший вбитий" sx={{ fontSize: 16 }} />, text: 'перший вбитий' },
                 ]}
               />
+              {/* Підписи ролей беремо з RolesPoolMap, тож легенда не розійдеться з колонкою «Р». */}
+              <AbbrLegend
+                items={[
+                  { term: `${RolesPoolMap[1]}, ${RolesPoolMap[2]}`, text: 'мафія' },
+                  { term: RolesPoolMap[3], text: 'дон мафії' },
+                  { term: RolesPoolMap[4], text: 'шериф' },
+                  { term: '—', text: 'порожня клітинка: мирний' },
+                ]}
+              />
             </Box>
           </Popover>
           {showResetButton && (
