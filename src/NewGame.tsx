@@ -7,7 +7,7 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import AppTheme from "./theme/AppTheme";
-import { brandColors, brandFonts, fg } from "./theme/brand";
+import { brandColors, brandFonts, fg, withAlpha } from "./theme/brand";
 import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
@@ -966,7 +966,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                         </Grid>
                         <Grid sx={{
                           p: n === 0 ? '.5rem' : '.1rem',
-                          backgroundColor: players[n]?.warnings === 3 ? 'rgba(255,165,0, 0.2)' : players[n]?.warnings === 4 ? 'rgba(255,0,0, 0.3)' : 'transparent',
+                          backgroundColor: players[n]?.warnings === 3 ? withAlpha(brandColors.ember, 0.2) : players[n]?.warnings === 4 ? withAlpha(brandColors.negative, 0.3) : 'transparent',
                           cursor: n !== 0 ? 'pointer' : 'default'
                         }} {...(n !== 0 && cellButton(`Фол гравцю ${n}, зараз ${players[n].warnings}`, () => addWarning(n)))}
                           size={{xs: 1.75, sm: 2, lg: 1.5}}>
@@ -984,17 +984,18 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                 }
                 {
                   n !== 0 && players[n]?.killed === 1 && !killedShowInfo &&
-                    <Grid container columns={12} sx={{p: '.3rem', backgroundColor: 'rgba(200, 200, 210, 0.25)'}} size={{xs: 10.75, sm: 11.5, lg: 11.5}}>
+                    <Grid container columns={12} sx={{p: '.3rem', backgroundColor: fg(0.12)}} size={{xs: 10.75, sm: 11.5, lg: 11.5}}>
                       {
                         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => {
                           const color = players[n].bestTurn?.[i];
                           return <Grid key={i} sx={{
-                            backgroundColor: color === 'black' ? 'rgba(0, 0, 0, 1)'
-                              : color === 'red' ? 'rgba(180, 0, 0, 0.6)'
+                            // Чорна й червона — кольори карт гри, а не теми. Червона — акцент бренду.
+                            backgroundColor: color === 'black' ? '#000'
+                              : color === 'red' ? brandColors.accent
                               : 'transparent',
                             color: color ? '#fff' : 'inherit',
                             ...touchTargetSx,
-                            borderColor: 'gray !important',
+                            borderColor: `${fg(0.3)} !important`,
                             borderRight: 'var(--Grid-borderWidth) solid',
                             cursor: 'pointer',
                             fontWeight: color ? 700 : 400,
@@ -1024,7 +1025,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                    ))}>
                   {winState && n !== 0
                     ? (players[n].bonusPoints
-                      ? <span style={{fontSize: '0.7rem', color: players[n].bonusPoints > 0 ? '#4caf50' : '#f44336'}}>{players[n].bonusPoints > 0 ? '+' : ''}{players[n].bonusPoints}</span>
+                      ? <span style={{fontSize: '0.7rem', color: players[n].bonusPoints > 0 ? brandColors.positive : brandColors.negative}}>{players[n].bonusPoints > 0 ? '+' : ''}{players[n].bonusPoints}</span>
                       : <ThumbUpIcon sx={{fontSize: '0.9rem', opacity: 0.5}}/>)
                     : n === 0
                       ? <HeartBrokenIcon/>
@@ -1117,9 +1118,9 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                             return <Grid key={j} sx={{
                               p: '.3rem',
                               fontStyle: 'italic',
-                              backgroundColor: activeVoting?.candidates?.[i]?.[1] === j ? 'rgb(0, 54, 107)' : 'transparent',
-                              // Темно-синя комірка: успадкований текст світлої теми на ній не читається.
-                              color: activeVoting?.candidates?.[i]?.[1] === j ? '#fff' : 'inherit',
+                              // Обрана кількість голосів — інверсія теми: контрастна і в темній, і в світлій схемі.
+                              backgroundColor: activeVoting?.candidates?.[i]?.[1] === j ? brandColors.text : 'transparent',
+                              color: activeVoting?.candidates?.[i]?.[1] === j ? brandColors.bg : 'inherit',
                               // borderColor: 'gray !important',
                               // borderRight: 'var(--Grid-borderWidth) solid',
                               cursor: 'pointer',
