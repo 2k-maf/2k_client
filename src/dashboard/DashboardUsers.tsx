@@ -2,51 +2,31 @@ import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
+import Switch from '@mui/material/Switch';
+import GavelIcon from '@mui/icons-material/Gavel';
 import AppTheme from '../theme/AppTheme';
 import ProfilePage from '../components/brand/ProfilePage';
 import BrandTable, { BrandColumn } from '../components/brand/BrandTable';
 import BrandSearchField from '../components/brand/BrandSearchField';
 import axios from '../axios';
-import { brandFonts, monoSx } from '../theme/brand';
+import { brandColors, brandFonts, monoSx } from '../theme/brand';
 
 type ClubMember = {
   id: number;
+  _id: string;
   nickname?: string;
   name?: string;
   email?: string;
+  /** Значок ведучого: учасник може проводити рейтингові ігри клубу. */
+  isHost?: boolean;
 };
-
-const COLUMNS: BrandColumn<ClubMember>[] = [
-  {
-    key: 'nickname',
-    header: 'НІК',
-    width: 'minmax(0,1fr)',
-    render: (member) => (
-      <Box
-        component="span"
-        sx={{ fontFamily: brandFonts.display, fontWeight: 900, fontSize: 18, letterSpacing: '-0.01em' }}
-      >
-        {member.nickname?.trim()}
-      </Box>
-    ),
-  },
-  { key: 'name', header: "ІМ'Я", width: 'minmax(0,1fr)' },
-  {
-    key: 'email',
-    header: 'EMAIL',
-    width: 'minmax(0,1.2fr)',
-    render: (member) => (
-      <Box component="span" sx={monoSx(13)}>
-        {member.email || '—'}
-      </Box>
-    ),
-  },
-];
 
 export default function DashboardUsers(props: { disableCustomTheme?: boolean }) {
   const [members, setMembers] = useState<ClubMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  /** Учасник, чий значок зараз зберігається: перемикач блокується до відповіді сервера. */
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -70,6 +50,67 @@ export default function DashboardUsers(props: { disableCustomTheme?: boolean }) 
     );
   }, [members, query]);
 
+  const columns = useMemo<BrandColumn<ClubMember>[]>(() => {
+    const toggleHost = async (member: ClubMember, host: boolean) => {
+      setSavingId(member._id);
+      try {
+        await axios.put(`/club/users/${member._id}/host`, { host });
+        setMembers((prev) => prev.map((m) => (m._id === member._id ? { ...m, isHost: host } : m)));
+      } catch (e: any) {
+        alert(e?.response?.data?.error || 'Значок не змінено');
+      } finally {
+        setSavingId(null);
+      }
+    };
+
+    return [
+      {
+        key: 'nickname',
+        header: 'НІК',
+        width: 'minmax(0,1fr)',
+        render: (member) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}>
+            <Box
+              component="span"
+              sx={{ fontFamily: brandFonts.display, fontWeight: 900, fontSize: 18, letterSpacing: '-0.01em' }}
+            >
+              {member.nickname?.trim()}
+            </Box>
+            {member.isHost && (
+              <GavelIcon titleAccess="Ведучий" sx={{ fontSize: 16, color: brandColors.accent }} />
+            )}
+          </Box>
+        ),
+      },
+      { key: 'name', header: "ІМ'Я", width: 'minmax(0,1fr)' },
+      {
+        key: 'email',
+        header: 'EMAIL',
+        width: 'minmax(0,1.2fr)',
+        render: (member) => (
+          <Box component="span" sx={monoSx(13)}>
+            {member.email || '—'}
+          </Box>
+        ),
+      },
+      {
+        key: 'isHost',
+        header: 'ВЕДУЧИЙ',
+        width: '96px',
+        align: 'right',
+        render: (member) => (
+          <Switch
+            size="small"
+            checked={Boolean(member.isHost)}
+            disabled={savingId === member._id}
+            onChange={(e) => void toggleHost(member, e.target.checked)}
+            inputProps={{ 'aria-label': `Значок ведучого: ${member.nickname || member.name || ''}` }}
+          />
+        ),
+      },
+    ];
+  }, [savingId]);
+
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
@@ -83,13 +124,13 @@ export default function DashboardUsers(props: { disableCustomTheme?: boolean }) 
           />
         </Box>
         <BrandTable
-          columns={COLUMNS}
+          columns={columns}
           rows={filtered}
           getRowKey={(member) => member.id}
           pageSize={20}
           loading={loading}
           emptyText={query ? 'Учасника не знайдено.' : 'У клубі поки немає учасників.'}
-          minWidth={640}
+          minWidth={740}
         />
       </ProfilePage>
     </AppTheme>

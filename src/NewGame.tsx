@@ -98,6 +98,30 @@ const loadTournamentDraft = (key: string) => {
   } catch { return null; }
 };
 
+/** Гравці збереженої гри (API) → стан форми: ролі числами, ОП5 — об'єктом місце → колір. */
+function playersFromApi(apiPlayers: any[]): Record<number, any> {
+  const restored = createInitialPlayers();
+  const mafiaSlot = { n: 0 };
+  for (let seat = 1; seat <= 10; seat++) {
+    const p = (apiPlayers || []).find((x: any) => Number(x.n) === seat);
+    if (!p) continue;
+    const bt: Record<number, string> = {};
+    (p.bestTurn || []).forEach((x: any) => {
+      if (x && x.n != null) bt[Number(x.n)] = x.color;
+    });
+    restored[seat] = {
+      ...restored[seat],
+      ...p,
+      n: seat,
+      role: apiRoleToUiRole(p.role, mafiaSlot),
+      bestTurn: bt,
+      id: p.id ? String(p.id) : '',
+      pendingTeamIds: undefined,
+    };
+  }
+  return restored;
+}
+
 function applySeatingFromTournament(
   seatMap: Record<string, { userIds: string[] }> | undefined,
   clubMemberList: any[],
@@ -130,17 +154,21 @@ function applySeatingFromTournament(
 }
 
 export default function NewGame(props: { disableCustomTheme?: boolean }) {
-  const { user } = useAuth();
+  const { user, canRecordRatingGame } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const { tournamentId, gameIndex: gameIndexStr } = useParams<{ tournamentId: string; gameIndex: string }>();
+  const { tournamentId, gameIndex: gameIndexStr, gameId: editGameId } =
+    useParams<{ tournamentId: string; gameIndex: string; gameId: string }>();
   const isTournamentGame = Boolean(tournamentId && gameIndexStr);
   const tournamentStorageKey = isTournamentGame ? `tournamentGame_${tournamentId}_${gameIndexStr}` : '';
-  const isRatingGame = location.pathname.endsWith('new-game-rating');
+  /** Редагування вже збереженої рейтингової гри (клуб або ведучий, що її записав). */
+  const isEditingRatingGame = Boolean(editGameId);
+  const isRatingGame = location.pathname.endsWith('new-game-rating') || isEditingRatingGame;
+  // Збережена гра приходить з сервера, тож чернетку з localStorage для неї не беремо.
   const saved = React.useRef(
     isTournamentGame
       ? loadTournamentDraft(tournamentStorageKey)
-      : isRatingGame
+      : isRatingGame && !isEditingRatingGame
         ? loadSavedState()
         : null
   ).current;
@@ -165,7 +193,9 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const [bonusPlayerN, setBonusPlayerN] = React.useState<number>(0);
   const [killedShowInfo, setKilledShowInfo] = React.useState(false);
 
-  const gameLockedAfterWin = Boolean(winState && !(editingSavedTournamentGame && isTournamentGame));
+  /** Збережену гру можна правити й після вибору переможця. */
+  const editingSaved = isEditingRatingGame || (editingSavedTournamentGame && isTournamentGame);
+  const gameLockedAfterWin = Boolean(winState && !editingSaved);
 
   /** Чи є що скидати: не лише дефолтні «Гість N». */
   const formCanReset = useMemo(() => {
@@ -180,7 +210,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   }, [players, winState, activeVoting]);
 
   useEffect(() => {
-    if (!isRatingGame) return;
+    if (!isRatingGame || isEditingRatingGame) return;
     const hasRealPlayers = Object.values(players).some(
       (p: any) => p.id && !p.title?.startsWith('Гість')
     );
@@ -194,7 +224,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       _vancouverSavedYmd: vancouverTodayYmd(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [players, votings, activeVoting, winState, hideRoles, isRatingGame]);
+  }, [players, votings, activeVoting, winState, hideRoles, isRatingGame, isEditingRatingGame]);
 
   useEffect(() => {
     if (!isTournamentGame || !tournamentStorageKey || readOnlyTournament || tournamentHidden) return;
@@ -316,6 +346,27 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     });
   }, [isTournamentGame, winState, readOnlyTournament]);
 
+  /** Рейтинг: після зміни переможця бонус іншої команди стає недійсним (сервер його відхилить). */
+  useEffect(() => {
+    if (!isRatingGame || !winState) return;
+    _setPlayers((prev: Record<number, any>) => {
+      let changed = false;
+      const out = { ...prev };
+      for (const k of Object.keys(out)) {
+        const n = Number(k);
+        if (!Number.isFinite(n)) continue;
+        const role = out[n]?.role;
+        const won = winState === 'mafia' ? [1, 2, 3].includes(role) : [0, 4].includes(role);
+        const bp = Number(out[n]?.bonusPoints) || 0;
+        if (bp && !(won ? BONUS_RATING_WIN : BONUS_RATING_LOSS).includes(bp)) {
+          out[n] = { ...out[n], bonusPoints: 0 };
+          changed = true;
+        }
+      }
+      return changed ? out : prev;
+    });
+  }, [isRatingGame, winState]);
+
   const openBonusPopover = (e: React.MouseEvent<HTMLElement>, n: number) => {
     if (readOnlyTournament || tournamentHidden) return;
     setBonusAnchorEl(e.currentTarget);
@@ -396,7 +447,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
 
   const win = (winner: string) => {
     if (readOnlyTournament || tournamentHidden) return;
-    if (winState && !(editingSavedTournamentGame && isTournamentGame)) {
+    if (winState && !editingSaved) {
       alert('Гра закінчена');
       return;
     }
@@ -449,8 +500,11 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         return;
       }
     }
-    const updatingSaved = Boolean(isTournamentGame && editingSavedTournamentGame);
-    if (!confirm(updatingSaved ? 'Зберегти зміни в цій грі турніру?' : 'Відправити результати гри?')) return;
+    if (!confirm(
+      editingSaved
+        ? (isTournamentGame ? 'Зберегти зміни в цій грі турніру?' : 'Зберегти зміни в цій грі?')
+        : 'Відправити результати гри?'
+    )) return;
     const playersPayload = Object.values(effective).map((p: any) => ({
       ...p,
       bestTurn: Object.entries(p.bestTurn || {}).map(([seat, color]) => ({n: Number(seat), color})),
@@ -464,7 +518,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         votings,
       };
       try {
-        if (updatingSaved) {
+        if (editingSaved) {
           await axios.put('/club/tournament-game', payload);
           if (tournamentStorageKey) localStorage.removeItem(tournamentStorageKey);
           alert('Зміни збережено');
@@ -488,12 +542,23 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       }
       return;
     }
-    await axios.post('/club/rating-game', {
-      players: playersPayload,
-      winState,
-      votings
-    });
+    const payload = { players: playersPayload, winState, votings };
+    try {
+      if (isEditingRatingGame) {
+        await axios.put(`/club/rating-game/${editGameId}`, payload);
+      } else {
+        await axios.post('/club/rating-game', payload);
+      }
+    } catch (e: any) {
+      alert(e?.response?.data?.error || e?.message || 'Помилка збереження');
+      return;
+    }
     invalidateClubRatingCache();
+    if (isEditingRatingGame) {
+      alert('Зміни збережено');
+      navigate('/profile/hosts');
+      return;
+    }
     alert('Гру збережено');
     resetGame();
   }
@@ -536,26 +601,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
               setReadOnlyTournament(true);
               setClubUsers([]);
             }
-            const restored = createInitialPlayers();
-            const mafiaSlot = { n: 0 };
-            for (let seat = 1; seat <= 10; seat++) {
-              const p = (existing.players || []).find((x: any) => Number(x.n) === seat);
-              if (!p) continue;
-              const bt: Record<number, string> = {};
-              (p.bestTurn || []).forEach((x: any) => {
-                if (x && x.n != null) bt[Number(x.n)] = x.color;
-              });
-              restored[seat] = {
-                ...restored[seat],
-                ...p,
-                n: seat,
-                role: apiRoleToUiRole(p.role, mafiaSlot),
-                bestTurn: bt,
-                id: p.id ? String(p.id) : '',
-                pendingTeamIds: undefined,
-              };
-            }
-            setPlayers(restored);
+            setPlayers(playersFromApi(existing.players));
             setWinState(existing.winState || '');
             setVotings(existing.votings || createInitialVotings());
             return;
@@ -610,6 +656,14 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         })
         setClubUsers(() => array || []);
 
+        if (isEditingRatingGame) {
+          const { data: game } = await axios.get(`/club/rating-game/${editGameId}`);
+          setPlayers(playersFromApi(game.players));
+          setWinState(game.winState || '');
+          setVotings(game.votings || createInitialVotings());
+          return;
+        }
+
         const savedHasRealPlayers = saved && Object.values(saved.players || {}).some(
           (p: any) => {
             if (!p?.title) return false;
@@ -634,13 +688,17 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             console.error('Failed to load last game players', e);
           }
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
+        if (isEditingRatingGame) {
+          alert(e?.response?.data?.error || 'Гру не вдалося відкрити');
+          navigate('/profile/hosts');
+        }
       }
     }
     fetchData();
     return () => {};
-  }, [isTournamentGame, tournamentId, gameIndexStr, user?._id, user?.authType])
+  }, [isTournamentGame, tournamentId, gameIndexStr, editGameId, user?._id, user?.authType])
 
   // get active players nickname list
   const activePlayers = useMemo(() => {
@@ -678,7 +736,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       <CssBaseline enableColorScheme/>
       <BrandPage
         eyebrow="Протокол гри"
-        title={isTournamentGame ? 'Турнірна гра' : isRatingGame ? 'Рейтингова гра' : 'Фан гра'}
+        title={isTournamentGame ? 'Турнірна гра' : isEditingRatingGame ? 'Редагування гри' : isRatingGame ? 'Рейтингова гра' : 'Фан гра'}
       >
         <Stack direction="column" alignItems="center" sx={{ width: '100%' }}>
         {isTournamentGame && (
@@ -702,7 +760,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             mt: 2,
           }}
         >
-          {!readOnlyTournament && !tournamentHidden && (
+          {!readOnlyTournament && !tournamentHidden && !isEditingRatingGame && (
             <IconButton
               aria-label="Скинути форму"
               title={formCanReset ? 'Скинути форму' : 'Форма вже порожня'}
@@ -747,32 +805,32 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             <Button
               onClick={() =>
                 !readOnlyTournament &&
-                (!winState || (editingSavedTournamentGame && isTournamentGame)) &&
+                (!winState || editingSaved) &&
                 win('mafia')
               }
               variant="outlined"
               color={winState === 'mafia' ? 'secondary' : 'info'}
               size="small"
-              disabled={readOnlyTournament || Boolean(winState && !(editingSavedTournamentGame && isTournamentGame))}
+              disabled={readOnlyTournament || gameLockedAfterWin}
             >
               Перемога мафії
             </Button>
             <Button
               onClick={() =>
                 !readOnlyTournament &&
-                (!winState || (editingSavedTournamentGame && isTournamentGame)) &&
+                (!winState || editingSaved) &&
                 win('citizens')
               }
               variant="outlined"
               color={winState === 'citizens' ? 'secondary' : 'info'}
               size="small"
-              disabled={readOnlyTournament || Boolean(winState && !(editingSavedTournamentGame && isTournamentGame))}
+              disabled={readOnlyTournament || gameLockedAfterWin}
             >
               Перемога мирних
             </Button>
-            {winState && user?.authType === 'Клуб' && isRatingGame && (
+            {winState && canRecordRatingGame && isRatingGame && (
               <Button onClick={submitGame} variant="contained" color="success" size="small">
-                Зберегти гру
+                {isEditingRatingGame ? 'Зберегти зміни' : 'Зберегти гру'}
               </Button>
             )}
             {winState && user?.authType === 'Клуб' && isTournamentGame && !readOnlyTournament && (

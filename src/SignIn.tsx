@@ -1,5 +1,4 @@
 import * as React from 'react';
-import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -10,7 +9,8 @@ import Link from '@mui/material/Link';
 import TextField from '@mui/material/TextField';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import ForgotPassword from './components/ForgotPassword';
-import GoogleButton, { googleEnabled } from './components/GoogleButton';
+import { googleEnabled } from './components/GoogleButton';
+import GoogleSignIn, { ACCOUNT_CONFLICT_MESSAGE, isAccountConflict } from './components/GoogleSignIn';
 import AppTheme from './theme/AppTheme';
 import BrandPageLayout from './components/brand/BrandPageLayout';
 import BrandFormCard from './components/brand/BrandFormCard';
@@ -19,23 +19,12 @@ import axios from './axios';
 import { normalizeAuthEmail } from './utils/email';
 import { useAuth } from './AuthProvider';
 
-/** Текст, коли старий дубль: один логін належить і гравцю, і клубу. */
-const ACCOUNT_CONFLICT_MESSAGE =
-  'Ця адреса належить двом обліковим записам: гравця і клубу. Зверніться до адміністратора.';
-
-/** Чи відповів сервер 409 ACCOUNT_CONFLICT. */
-function isAccountConflict(e: any): boolean {
-  return e?.response?.status === 409 && e?.response?.data?.code === 'ACCOUNT_CONFLICT';
-}
-
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
-  // Код GOOGLE_NOT_LINKED або готовий текст помилки входу через Google.
-  const [googleError, setGoogleError] = React.useState('');
   const { setToken } = useAuth();
   const navigate = useNavigate();
 
@@ -64,33 +53,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       console.error(e);
       alert(isAccountConflict(e) ? ACCOUNT_CONFLICT_MESSAGE : 'Некоректний логін або пароль');
     });
-  };
-
-  const handleGoogleCredential = async (credential: string) => {
-    setGoogleError('');
-    try {
-      // 401 тут означає, що сервер не прийняв credential Google, а не завершену сесію.
-      const { data } = await axios.post(
-        '/auth/google',
-        { credential },
-        { skipAuthRedirect: true },
-      );
-      const token = data?.token;
-      token && setToken(token)
-      navigate('/')
-    } catch (e: any) {
-      console.error(e);
-      const status = e?.response?.status;
-      if (status === 404 && e?.response?.data?.code === 'GOOGLE_NOT_LINKED') {
-        setGoogleError('GOOGLE_NOT_LINKED');
-      } else if (isAccountConflict(e)) {
-        setGoogleError(ACCOUNT_CONFLICT_MESSAGE);
-      } else if (status === 401) {
-        setGoogleError('Сервер не прийняв підтвердження Google. Натисніть кнопку Google ще раз.');
-      } else {
-        setGoogleError('Не вдалося увійти через Google. Спробуйте пізніше.');
-      }
-    }
   };
 
   const validateInputs = () => {
@@ -181,23 +143,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           {googleEnabled && (
             <>
               <Divider sx={{ fontSize: 13, color: fg(0.6) }}>або</Divider>
-              <GoogleButton onCredential={handleGoogleCredential} />
-              {googleError === 'GOOGLE_NOT_LINKED' ? (
-                <Alert severity="warning">
-                  Цей Google-акаунт не прив'язано до жодного облікового запису.
-                  Увійдіть з паролем і прив'яжіть Google у кабінеті або зареєструйтеся{' '}
-                  <Link component={RouterLink} to="/register" sx={{ fontWeight: 600 }}>
-                    як гравець
-                  </Link>
-                  {' '}чи{' '}
-                  <Link component={RouterLink} to="/register-club" sx={{ fontWeight: 600 }}>
-                    як клуб
-                  </Link>
-                  .
-                </Alert>
-              ) : (
-                googleError && <Alert severity="error">{googleError}</Alert>
-              )}
+              <GoogleSignIn onSignedIn={() => navigate('/')} />
             </>
           )}
           <Box

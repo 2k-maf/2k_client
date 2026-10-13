@@ -19,6 +19,10 @@ const AuthContext = createContext({
   token: null as string | null,
   setToken: (token: string) => {},
   logout: () => {},
+  /** Клуб або гравець зі значком ведучого: може проводити рейтингові ігри. */
+  canRecordRatingGame: false,
+  /** Гравець має значок ведучого хоча б в одному клубі. */
+  isHost: false,
   // getUser: () => null as User | null,
 });
 
@@ -27,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactElement }) => {
   // State to hold the authentication token
   const [token, setToken_] = useState(localStorage.getItem("jwt_token") || null);
   const [user, setUser_] = useState(null as User | null);
+  const [isHost, setIsHost] = useState(false);
 
   // Function to set the authentication token
   const setToken = (newToken: string) => setToken_(newToken);
@@ -51,6 +56,24 @@ export const AuthProvider = ({ children }: { children: ReactElement }) => {
     }
     
   }, [token]);
+
+  // Значок ведучого не лежить у JWT: клуб видає й забирає його будь-коли,
+  // а токен живе тиждень. Тому питаємо сервер після кожного входу.
+  useEffect(() => {
+    if (user?.authType !== 'Учасник') {
+      setIsHost(false);
+      return;
+    }
+    let cancelled = false;
+    axios.get('/user/clubs')
+      .then(({ data }) => {
+        if (!cancelled) setIsHost((data.items || []).some((club: any) => club.isHost));
+      })
+      .catch(() => {
+        if (!cancelled) setIsHost(false);
+      });
+    return () => { cancelled = true; };
+  }, [user?._id, user?.authType]);
 
   // Check JWT validity
   // useEffect(() => {
@@ -95,8 +118,10 @@ export const AuthProvider = ({ children }: { children: ReactElement }) => {
       user,
       setToken,
       logout,
+      isHost,
+      canRecordRatingGame: user?.authType === 'Клуб' || isHost,
     }),
-    [token, user]
+    [token, user, isHost]
   );
 
   // const getUser = () => {

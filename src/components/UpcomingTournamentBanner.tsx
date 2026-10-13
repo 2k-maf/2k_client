@@ -25,16 +25,27 @@ type RecentCompletedBanner = {
   winnerAvatarUrl: string | null;
 };
 
-/** Pill-плашка: brand-кольори, fixed по центру під хедером. */
+/**
+ * Плашка: brand-кольори.
+ *
+ * До md плашка стоїть у потоці сторінки (її монтує Hero) і зсуває контент
+ * униз: плаваюча плашка на телефоні закривала заголовок. Текст там займає
+ * 2–3 рядки, тому радіус помірний.
+ *
+ * Від md плашка — пігулка, fixed по центру під хедером. Центрування через
+ * left + right + margin auto, а не через left: 50% і translateX: блок з
+ * left: 50% і width: fit-content отримує лише праву половину екрана.
+ */
 const bannerShellSx = {
-  position: 'fixed' as const,
+  position: { xs: 'static', md: 'fixed' } as const,
   zIndex: (t: { zIndex: { appBar: number } }) => t.zIndex.appBar + 1,
-  top: { xs: 72, md: 80 },
-  left: '50%',
-  transform: 'translateX(-50%)',
-  width: 'fit-content',
-  maxWidth: 'min(100%, calc(100vw - 24px))',
-  borderRadius: 999,
+  top: { md: 80 },
+  left: { md: 12 },
+  right: { md: 12 },
+  mx: { md: 'auto' },
+  width: { md: 'fit-content' },
+  maxWidth: { md: 720 },
+  borderRadius: { xs: '16px', md: 999 },
   border: `1px solid ${withAlpha(brandColors.accent, 0.45)}`,
   background: `linear-gradient(125deg, ${withAlpha(brandColors.accent, 0.28)} 0%, ${brandColors.panel} 42%, ${brandColors.panelAlt} 100%)`,
   backdropFilter: 'blur(10px)',
@@ -42,8 +53,9 @@ const bannerShellSx = {
   color: brandColors.text,
 };
 
+/** Текст переноситься всередині своєї колонки, а «Перейти» і хрестик лишаються праворуч. */
 const stackPaddingSx = {
-  flexWrap: 'wrap' as const,
+  flexWrap: 'nowrap' as const,
   px: { xs: 1.25, sm: 1.5 },
   py: { xs: 0.65, sm: 0.6 },
 };
@@ -156,7 +168,7 @@ export default function UpcomingTournamentBanner() {
       recentCompleted.winnerNickname.trim().charAt(0).toUpperCase() || '?';
     const avatarSrc = resolveMediaUrl(recentCompleted.winnerAvatarUrl ?? null);
     return (
-      <Box role="status" aria-live="polite" sx={bannerShellSx}>
+      <Box role="status" aria-live="polite" data-tournament-banner sx={bannerShellSx}>
         <Stack direction="row" alignItems="center" spacing={1} sx={stackPaddingSx}>
           <EmojiEventsOutlinedIcon sx={{ fontSize: 18, flexShrink: 0, color: brandColors.accentHover }} />
           <Typography
@@ -182,25 +194,25 @@ export default function UpcomingTournamentBanner() {
             <Box component="span" sx={{ fontWeight: 500, color: fg(0.72) }}>
               закінчено! Вітаємо переможця
             </Box>
-            <Avatar
-              src={avatarSrc || undefined}
-              alt=""
-              sx={{
-                width: 22,
-                height: 22,
-                fontSize: '0.7rem',
-                flexShrink: 0,
-                border: `1px solid ${withAlpha(brandColors.accent, 0.5)}`,
-                bgcolor: brandColors.border,
-              }}
-            >
-              {initial}
-            </Avatar>
-            <Box component="span" sx={{ fontWeight: 700 }}>
-              {recentCompleted.winnerNickname}
-            </Box>
-            <Box component="span" sx={{ fontWeight: 600 }}>
-              !
+            {/* Аватар, нік і знак оклику переносяться разом, а не по одному. */}
+            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, whiteSpace: 'nowrap' }}>
+              <Avatar
+                src={avatarSrc || undefined}
+                alt=""
+                sx={{
+                  width: 22,
+                  height: 22,
+                  fontSize: '0.7rem',
+                  flexShrink: 0,
+                  border: `1px solid ${withAlpha(brandColors.accent, 0.5)}`,
+                  bgcolor: brandColors.border,
+                }}
+              >
+                {initial}
+              </Avatar>
+              <Box component="span" sx={{ fontWeight: 700 }}>
+                {recentCompleted.winnerNickname}!
+              </Box>
             </Box>
           </Typography>
           <Link
@@ -221,7 +233,7 @@ export default function UpcomingTournamentBanner() {
   if (!tournament || upcomingBannerId === dismissedId) return null;
 
   return (
-    <Box role="status" aria-live="polite" sx={bannerShellSx}>
+    <Box role="status" aria-live="polite" data-tournament-banner sx={bannerShellSx}>
       <Stack direction="row" alignItems="center" spacing={1} sx={stackPaddingSx}>
         <EmojiEventsOutlinedIcon sx={{ fontSize: 18, flexShrink: 0, color: brandColors.accentHover }} />
         <Typography

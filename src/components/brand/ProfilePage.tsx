@@ -10,14 +10,20 @@ const MEMBER_TABS: BrandTab[] = [
   { label: 'Ігри', to: '/profile/games' },
   { label: 'Клуби', to: '/profile/clubs' },
 ];
+/** Статистика ведучих і редагування їхніх ігор. */
+const HOSTS_TAB: BrandTab = { label: 'Ведучі', to: '/profile/hosts' };
 const SHARED_TABS: BrandTab[] = [
   { label: 'Рейтинговий період', to: '/profile/rating-periods' },
   { label: 'Турніри', to: '/profile/tournaments' },
 ];
 
-/** Розділи кабінету залежать від типу акаунта: клуб веде учасників, гравець — свої ігри. */
-function profileTabs(isClub: boolean): BrandTab[] {
-  return [HOME_TAB, ...(isClub ? [CLUB_TAB] : MEMBER_TABS), ...SHARED_TABS];
+/**
+ * Розділи кабінету залежать від типу акаунта: клуб веде учасників, гравець — свої ігри.
+ * Вкладку «Ведучі» бачать клуб і гравець зі значком ведучого.
+ */
+function profileTabs(isClub: boolean, isHost: boolean): BrandTab[] {
+  const hostTabs = isClub ? [HOSTS_TAB] : isHost ? [{ ...HOSTS_TAB, label: 'Ведучий' }] : [];
+  return [HOME_TAB, ...(isClub ? [CLUB_TAB] : MEMBER_TABS), ...hostTabs, ...SHARED_TABS];
 }
 
 /**
@@ -40,10 +46,10 @@ type Props = {
  * рядок вкладок замість бічного меню шаблону MUI.
  */
 export default function ProfilePage({ title, children }: Props) {
-  const { user } = useAuth();
+  const { user, isHost } = useAuth();
   const { pathname } = useLocation();
   const isClub = user?.authType === 'Клуб';
-  const tabs = profileTabs(isClub);
+  const tabs = profileTabs(isClub, isHost);
 
   return (
     <BrandPage

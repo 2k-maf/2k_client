@@ -8,6 +8,8 @@ import { brandColors, brandFonts, fg, withAlpha } from '../theme/brand';
 import { useClubRating } from '../hooks/useClubRating';
 import { formatSeasonLabel } from '../utils/podium';
 import PodiumStack from './brand/PodiumStack';
+import GoogleSignIn from './GoogleSignIn';
+import UpcomingTournamentBanner from './UpcomingTournamentBanner';
 
 export default function Hero() {
   const { user } = useAuth();
@@ -30,6 +32,9 @@ export default function Hero() {
           gap: { xs: 0, md: 4 },
           px: { xs: 2.5, md: 6 },
           pt: { xs: 12, md: 14 },
+          // Від md плашка турніру плаває під шапкою (top 80, висота ~48).
+          // Поки вона є, герой опускається нижче, щоб плашка не лягала на заголовок.
+          '&:has([data-tournament-banner])': { pt: { md: 18 } },
           pb: { xs: 6, md: 9 },
           maxWidth: 1280,
           width: '100%',
@@ -78,6 +83,8 @@ export default function Hero() {
           }}
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5 }}>
+            {/* На телефоні плашка стоїть у потоці над заголовком, на десктопі плаває під шапкою. */}
+            <UpcomingTournamentBanner />
             <Typography
               variant="h1"
               sx={{
@@ -107,32 +114,36 @@ export default function Hero() {
                 Привіт, {user.authType === 'Клуб' ? user.name : user.nickname}!
               </Typography>
             ) : (
-              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                <Button
-                  component={RouterLink}
-                  to="/register"
-                  variant="contained"
-                  sx={{ px: 3.25, py: 1.75, borderRadius: '12px', fontSize: 14 }}
-                >
-                  Зареєструватися
-                </Button>
-                <Button
-                  component={RouterLink}
-                  to="/login"
-                  variant="outlined"
-                  sx={{
-                    px: 3.25,
-                    py: 1.75,
-                    borderRadius: '12px',
-                    borderColor: fg(0.2),
-                    color: brandColors.text,
-                    fontWeight: 600,
-                    fontSize: 14,
-                    '&:hover': { borderColor: brandColors.accent, bgcolor: 'transparent' },
-                  }}
-                >
-                  Увійти
-                </Button>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxWidth: 340 }}>
+                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                  <Button
+                    component={RouterLink}
+                    to="/register"
+                    variant="contained"
+                    sx={{ px: 3.25, py: 1.75, borderRadius: '12px', fontSize: 14 }}
+                  >
+                    Зареєструватися
+                  </Button>
+                  <Button
+                    component={RouterLink}
+                    to="/login"
+                    variant="outlined"
+                    sx={{
+                      px: 3.25,
+                      py: 1.75,
+                      borderRadius: '12px',
+                      borderColor: fg(0.2),
+                      color: brandColors.text,
+                      fontWeight: 600,
+                      fontSize: 14,
+                      '&:hover': { borderColor: brandColors.accent, bgcolor: 'transparent' },
+                    }}
+                  >
+                    Увійти
+                  </Button>
+                </Box>
+                {/* Вхід одним кліком: після успіху герой сам показує привітання. */}
+                <GoogleSignIn />
               </Box>
             )}
 
