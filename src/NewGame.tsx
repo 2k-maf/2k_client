@@ -28,6 +28,7 @@ import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {useAuth} from "./AuthProvider";
 import {vancouverTodayYmd} from "./utils/vancouverDate";
+import AbbrLegend from "./components/brand/AbbrLegend";
 import { confirmAction, notify } from "./components/feedback/feedback";
 
 const filter = createFilterOptions();
@@ -1038,6 +1039,18 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             ))
           }
         </Grid>
+        </Box>
+
+        {/* Заголовки колонок — одна літера чи іконка, тож пояснення стоїть під сіткою. */}
+        <Box sx={{ width: '100%', maxWidth: 1200 }}>
+          <AbbrLegend
+            items={[
+              { term: <ThumbUpIcon titleAccess="Голосування" sx={{ fontSize: 16 }} />, text: 'номер гравця — виставити на голосування' },
+              { term: 'Ф', text: 'фоли' },
+              { term: 'Р', text: 'роль; заголовок ховає ролі' },
+              { term: <HeartBrokenIcon titleAccess="Перший вбитий" sx={{ fontSize: 16 }} />, text: 'перший вбитий' },
+            ]}
+          />
         </Box>
 
         {Object.values(players).some((p: any) => p.killed === 1) && (

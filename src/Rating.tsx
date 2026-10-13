@@ -13,6 +13,8 @@ import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import AppTheme from './theme/AppTheme';
 import BrandPage from './components/brand/BrandPage';
 import BrandSearchField from './components/brand/BrandSearchField';
+import AbbrLegend from './components/brand/AbbrLegend';
+import { Link as RouterLink } from 'react-router-dom';
 import { brandColors, brandFonts, monoSx, fg } from './theme/brand';
 import { useClubRating } from './hooks/useClubRating';
 import { formatFloat1, formatSeasonLabel, RatingPlayer } from './utils/podium';
@@ -23,6 +25,16 @@ const PAGE_SIZE = 15;
 const GRID_COLUMNS = '56px minmax(0,1fr) 148px 128px 72px 84px 84px';
 
 const HEADERS = ['№', 'ГРАВЕЦЬ', 'РЕЙТ', 'ІГРИ', 'ПВ', 'ОП5', 'ДБ'];
+
+/** Розшифровка скорочень заголовків: підказка при наведенні і легенда під таблицею. */
+const HEADER_HINTS: Record<string, string> = {
+  РЕЙТ: 'рейтинг',
+  ПВ: 'перший вбитий',
+  ОП5: "опорна п'ятірка",
+  ДБ: 'додаткові бали від судді',
+};
+
+const LEGEND = ['ПВ', 'ОП5', 'ДБ'].map((term) => ({ term, text: HEADER_HINTS[term] }));
 
 /**
  * Нижче md рядок — картка у два яруси: зверху гравець і рейтинг, знизу статистика.
@@ -156,7 +168,11 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
             >
               {HEADERS.map((h, i) => (
                 <Box key={h} component="span" role="columnheader" sx={{ textAlign: i >= 4 ? 'right' : 'left' }}>
-                  {h}
+                  {HEADER_HINTS[h] ? (
+                    <Box component="abbr" title={HEADER_HINTS[h]} sx={{ textDecoration: 'none', cursor: 'help' }}>
+                      {h}
+                    </Box>
+                  ) : h}
                 </Box>
               ))}
             </Box>
@@ -336,6 +352,12 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
             </Box>}
           </Box>
         </Box>
+
+        <AbbrLegend items={LEGEND}>
+          <Box component={RouterLink} to="/scoring" sx={{ color: brandColors.accentHover, fontWeight: 700, textDecoration: 'none' }}>
+            Як рахуються бали →
+          </Box>
+        </AbbrLegend>
 
         <Popover
           open={Boolean(infoAnchor)}
