@@ -18,7 +18,6 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import RemoteAvatar from './brand/RemoteAvatar';
 import ColorModeToggle from '../theme/ColorModeToggle';
 import Sitemark from './SitemarkIcon';
-import UpcomingTournamentBanner from './UpcomingTournamentBanner';
 import { OutlinedActionIconButton } from './OutlinedActionIconButton';
 import {useAuth} from "../AuthProvider";
 import {useNavigate, useLocation, Link as RouterLink} from "react-router-dom";
@@ -539,11 +538,6 @@ export default function AppAppBar() {
             )}
           </Box>
         </StyledToolbar>
-        {pathname === '/' ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', px: 0.5 }}>
-            <UpcomingTournamentBanner />
-          </Box>
-        ) : null}
       </Container>
     </AppBar>
   );
