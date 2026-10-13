@@ -17,6 +17,7 @@ import DashboardTournamentNew from "./dashboard/DashboardTournamentNew";
 import DashboardTournamentDetail from "./dashboard/DashboardTournamentDetail";
 import NewGame from "./NewGame";
 import DashboardGames from "./dashboard/DashboardGames";
+import DashboardHosts from "./dashboard/DashboardHosts";
 import Rating from "./Rating";
 import ScoringRules from "./ScoringRules";
 import Rules from "./Rules";
@@ -29,6 +30,12 @@ import PublicTournamentPage from "./PublicTournamentPage";
 function DashboardTournamentGame() {
   const { tournamentId, gameIndex } = useParams<{ tournamentId: string; gameIndex: string }>();
   return <NewGame key={`tournament-${tournamentId}-${gameIndex}`} />;
+}
+
+/** Редагування збереженої рейтингової гри: окремий інстанс на кожну гру, як і в турнірі. */
+function DashboardRatingGameEdit() {
+  const { gameId } = useParams<{ gameId: string }>();
+  return <NewGame key={`rating-${gameId}`} />;
 }
 
 const App = () => {
@@ -55,6 +62,8 @@ const App = () => {
           <Route path="profile/clubs" element={<PrivateRoute Component={DashboardClubs}/>} />
           <Route path="profile/games" element={<PrivateRoute Component={DashboardGames}/>} />
           <Route path="profile/rating-periods" element={<PrivateRoute Component={DashboardRatingPeriods}/>} />
+          <Route path="profile/hosts" element={<PrivateRoute Component={DashboardHosts}/>} />
+          <Route path="profile/rating-game/:gameId" element={<PrivateRoute Component={DashboardRatingGameEdit}/>} />
           <Route path="profile/tournaments" element={<PrivateRoute Component={DashboardTournaments}/>} />
           <Route path="profile/tournaments/new" element={<PrivateRoute Component={DashboardTournamentNew}/>} />
           <Route path="profile/tournaments/:id" element={<PrivateRoute Component={DashboardTournamentDetail}/>} />

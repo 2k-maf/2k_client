@@ -107,7 +107,7 @@ function appBarNavMenuPaperSx(theme: Theme) {
 export default function AppAppBar() {
   const [open, setOpen] = React.useState(false);
   const [gameMenuAnchor, setGameMenuAnchor] = React.useState<null | HTMLElement>(null);
-  const {user, logout} = useAuth();
+  const {user, logout, canRecordRatingGame} = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [stopWatch, setStopWatch] = React.useState(60);
@@ -216,7 +216,7 @@ export default function AppAppBar() {
                       size="small" color="secondary">
                 Рейтинг клубу
               </Button>
-              {user?.authType === 'Клуб' ? <>
+              {canRecordRatingGame ? <>
                 <Box sx={{display: 'flex', alignItems: 'center'}}>
                   <Button
                     variant={isGameRoute ? 'outlined' : 'text'}
@@ -414,7 +414,7 @@ export default function AppAppBar() {
                 </Box>
                 <MenuItem selected={isActive('/clubs-rating')}
                           onClick={() => navigateWithConfirm('/clubs-rating')}><StarIcon sx={{ mr: .5 }}/>Рейтинг клубу</MenuItem>
-                {user?.authType === 'Клуб' ? <>
+                {canRecordRatingGame ? <>
                   <MenuItem selected={isActive('/new-game-rating')}
                             onClick={() => { setOpen(false); navigateWithConfirm('/new-game-rating'); }}>Рейтингова гра</MenuItem>
                   <MenuItem selected={isActive('/new-game')}
