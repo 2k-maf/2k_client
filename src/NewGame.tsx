@@ -32,6 +32,22 @@ import { confirmAction, notify } from "./components/feedback/feedback";
 
 const filter = createFilterOptions();
 
+/**
+ * Пропси клітинки протоколу, яку натискає ведучий. Клітинка лишається `Grid`,
+ * щоб не змінити вигляд, але клавіатура і читач екрана бачать її як кнопку.
+ */
+const cellButton = (label: string, onActivate: (el: HTMLElement) => void) => ({
+  role: 'button',
+  tabIndex: 0,
+  'aria-label': label,
+  onClick: (e: React.MouseEvent<HTMLElement>) => onActivate(e.currentTarget),
+  onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    onActivate(e.currentTarget);
+  },
+});
+
 const RolesPoolDefault = [1, 2, 3, 4]
 const RolesPoolMap: Record<number, string> = {
   0: '',
@@ -368,9 +384,9 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     });
   }, [isRatingGame, winState]);
 
-  const openBonusPopover = (e: React.MouseEvent<HTMLElement>, n: number) => {
+  const openBonusPopover = (anchor: HTMLElement, n: number) => {
     if (readOnlyTournament || tournamentHidden) return;
-    setBonusAnchorEl(e.currentTarget);
+    setBonusAnchorEl(anchor);
     setBonusPlayerN(n);
   };
 
@@ -812,6 +828,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
               }
               variant="outlined"
               color={winState === 'mafia' ? 'secondary' : 'info'}
+              aria-pressed={winState === 'mafia'}
               size="small"
               disabled={readOnlyTournament || gameLockedAfterWin}
             >
@@ -825,6 +842,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
               }
               variant="outlined"
               color={winState === 'citizens' ? 'secondary' : 'info'}
+              aria-pressed={winState === 'citizens'}
               size="small"
               disabled={readOnlyTournament || gameLockedAfterWin}
             >
@@ -864,7 +882,8 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
               <React.Fragment key={n}>
                 {
                   (players[n]?.killed !== 1 || (n !== 0 && killedShowInfo)) && <>
-                        <Grid onClick={() => promoteVote(n)} sx={{cursor: 'pointer', p: '.2rem'}}
+                        <Grid {...(n !== 0 && cellButton(`Виставити гравця ${n} на голосування`, () => promoteVote(n)))}
+                              sx={{cursor: n !== 0 ? 'pointer' : 'default', p: '.2rem'}}
                               size={{xs: 1.5, sm: 1, lg: 1}}>
                           {n === 0 ? <ThumbUpIcon/> : n}
                         </Grid>
@@ -890,7 +909,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                               if (inputValue !== '' && !isExisting) {
                                 filtered.push({
                                   inputValue,
-                                  title: `Add "${inputValue}"`,
+                                  title: `Додати «${inputValue}»`,
                                 });
                               }
 
@@ -899,7 +918,6 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                             selectOnFocus
                             clearOnBlur
                             handleHomeEndKeys
-                            id="free-solo-with-text-demo"
                             options={(() => {
                               const pending = (players[n] as any)?.pendingTeamIds as string[] | undefined;
                               const base = pending?.length
@@ -926,22 +944,27 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                               );
                             }}
                             renderInput={(params) => (
-                              <TextField {...params} />
+                              <TextField
+                                {...params}
+                                inputProps={{ ...params.inputProps, 'aria-label': `Нік гравця ${n}` }}
+                              />
                             )}
                           />}
                         </Grid>
                         <Grid sx={{
                           p: n === 0 ? '.5rem' : '.1rem',
                           backgroundColor: players[n]?.warnings === 3 ? 'rgba(255,165,0, 0.2)' : players[n]?.warnings === 4 ? 'rgba(255,0,0, 0.3)' : 'transparent',
-                          cursor: 'pointer'
-                        }} onClick={() => addWarning(n)} size={{xs: 1.75, sm: 2, lg: 1.5}}>
+                          cursor: n !== 0 ? 'pointer' : 'default'
+                        }} {...(n !== 0 && cellButton(`Фол гравцю ${n}, зараз ${players[n].warnings}`, () => addWarning(n)))}
+                          size={{xs: 1.75, sm: 2, lg: 1.5}}>
                           {n === 0 ? "Ф" : new Array(players[n].warnings).fill('⚠️').join('  ')}
                         </Grid>
                         <Grid sx={{
                           p: '.5rem',
                           fontWeight: n !== 0 ? 800 : '',
                           cursor: 'pointer',
-                        }} size={{xs: 2, sm: 1, lg: 1.5}} onClick={() => addRole(n)}>
+                        }} size={{xs: 2, sm: 1, lg: 1.5}}
+                          {...cellButton(n === 0 ? (hideRoles ? 'Показати ролі' : 'Сховати ролі') : `Змінити роль гравця ${n}`, () => addRole(n))}>
                           {n === 0 ? 'Р' : hideRoles ? '?' : `${RolesPoolMap[Number(players[n].role)] ?? ''} `}
                         </Grid>
                     </>
@@ -961,7 +984,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                             borderRight: 'var(--Grid-borderWidth) solid',
                             cursor: 'pointer',
                             fontWeight: color ? 700 : 400,
-                          }} size={{xs: 12 / 10}} onClick={() => supportFive(n, i)}>
+                          }} size={{xs: 12 / 10}} {...cellButton(`Кращий хід гравця ${n}: місце ${i}`, () => supportFive(n, i))}>
                             {i}
                           </Grid>
                         })
@@ -977,14 +1000,14 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                   opacity: !winState && n !== 0 && killedPool.includes(1) && players[n]?.killed !== 1 ? 0.3 : 1,
                   fontSize: players[n]?.killed === 1 && !winState ? '0.7rem' : 'inherit',
                 }} size={{xs: 1.25, sm: 0.5, lg: 0.5}}
-                   onClick={(e: any) => {
-                     if (!n) return;
-                     if (winState) {
-                       openBonusPopover(e, n);
-                     } else {
-                       killPlayer(n);
-                     }
-                   }}>
+                   {...(n !== 0 && cellButton(
+                     winState
+                       ? `Бонус гравцю ${n}`
+                       : players[n]?.killed === 1
+                         ? `Зняти з гравця ${n} позначку першого вбитого`
+                         : `Позначити гравця ${n} першим вбитим`,
+                     (el) => (winState ? openBonusPopover(el, n) : killPlayer(n)),
+                   ))}>
                   {winState && n !== 0
                     ? (players[n].bonusPoints
                       ? <span style={{fontSize: '0.7rem', color: players[n].bonusPoints > 0 ? '#4caf50' : '#f44336'}}>{players[n].bonusPoints > 0 ? '+' : ''}{players[n].bonusPoints}</span>
@@ -1073,11 +1096,11 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                 }}>
                   {
                     activeVoting?.candidates.map(([candidate]: [number, number], i: number) => {
-                      return <>
+                      return <React.Fragment key={candidate}>
                         <Grid sx={{cursor: 'pointer', p: '.3rem'}} size={{xs: 1}}> <strong>{candidate}</strong> </Grid>
                         {
                           [1, 2, 3, 4, 5, 6].map((j) => {
-                            return <Grid sx={{
+                            return <Grid key={j} sx={{
                               p: '.3rem',
                               fontStyle: 'italic',
                               backgroundColor: activeVoting?.candidates?.[i]?.[1] === j ? 'rgb(0, 54, 107)' : 'transparent',
@@ -1086,12 +1109,12 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                               // borderColor: 'gray !important',
                               // borderRight: 'var(--Grid-borderWidth) solid',
                               cursor: 'pointer'
-                            }} size={{xs: 11 / 6}} onClick={() => voteForPlayer(i, j)}>
+                            }} size={{xs: 11 / 6}} {...cellButton(`${j === 6 ? '6 і більше' : j} голосів за гравця ${candidate}`, () => voteForPlayer(i, j))}>
                               {j === 6 ? '6+' : j }
                             </Grid>
                           })
                         }
-                      </>
+                      </React.Fragment>
                     })
                   }
                 </Grid>
