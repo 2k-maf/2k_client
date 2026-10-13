@@ -15,7 +15,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import StarIcon from '@mui/icons-material/Star';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import Avatar from '@mui/material/Avatar';
+import RemoteAvatar from './brand/RemoteAvatar';
 import ColorModeToggle from '../theme/ColorModeToggle';
 import Sitemark from './SitemarkIcon';
 import UpcomingTournamentBanner from './UpcomingTournamentBanner';
@@ -28,12 +28,15 @@ import { brandColors, brandFonts, withAlpha } from '../theme/brand';
 import Typography from "@mui/material/Typography";
 import {useEffect, useMemo} from "react";
 
-/** Кільце навколо аватара — інакше фото зливається зі смугою хедера. */
+/** Кільце навколо аватара — інакше фото зливається зі смугою хедера. Літера-заглушка — кольору тексту смуги. */
 const headerAvatarSx = {
   width: 28,
   height: 28,
   border: `1px solid ${brandColors.ink}`,
   bgcolor: brandColors.band,
+  color: brandColors.ink,
+  fontSize: 14,
+  fontWeight: 700,
 } as const;
 
 /**
@@ -108,6 +111,8 @@ export default function AppAppBar() {
   const [open, setOpen] = React.useState(false);
   const [gameMenuAnchor, setGameMenuAnchor] = React.useState<null | HTMLElement>(null);
   const {user, logout, canRecordRatingGame} = useAuth();
+  /** Ім'я для літери-заглушки аватара: клуб — назва, гравець — нік. */
+  const avatarName = (user?.authType === 'Клуб' ? user?.name : user?.nickname || user?.name) || '';
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [stopWatch, setStopWatch] = React.useState(60);
@@ -355,7 +360,7 @@ export default function AppAppBar() {
             <ColorModeToggle/>
             {
               user && <Button onClick={() => navigateWithConfirm('/profile')} color="primary" variant="text" size="small" sx={{gap: 1, lineHeight: 1.2, py: 0.5, maxWidth: 180, overflow: 'hidden'}}>
-                    {user.avatarUrl && <Avatar src={user.avatarUrl} sx={headerAvatarSx}/>}
+                    <RemoteAvatar avatarUrl={user.avatarUrl} nickname={avatarName} sx={headerAvatarSx}/>
                     <Box sx={{display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
                       Мій Профіль
                       <span style={{fontSize: '0.7em', opacity: 0.7, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>({user?.name})</span>
@@ -386,7 +391,7 @@ export default function AppAppBar() {
                 </Button>
             }
           </Box>
-          <Box sx={{display: 'flex', '@media (min-width: 940px)': {display: 'none'}, gap: 1, flexShrink: 0}}>
+          <Box sx={{display: 'flex', '@media (min-width: 940px)': {display: 'none'}, gap: 1, alignItems: 'center', flexShrink: 0}}>
             <ColorModeToggle size="medium"/>
             <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
               <MenuIcon/>
@@ -497,7 +502,7 @@ export default function AppAppBar() {
                   user && <>
                         <MenuItem>
                             <Button href="/profile" color="primary" variant="outlined" fullWidth sx={{gap: 1, lineHeight: 1.2, py: 0.5}}>
-                                {user.avatarUrl && <Avatar src={user.avatarUrl} sx={headerAvatarSx}/>}
+                                <RemoteAvatar avatarUrl={user.avatarUrl} nickname={avatarName} sx={headerAvatarSx}/>
                                 <Box sx={{display: 'flex', flexDirection: 'column'}}>
                                   Мій Профіль
                                   <span style={{fontSize: '0.7em', opacity: 0.7}}>({user?.name})</span>
@@ -516,6 +521,22 @@ export default function AppAppBar() {
                 }
               </Box>
             </Drawer>
+            {/* Акаунт стоїть на правому краї, як і на десктопі. Круглий аватар без
+                рамки кнопки: друга рамка навколо кола виглядала б як ще одна іконка. */}
+            {user && (
+              <IconButton
+                aria-label="Мій профіль"
+                onClick={() => navigateWithConfirm('/profile')}
+                sx={{
+                  // StyledToolbar фарбує всі IconButton рамкою і тлом селектором
+                  // з двох класів. Потрійний & перебиває його без !important.
+                  '&&&': {p: 0, border: 'none', borderRadius: '50%', bgcolor: 'transparent'},
+                  '&&&:hover .MuiAvatar-root': {borderColor: brandColors.accent},
+                }}
+              >
+                <RemoteAvatar avatarUrl={user.avatarUrl} nickname={avatarName} sx={{...headerAvatarSx, width: 36, height: 36, fontSize: 16}}/>
+              </IconButton>
+            )}
           </Box>
         </StyledToolbar>
         {pathname === '/' ? (
