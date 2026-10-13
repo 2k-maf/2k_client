@@ -26,6 +26,7 @@ import { invalidateClubRatingCache } from "./utils/clubRatingCache";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import {useAuth} from "./AuthProvider";
 import {vancouverTodayYmd} from "./utils/vancouverDate";
 import AbbrLegend from "./components/brand/AbbrLegend";
@@ -223,6 +224,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const [bonusAnchorEl, setBonusAnchorEl] = React.useState<HTMLElement | null>(null);
   const [bonusPlayerN, setBonusPlayerN] = React.useState<number>(0);
   const [killedShowInfo, setKilledShowInfo] = React.useState(false);
+  const [legendAnchorEl, setLegendAnchorEl] = React.useState<HTMLElement | null>(null);
 
   /** Збережену гру можна правити й після вибору переможця. */
   const editingSaved = isEditingRatingGame || (editingSavedTournamentGame && isTournamentGame);
@@ -745,6 +747,9 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     return Object.values(players).filter((player: any) => player.killed).map((player: any) => player.killed)
   }, [players]);
 
+  /** Скидання форми є не в усіх режимах: перегляд турніру і редагування збереженої гри його не мають. */
+  const showResetButton = !readOnlyTournament && !tournamentHidden && !isEditingRatingGame;
+
   const bonusWinnerOpts = isTournamentGame ? BONUS_TOURNAMENT_WIN : BONUS_RATING_WIN;
   const bonusLoserOpts = isTournamentGame ? BONUS_TOURNAMENT_LOSS : BONUS_RATING_LOSS;
   const penaltyWinnerOpts = isTournamentGame ? PENALTY_TOURNAMENT_WIN : [];
@@ -792,7 +797,50 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             mt: 2,
           }}
         >
-          {!readOnlyTournament && !tournamentHidden && !isEditingRatingGame && (
+          <IconButton
+            aria-label="Позначення колонок"
+            title="Позначення колонок"
+            aria-haspopup="dialog"
+            aria-expanded={Boolean(legendAnchorEl)}
+            aria-controls={legendAnchorEl ? 'protocol-legend' : undefined}
+            onClick={(e) => setLegendAnchorEl(e.currentTarget)}
+            size="small"
+            sx={{
+              position: 'absolute',
+              top: 0,
+              // Праворуч стоїть скидання форми, якщо воно є в цьому режимі.
+              right: showResetButton ? 34 : 0,
+              zIndex: 1,
+              border: 'none',
+              bgcolor: 'transparent',
+              backgroundImage: 'none',
+              color: fg(0.75),
+              '&:hover': { bgcolor: 'transparent', backgroundImage: 'none', color: brandColors.text },
+            }}
+          >
+            <HelpOutlineIcon fontSize="small" />
+          </IconButton>
+          <Popover
+            id="protocol-legend"
+            open={Boolean(legendAnchorEl)}
+            anchorEl={legendAnchorEl}
+            onClose={() => setLegendAnchorEl(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            {/* Легенда на вимогу: під сіткою вона розривала протокол і голосування. */}
+            <Box sx={{ py: 1.5, pr: 1.5, maxWidth: 300 }}>
+              <AbbrLegend
+                items={[
+                  { term: <ThumbUpIcon titleAccess="Голосування" sx={{ fontSize: 16 }} />, text: 'номер гравця — виставити на голосування' },
+                  { term: 'Ф', text: 'фоли' },
+                  { term: 'Р', text: 'роль; заголовок ховає ролі' },
+                  { term: <HeartBrokenIcon titleAccess="Перший вбитий" sx={{ fontSize: 16 }} />, text: 'перший вбитий' },
+                ]}
+              />
+            </Box>
+          </Popover>
+          {showResetButton && (
             <IconButton
               aria-label="Скинути форму"
               title={formCanReset ? 'Скинути форму' : 'Форма вже порожня'}
@@ -831,7 +879,8 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
               justifyContent: 'center',
               gap: 1,
               flexWrap: 'wrap',
-              pr: { xs: 5, sm: 0 },
+              // Місце під кнопки «?» і скидання праворуч від кнопок перемоги.
+              pr: { xs: showResetButton ? 9 : 5, sm: 0 },
             }}
           >
             <Button
@@ -1040,18 +1089,6 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             ))
           }
         </Grid>
-        </Box>
-
-        {/* Заголовки колонок — одна літера чи іконка, тож пояснення стоїть під сіткою. */}
-        <Box sx={{ width: '100%', maxWidth: 1200 }}>
-          <AbbrLegend
-            items={[
-              { term: <ThumbUpIcon titleAccess="Голосування" sx={{ fontSize: 16 }} />, text: 'номер гравця — виставити на голосування' },
-              { term: 'Ф', text: 'фоли' },
-              { term: 'Р', text: 'роль; заголовок ховає ролі' },
-              { term: <HeartBrokenIcon titleAccess="Перший вбитий" sx={{ fontSize: 16 }} />, text: 'перший вбитий' },
-            ]}
-          />
         </Box>
 
         {Object.values(players).some((p: any) => p.killed === 1) && (
