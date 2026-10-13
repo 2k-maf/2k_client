@@ -25,7 +25,7 @@ import axios from "../axios";
 import { brand } from '../theme/themePrimitives';
 import { brandColors, brandFonts, withAlpha } from '../theme/brand';
 import Typography from "@mui/material/Typography";
-import {useEffect, useMemo} from "react";
+import {useEffect} from "react";
 import { confirmAction } from './feedback/feedback';
 
 /** Кільце навколо аватара — інакше фото зливається зі смугою хедера. Літера-заглушка — кольору тексту смуги. */
@@ -82,13 +82,16 @@ const StyledToolbar = styled(Toolbar)(({theme}) => ({
   },
 }));
 
-let stopWatchInterval: NodeJS.Timeout;
-let stopWatchStart = false;
+/** Тривалість промови гравця на таймері ведучого, секунди. */
+const SPEECH_SECONDS = 60;
 
 const liveDotPulse = keyframes`
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.3; transform: scale(0.88); }
 `;
+
+/** Рядок з кнопкою акаунта в мобільному меню. Відступи — як у MenuItem теми, щоб вигляд не змінився. */
+const drawerActionSx = { display: 'flex', alignItems: 'center', padding: '6px 8px' } as const;
 
 /** Спільний вигляд випадаючих меню в хедері (як «Рейтингова / Фанова») */
 function appBarNavMenuPaperSx(theme: Theme) {
@@ -115,53 +118,52 @@ export default function AppAppBar() {
   const avatarName = (user?.authType === 'Клуб' ? user?.name : user?.nickname || user?.name) || '';
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [stopWatch, setStopWatch] = React.useState(60);
+  const [stopWatch, setStopWatch] = React.useState(SPEECH_SECONDS);
+  // Таймер стоїть, доки ведучий його не торкнеться. Стан компонента, а не модуля:
+  // інакше після першого запуску таймер сам біг на кожній новій сторінці гри.
+  const [stopWatchRunning, setStopWatchRunning] = React.useState(false);
   const [liveTournament, setLiveTournament] = React.useState<{ id: string; name: string } | null>(null);
-  // const [stopWatchStart, setStopWatchStart] = React.useState(false);
-  // const [stopWatchInterval, setStopWatchInterval] = React.useState(null as NodeJS.Timeout | null);
 
-  const stopWatchFmt= useMemo(() => {
-    const minutes = Math.floor((stopWatch % 3600) / 61);
-    const seconds = Math.floor(stopWatch % 61);
-    return seconds.toString().padStart(2, '0');
-  }, [stopWatch]);
+  const stopWatchFmt = stopWatch.toString().padStart(2, '0');
 
   useEffect(() => {
-    stopWatchInterval = setInterval(() => {
-      if (!stopWatchStart) return;
-      setStopWatch((prev) => Math.max(prev - 1, 0))
-    }, 1000);
-    return () => clearInterval(stopWatchInterval);
-  }, []);
+    if (!stopWatchRunning) return;
+    const t = window.setInterval(() => setStopWatch((prev) => Math.max(prev - 1, 0)), 1000);
+    return () => window.clearInterval(t);
+  }, [stopWatchRunning]);
 
+  useEffect(() => {
+    if (!stopWatchRunning || stopWatch > 0) return;
+    setStopWatchRunning(false);
+    // Час вийшов: телефон ведучого вібрує, щоб не дивитися на екран. iOS вібрацію не підтримує.
+    navigator.vibrate?.(400);
+  }, [stopWatch, stopWatchRunning]);
+
+  // Плашку «наживо» бачать усі відвідувачі, тому endpoint публічний.
   const fetchLiveTournament = React.useCallback(async () => {
-    if (!user || typeof localStorage === 'undefined' || !localStorage.getItem('jwt_token')) {
-      setLiveTournament(null);
-      return;
-    }
     try {
-      const { data } = await axios.get<{ items: { id: string; name: string; status: string }[] }>('/tournaments');
-      const items = data.items || [];
-      const live = items.find((t) => t.status === 'in_progress');
-      setLiveTournament(live ? { id: live.id, name: live.name } : null);
+      const { data } = await axios.get<{ item: { id: string; name: string } | null }>('/public/live-tournament');
+      setLiveTournament(data.item ?? null);
     } catch {
       setLiveTournament(null);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     void fetchLiveTournament();
   }, [fetchLiveTournament]);
 
   useEffect(() => {
-    if (!user) return;
-    const t = window.setInterval(() => fetchLiveTournament(), 90_000);
+    // Прихована вкладка не опитує API: кожен запит витрачає добовий ліміт функції Cloudflare.
+    const t = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void fetchLiveTournament();
+    }, 90_000);
     return () => window.clearInterval(t);
-  }, [user, fetchLiveTournament]);
+  }, [fetchLiveTournament]);
 
   const startStopWatch = () => {
-    setStopWatch(60);
-    stopWatchStart = true;
+    setStopWatch(SPEECH_SECONDS);
+    setStopWatchRunning(true);
   }
 
   /**
@@ -176,8 +178,11 @@ export default function AppAppBar() {
     setOpen(newOpen);
   };
 
+  /** Повторний перехід на рейтингову гру з неї самої скидає гру — тоді потрібне підтвердження. */
+  const needsNewGameConfirm = (path: string) => path === '/new-game-rating' && pathname.endsWith('new-game-rating');
+
   const navigateWithConfirm = async (path: string) => {
-    if (path === '/new-game-rating' && window.location.pathname.endsWith('new-game-rating')) {
+    if (needsNewGameConfirm(path)) {
       if (!(await confirmAction('Ви починаєте нову гру. Дані діючої рейтингової гри не будуть збережені.', 'Почати нову'))) return;
       localStorage.removeItem('ratingGameState');
       window.location.reload();
@@ -185,6 +190,28 @@ export default function AppAppBar() {
     }
     navigate(path);
   }
+
+  /**
+   * Пропси пункту навігації. Пункт рендериться як посилання (`component={RouterLink}`):
+   * так працюють «відкрити в новій вкладці» і `aria-current` для читачів екрана.
+   */
+  const navLink = (path: string, onNavigate?: () => void) => ({
+    to: path,
+    'aria-current': isActive(path) ? ('page' as const) : undefined,
+    onClick: (e: React.MouseEvent) => {
+      onNavigate?.();
+      if (!needsNewGameConfirm(path)) return;
+      e.preventDefault();
+      void navigateWithConfirm(path);
+    },
+  });
+
+  const closeDrawer = () => setOpen(false);
+
+  const logoutAndGoHome = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <AppBar
@@ -215,9 +242,9 @@ export default function AppAppBar() {
             }}
           >
             <Sitemark variant="band" size={isGameRoute ? 26 : 30}/>
-            <Box sx={{display: 'none', '@media (min-width: 940px)': {display: 'flex'}, gap: 0.5, overflow: 'hidden', '& .MuiButton-root': {whiteSpace: 'nowrap', minWidth: 'auto', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis'}}}>
+            <Box component="nav" aria-label="Головна навігація" sx={{display: 'none', '@media (min-width: 940px)': {display: 'flex'}, gap: 0.5, overflow: 'hidden', '& .MuiButton-root': {whiteSpace: 'nowrap', minWidth: 'auto', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis'}}}>
               <Button startIcon={<StarIcon/>} variant={navVariant('/clubs-rating')}
-                      onClick={() => navigateWithConfirm('/clubs-rating')}
+                      component={RouterLink} {...navLink('/clubs-rating')}
                       size="small" color="secondary">
                 Рейтинг клубу
               </Button>
@@ -225,7 +252,7 @@ export default function AppAppBar() {
                 <Box sx={{display: 'flex', alignItems: 'center'}}>
                   <Button
                     variant={isGameRoute ? 'outlined' : 'text'}
-                    onClick={() => navigateWithConfirm('/new-game-rating')}
+                    component={RouterLink} {...navLink('/new-game-rating')}
                     size="small"
                     sx={{borderTopRightRadius: 0, borderBottomRightRadius: 0, pr: 1}}>
                     {isActive('/new-game') ? 'Фан гра' : 'Рейтингова гра'}
@@ -233,30 +260,35 @@ export default function AppAppBar() {
                   <Button
                     variant={isGameRoute ? 'outlined' : 'text'}
                     onClick={(e) => setGameMenuAnchor(e.currentTarget)}
+                    aria-label="Обрати тип гри"
+                    aria-haspopup="menu"
+                    aria-expanded={Boolean(gameMenuAnchor)}
+                    aria-controls={gameMenuAnchor ? 'game-type-menu' : undefined}
                     size="small"
                     sx={{borderTopLeftRadius: 0, borderBottomLeftRadius: 0, minWidth: 'auto', px: 0.3}}>
                     <ArrowDropDownIcon sx={{fontSize: 20}}/>
                   </Button>
                 </Box>
                 <Menu
+                  id="game-type-menu"
                   anchorEl={gameMenuAnchor}
                   open={Boolean(gameMenuAnchor)}
                   onClose={() => setGameMenuAnchor(null)}
                   PaperProps={{ sx: appBarNavMenuPaperSx }}
                 >
-                  <MenuItem onClick={() => { setGameMenuAnchor(null); navigateWithConfirm('/new-game-rating'); }}>Рейтингова</MenuItem>
-                  <MenuItem onClick={() => { setGameMenuAnchor(null); navigateWithConfirm('/new-game'); }}>Фанова</MenuItem>
+                  <MenuItem component={RouterLink} {...navLink('/new-game-rating', () => setGameMenuAnchor(null))}>Рейтингова</MenuItem>
+                  <MenuItem component={RouterLink} {...navLink('/new-game', () => setGameMenuAnchor(null))}>Фанова</MenuItem>
                 </Menu>
               </> : <Button variant={navVariant('/new-game')}
-                      onClick={() => navigateWithConfirm('/new-game')}
+                      component={RouterLink} {...navLink('/new-game')}
                       size="small">
                 Фан гра
               </Button>}
-              <Button onClick={() => navigateWithConfirm('/rules')} variant={navVariant('/rules')} size="small">
+              <Button component={RouterLink} {...navLink('/rules')} variant={navVariant('/rules')} size="small">
                 Правила
               </Button>
               <Button
-                onClick={() => navigateWithConfirm('/members')}
+                component={RouterLink} {...navLink('/members')}
                 variant={navVariant('/members')}
                 size="small"
               >
@@ -359,7 +391,7 @@ export default function AppAppBar() {
                 виходу з акаунта. */}
             <ColorModeToggle/>
             {
-              user && <Button onClick={() => navigateWithConfirm('/profile')} color="primary" variant="text" size="small" sx={{gap: 1, lineHeight: 1.2, py: 0.5, maxWidth: 180, overflow: 'hidden'}}>
+              user && <Button component={RouterLink} {...navLink('/profile')} color="primary" variant="text" size="small" sx={{gap: 1, lineHeight: 1.2, py: 0.5, maxWidth: 180, overflow: 'hidden'}}>
                     <RemoteAvatar avatarUrl={user.avatarUrl} nickname={avatarName} sx={headerAvatarSx}/>
                     <Box sx={{display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
                       Мій Профіль
@@ -368,21 +400,18 @@ export default function AppAppBar() {
                 </Button>
             }
             {
-              user && <Button onClick={() => {
-                logout()
-                navigateWithConfirm('/')
-              }} color="primary" variant="text" size="small">
+              user && <Button onClick={logoutAndGoHome} color="primary" variant="text" size="small">
                     Вийти
                 </Button>
             }
             {
-              !user && <Button href="/login" color="primary" variant="text" size="small">
+              !user && <Button component={RouterLink} {...navLink('/login')} color="primary" variant="text" size="small">
                     Увійти
                 </Button>
             }
             {
               !user && <Button
-                    href="/register"
+                    component={RouterLink} {...navLink('/register')}
                     variant="contained"
                     size="small"
                     sx={{ px: 2, borderRadius: '12px' }}
@@ -393,7 +422,7 @@ export default function AppAppBar() {
           </Box>
           <Box sx={{display: 'flex', '@media (min-width: 940px)': {display: 'none'}, gap: 1, alignItems: 'center', flexShrink: 0}}>
             <ColorModeToggle size="medium"/>
-            <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
+            <IconButton aria-label="Відкрити меню" aria-expanded={open} onClick={toggleDrawer(true)}>
               <MenuIcon/>
             </IconButton>
             <Drawer
@@ -406,7 +435,7 @@ export default function AppAppBar() {
                 },
               }}
             >
-              <Box sx={{p: 2, backgroundColor: 'background.default'}}>
+              <Box component="nav" aria-label="Головна навігація" sx={{p: 2, backgroundColor: 'background.default'}}>
                 <Box
                   sx={{
                     display: 'flex',
@@ -418,37 +447,25 @@ export default function AppAppBar() {
                   </OutlinedActionIconButton>
                 </Box>
                 <MenuItem selected={isActive('/clubs-rating')}
-                          onClick={() => navigateWithConfirm('/clubs-rating')}><StarIcon sx={{ mr: .5 }}/>Рейтинг клубу</MenuItem>
+                          component={RouterLink} {...navLink('/clubs-rating', closeDrawer)}><StarIcon sx={{ mr: .5 }}/>Рейтинг клубу</MenuItem>
                 {canRecordRatingGame ? <>
                   <MenuItem selected={isActive('/new-game-rating')}
-                            onClick={() => { setOpen(false); navigateWithConfirm('/new-game-rating'); }}>Рейтингова гра</MenuItem>
+                            component={RouterLink} {...navLink('/new-game-rating', closeDrawer)}>Рейтингова гра</MenuItem>
                   <MenuItem selected={isActive('/new-game')}
-                            onClick={() => { setOpen(false); navigateWithConfirm('/new-game'); }}>Фан гра</MenuItem>
+                            component={RouterLink} {...navLink('/new-game', closeDrawer)}>Фан гра</MenuItem>
                 </> : <MenuItem selected={isActive('/new-game')}
-                          onClick={() => { setOpen(false); navigateWithConfirm('/new-game'); }}>Фан гра</MenuItem>}
-                <MenuItem
-                  selected={isActive('/rules')}
-                  onClick={() => {
-                    setOpen(false);
-                    navigateWithConfirm('/rules');
-                  }}
-                >
+                          component={RouterLink} {...navLink('/new-game', closeDrawer)}>Фан гра</MenuItem>}
+                <MenuItem selected={isActive('/rules')} component={RouterLink} {...navLink('/rules', closeDrawer)}>
                   Правила
                 </MenuItem>
-                <MenuItem
-                  selected={isActive('/members')}
-                  onClick={() => {
-                    setOpen(false);
-                    navigateWithConfirm('/members');
-                  }}
-                >
+                <MenuItem selected={isActive('/members')} component={RouterLink} {...navLink('/members', closeDrawer)}>
                   Учасники
                 </MenuItem>
                 {liveTournament ? (
                   <MenuItem
                     component={RouterLink}
                     to={`/tournaments/${liveTournament.id}`}
-                    onClick={() => setOpen(false)}
+                    onClick={closeDrawer}
                     sx={(theme) => {
                       const isDark = theme.palette.mode === 'dark';
                       return {
@@ -486,37 +503,34 @@ export default function AppAppBar() {
                 <Divider sx={{my: 3}}/>
                 {
                   !user && <>
-                        <MenuItem>
-                            <Button href="/register" color="primary" variant="outlined" fullWidth>
+                        <Box sx={drawerActionSx}>
+                            <Button component={RouterLink} {...navLink('/register', closeDrawer)} color="primary" variant="outlined" fullWidth>
                                 Зареєструватися
                             </Button>
-                        </MenuItem>
-                        <MenuItem>
-                            <Button href="/login" color="primary" variant="outlined" fullWidth>
+                        </Box>
+                        <Box sx={drawerActionSx}>
+                            <Button component={RouterLink} {...navLink('/login', closeDrawer)} color="primary" variant="outlined" fullWidth>
                                 Увійти
                             </Button>
-                        </MenuItem>
+                        </Box>
                     </>
                 }
                 {
                   user && <>
-                        <MenuItem>
-                            <Button href="/profile" color="primary" variant="outlined" fullWidth sx={{gap: 1, lineHeight: 1.2, py: 0.5}}>
+                        <Box sx={drawerActionSx}>
+                            <Button component={RouterLink} {...navLink('/profile', closeDrawer)} color="primary" variant="outlined" fullWidth sx={{gap: 1, lineHeight: 1.2, py: 0.5}}>
                                 <RemoteAvatar avatarUrl={user.avatarUrl} nickname={avatarName} sx={headerAvatarSx}/>
                                 <Box sx={{display: 'flex', flexDirection: 'column'}}>
                                   Мій Профіль
                                   <span style={{fontSize: '0.7em', opacity: 0.7}}>({user?.name})</span>
                                 </Box>
                             </Button>
-                        </MenuItem>
-                        <MenuItem>
-                            <Button onClick={() => {
-                                logout()
-                              navigateWithConfirm('/')
-                            }} color="primary" variant="outlined" fullWidth>
+                        </Box>
+                        <Box sx={drawerActionSx}>
+                            <Button onClick={logoutAndGoHome} color="primary" variant="outlined" fullWidth>
                                 Вийти
                             </Button>
-                        </MenuItem>
+                        </Box>
                     </>
                 }
               </Box>
@@ -526,7 +540,8 @@ export default function AppAppBar() {
             {user && (
               <IconButton
                 aria-label="Мій профіль"
-                onClick={() => navigateWithConfirm('/profile')}
+                component={RouterLink}
+                {...navLink('/profile')}
                 sx={{
                   // StyledToolbar фарбує всі IconButton рамкою і тлом селектором
                   // з двох класів. Потрійний & перебиває його без !important.
