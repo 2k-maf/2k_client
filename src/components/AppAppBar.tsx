@@ -391,7 +391,8 @@ export default function AppAppBar() {
               size="small"
               aria-label={`Запустити таймер на ${SHORT_SPEECH_SECONDS} секунд`}
               onClick={() => startStopWatch(SHORT_SPEECH_SECONDS)}
-              sx={{ minWidth: 44, height: 36, px: 1, flexShrink: 0, fontFamily: brandFonts.mono, fontWeight: 700 }}
+              // mr: той самий проміжок 8px, що й між іконками праворуч (gap: 1).
+              sx={{ minWidth: 44, height: 36, px: 1, mr: 1, flexShrink: 0, fontFamily: brandFonts.mono, fontWeight: 700 }}
             >
               {SHORT_SPEECH_SECONDS}
             </Button>
