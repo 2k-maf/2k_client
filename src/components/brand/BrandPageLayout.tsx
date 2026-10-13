@@ -19,7 +19,8 @@ type Props = {
  */
 export default function BrandPageLayout({ eyebrow, subtitle, children }: Props) {
   return (
-    <BrandPage centered>
+    // Великого заголовка тут немає, тож вкладку називає надзаголовок: «Вхід до клубу», «Реєстрація».
+    <BrandPage centered documentTitle={eyebrow}>
       <Box
         sx={{
           display: 'grid',

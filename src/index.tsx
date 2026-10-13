@@ -3,8 +3,9 @@ import * as ReactDOM from 'react-dom/client';
 import { StyledEngineProvider } from '@mui/material/styles';
 import App from './App';
 
-// Заголовок вкладки задає <title> у public/index.html. Не перезаписуйте його
-// звідси: попередній варіант ставив стару назву «Nine or Ten» після монтування.
+// Базовий заголовок вкладки задає <title> у public/index.html. Сторінки додають до
+// нього свою назву через usePageTitle, з тією самою назвою сайту SITE_NAME.
+// Не задавайте назву сайту тут: попередній варіант ставив стару «Nine or Ten».
 ReactDOM.createRoot(document.querySelector("#root")!).render(
   <React.StrictMode>
     <StyledEngineProvider injectFirst>

@@ -134,7 +134,7 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <ProfilePage title={isClub ? user?.name || 'Профіль клубу' : user?.nickname || 'Профіль'}>
+      <ProfilePage title={isClub ? user?.name || 'Профіль клубу' : user?.nickname || 'Профіль'} documentTitle="Кабінет">
         <ProfileCardGrid>
           <ProfileCard
             icon={<AccountBoxIcon />}

@@ -4,12 +4,15 @@ import Typography from '@mui/material/Typography';
 import AppAppBar from '../AppAppBar';
 import Footer from '../Footer';
 import { brandColors, brandFonts, eyebrowSx } from '../../theme/brand';
+import { usePageTitle } from '../../hooks/usePageTitle';
 
 type Props = {
   /** Моно-напис над заголовком, напр. «Правила». */
   eyebrow?: string;
   /** Великий заголовок сторінки. Без нього шапка не рендериться. */
   title?: string;
+  /** Заголовок вкладки, якщо він інший, ніж `title`. */
+  documentTitle?: string;
   /** Праворуч від заголовка: пошук, бейдж сезону. Не для навігації. */
   actions?: React.ReactNode;
   /** Навігація розділу — завжди окремим рядком під заголовком, щоб не стрибала. */
@@ -26,7 +29,9 @@ type Props = {
  * Усі внутрішні сторінки мають будуватись на ньому — інакше відступи й фон
  * розходяться, як це було на «Учасниках» і «Клубах».
  */
-export default function BrandPage({ eyebrow, title, actions, subnav, centered = false, children }: Props) {
+export default function BrandPage({ eyebrow, title, documentTitle, actions, subnav, centered = false, children }: Props) {
+  usePageTitle(documentTitle ?? title);
+
   return (
     <Box
       sx={{

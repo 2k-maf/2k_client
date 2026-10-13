@@ -753,7 +753,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     return (
       <AppTheme {...props}>
         <CssBaseline enableColorScheme />
-        <BrandPage>
+        <BrandPage documentTitle="Турнірна гра">
           <Typography sx={{ textAlign: 'center' }}>
             Результати цієї гри приховані до завершення турніру.
           </Typography>

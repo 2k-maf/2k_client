@@ -38,6 +38,8 @@ function activeTab(tabs: BrandTab[], pathname: string): string {
 
 type Props = {
   title: string;
+  /** Заголовок вкладки, якщо він інший, ніж `title`. */
+  documentTitle?: string;
   children: React.ReactNode;
 };
 
@@ -45,7 +47,7 @@ type Props = {
  * Каркас кабінету: той самий `BrandPage`, що й на публічних сторінках, плюс
  * рядок вкладок замість бічного меню шаблону MUI.
  */
-export default function ProfilePage({ title, children }: Props) {
+export default function ProfilePage({ title, documentTitle, children }: Props) {
   const { user, isHost } = useAuth();
   const { pathname } = useLocation();
   const isClub = user?.authType === 'Клуб';
@@ -55,6 +57,7 @@ export default function ProfilePage({ title, children }: Props) {
     <BrandPage
       eyebrow={isClub ? 'Кабінет клубу' : 'Кабінет учасника'}
       title={title}
+      documentTitle={documentTitle}
       subnav={<BrandTabs tabs={tabs} activeTo={activeTab(tabs, pathname)} />}
     >
       {children}
