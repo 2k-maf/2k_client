@@ -967,7 +967,8 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                         </Grid>
                         <Grid sx={{
                           p: n === 0 ? '.5rem' : '.1rem',
-                          backgroundColor: players[n]?.warnings === 3 ? withAlpha(brandColors.ember, 0.2) : players[n]?.warnings === 4 ? withAlpha(brandColors.negative, 0.3) : 'transparent',
+                          // 3 і 4 фоли мають бути видно з першого погляду: фон ≥3:1 до тла сторінки (WCAG 1.4.11).
+                          backgroundColor: players[n]?.warnings === 3 ? withAlpha(brandColors.ember, 0.75) : players[n]?.warnings === 4 ? withAlpha(brandColors.accent, 0.85) : 'transparent',
                           cursor: n !== 0 ? 'pointer' : 'default'
                         }} {...(n !== 0 && cellButton(`Фол гравцю ${n}, зараз ${players[n].warnings}`, () => addWarning(n)))}
                           size={{xs: 1.75, sm: 2, lg: 1.5}}>
