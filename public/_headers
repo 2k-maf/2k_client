@@ -9,7 +9,7 @@
   X-XSS-Protection: 1; mode=block
 
 # Імена файлів CRA хешує, вміст за таким іменем ніколи не змінюється.
-# Увага: якщо edge віддасть SPA index.html на відсутній /static/* (гонка деплою),
-# цей Cache-Control отруїть URL на рік. Деплой перевіряє Content-Type бандла.
+# /static/* іде через edge/proxy.mjs: SPA index.html на відсутній файл (гонка
+# деплою) функція замінює на 404 без кешу, тож цей Cache-Control його не отруїть.
 /static/*
   Cache-Control: public, max-age=31536000, immutable

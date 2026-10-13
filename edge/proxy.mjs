@@ -6,6 +6,7 @@
  *
  *   шляхи API      → Lambda Function URL + заголовок x-origin-secret
  *   /avatars/*     → приватний бакет S3, підписаний GET, кеш Cloudflare
+ *   /static/*      → статика Pages як є; SPA-fallback замість файлу → 404
  *   решта          → статика Pages (сюди функція не викликається взагалі,
  *                    див. public/_routes.json)
  *
@@ -33,6 +34,10 @@ const HOP_HEADERS = ['host', 'connection', 'keep-alive', 'transfer-encoding', 'u
 
 export async function handle(request, env, ctx) {
     const url = new URL(request.url);
+
+    if (url.pathname.startsWith('/static/')) {
+        return serveStatic(request, env);
+    }
 
     if (url.pathname.startsWith('/avatars/')) {
         return withSecurityHeaders(await serveAvatar(request, env, ctx, url));
@@ -79,6 +84,27 @@ async function proxyApi(request, env, url) {
         console.error(`Lambda недоступна: ${e?.message}`);
         return json(502, { message: 'Bad gateway' });
     }
+}
+
+/**
+ * Хешовані файли CRA. У /static/ лежать лише js, css і медіа, тож HTML тут
+ * означає SPA-fallback Pages: файлу в цьому деплої немає.
+ *
+ * Так буває під час деплою: новий index.html уже живий, а запит на новий
+ * бандл кілька секунд потрапляє на попередній деплой. Без підміни fallback
+ * отримав би з public/_headers immutable на рік, і браузер закешував би
+ * index.html як бандл. 2026-10-13 це сталося з main.4149502d.js.
+ *
+ * 404 з no-store не кешується: наступне завантаження сторінки отримає файл.
+ */
+async function serveStatic(request, env) {
+    const response = await env.ASSETS.fetch(request);
+    // 304 без тіла не має content-type і проходить як є.
+    if (!(response.headers.get('content-type') || '').includes('text/html')) return response;
+    return withSecurityHeaders(new Response('Not found', {
+        status: 404,
+        headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' },
+    }));
 }
 
 async function serveAvatar(request, env, ctx, url) {
