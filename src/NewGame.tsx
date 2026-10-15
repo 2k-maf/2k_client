@@ -244,11 +244,9 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
 
   useEffect(() => {
     if (!isRatingGame || isEditingRatingGame) return;
-    const hasRealPlayers = Object.values(players).some((p: any) => {
-      if (p?.id) return true;
-      const title = String(p?.title || '');
-      return Boolean(title && !title.startsWith('Гість'));
-    });
+    const hasRealPlayers = Object.values(players).some(
+      (p: any) => p.id && !p.title?.startsWith('Гість')
+    );
     if (!hasRealPlayers) return;
     const state = {
       players,
@@ -519,7 +517,15 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       notify.error('Не всім розподілено нікнейми');
       return
     }
-    // Кастомний нік без id — гість, не акаунт. У фан-грі й рейтингу команди місць немає.
+    if (!isTournamentGame) {
+      const missingId = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some(
+        (seat) => players[seat]?.title && !String(players[seat].title).startsWith('Гість') && !players[seat].id
+      );
+      if (missingId) {
+        notify.error('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
+        return;
+      }
+    }
     setWinState(() => winner);
   }
 
@@ -544,10 +550,10 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     const effective = resolveTeamSeats(players);
     if (effective !== players) setPlayers(effective);
     if (isTournamentGame) {
-      const unresolvedTeam = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some(
-        (seat) => effective[seat]?.pendingTeamIds?.length && !effective[seat]?.id
+      const missingId = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some(
+        (seat) => effective[seat]?.title && !String(effective[seat].title).startsWith('Гість') && !effective[seat].id
       );
-      if (unresolvedTeam) {
+      if (missingId) {
         notify.error('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
         return;
       }
@@ -754,10 +760,6 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   }, [isTournamentGame, tournamentId, gameIndexStr, editGameId, user?._id, user?.authType])
 
   // get active players nickname list
-  const activePlayers = useMemo(() => {
-    return Object.values(players).filter((player: any) => player.title).map((player: any) => player.title)
-  }, [players]);
-
   const rolesPool = useMemo(() => {
     return Object.values(players).filter((player: any) => player.role).map((player: any) => player.role)
   }, [players]);
@@ -1011,9 +1013,12 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                             handleHomeEndKeys
                             options={(() => {
                               const pending = (players[n] as any)?.pendingTeamIds as string[] | undefined;
+                              // Не ховаємо вже розсаджених: повторний вибір переносить
+                              // гравця (setPlayerNickname). Інакше clearOnBlur стирає нік,
+                              // бо value немає в options.
                               const base = pending?.length
                                 ? clubUsers.filter((u: any) => pending.includes(String(u._id)))
-                                : clubUsers.filter((u: any) => !activePlayers.includes(u.nickname));
+                                : clubUsers;
                               return base.map((option: { nickname: string }) => ({ ...option, title: option.nickname }));
                             })()}
                             freeSolo={!readOnlyTournament && !(players[n] as any)?.pendingTeamIds?.length}
