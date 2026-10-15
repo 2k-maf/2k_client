@@ -21,6 +21,12 @@ test('чужий запит не збігається', () => {
   expect(nickMatches('Аліса', 'rock')).toBe(false);
 });
 
+test('Rabbit знаходиться як ребіт', () => {
+  expect(nickMatches('Rabbit', 'ребіт')).toBe(true);
+  expect(nickMatches('Rabbit', 'рабіт')).toBe(true);
+  expect(nickMatches('Ребіт', 'rabbit')).toBe(true);
+});
+
 test('українські диграфи сходяться з латиницею', () => {
   expect(nickMatches('Гриша', 'grisha')).toBe(true);
   expect(nickMatches('Щука', 'schuka')).toBe(true);

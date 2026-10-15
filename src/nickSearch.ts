@@ -74,7 +74,14 @@ export function foldNick(value: string): string {
     if ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9')) out += ch;
     i += 1;
   }
-  return out;
+  // «Rabbit» пишуть «ребіт»: коротке a → е, подвійне bb → одне б.
+  let folded = '';
+  for (const ch of out) {
+    const letter = ch === 'e' ? 'a' : ch;
+    if (folded.endsWith(letter)) continue;
+    folded += letter;
+  }
+  return folded;
 }
 
 export function nickMatches(title: string, query: string): boolean {
