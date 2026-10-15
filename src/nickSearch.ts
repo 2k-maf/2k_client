@@ -132,7 +132,7 @@ function foldVariants(value: string): string[] {
       queue.push({ i: state.i + step.consume, out: state.out + step.text });
     }
   }
-  return [...new Set(done)];
+  return Array.from(new Set(done));
 }
 
 function vowelPair(a: string, b: string): boolean {
@@ -167,7 +167,7 @@ function forms(value: string): string[] {
   const base = compact(value);
   const flipped = flipLayout(base);
   const sources = flipped ? [base, flipped] : [base];
-  return [...new Set(sources.flatMap(foldVariants))];
+  return Array.from(new Set(sources.flatMap(foldVariants)));
 }
 
 export function nickMatches(title: string, query: string): boolean {
