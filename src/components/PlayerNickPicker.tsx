@@ -124,7 +124,7 @@ export default function PlayerNickPicker({
       if (listRef.current) listRef.current.scrollTop = 0;
     });
     return () => cancelAnimationFrame(id);
-  }, [open]);
+  }, [open, q]);
 
   const matchQ = (title: string, query: string) => {
     if (!query.trim()) return true;
@@ -136,13 +136,34 @@ export default function PlayerNickPicker({
     setOpen(false);
   };
 
+  const sectionLabelSx = {
+    display: 'block',
+    px: 2,
+    pt: 1.5,
+    pb: 0.5,
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    color: 'text.secondary',
+  } as const;
+
   if (isMobile) {
     const searching = Boolean(q.trim());
     const eveningVisible = eveningOpts.filter((o) => matchQ(o.title, q));
-    const showOthers = searching || othersOpen;
+    const showOthers = searching || othersOpen || eveningOpts.length === 0;
     const othersVisible = showOthers
       ? clubOpts.filter((o) => matchQ(o.title, q))
       : [];
+    const hasEveningHits = eveningVisible.length > 0;
+    const hasOtherHits = othersVisible.length > 0;
+    // Під час пошуку заголовки секцій лише якщо обидві групи мають хіти.
+    const showEveningLabel = hasEveningHits && (!searching || hasOtherHits);
+    const showOthersLabel =
+      hasOtherHits &&
+      (searching
+        ? hasEveningHits
+        : eveningOpts.length > 0);
+    const showOthersToggle = !searching && eveningOpts.length > 0;
 
     return (
       <>
@@ -229,22 +250,18 @@ export default function PlayerNickPicker({
             </Box>
             <List
               ref={listRef}
-              sx={{ flex: 1, overflow: 'auto', py: 0, pb: 'env(safe-area-inset-bottom)' }}
+              disablePadding
+              sx={{
+                flex: 1,
+                minHeight: 0,
+                overflow: 'auto',
+                py: 0,
+                pb: 'env(safe-area-inset-bottom)',
+                display: 'block',
+              }}
             >
-              {eveningVisible.length > 0 && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    display: 'block',
-                    px: 2,
-                    pt: 1.5,
-                    pb: 0.5,
-                    fontWeight: 700,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: 'text.secondary',
-                  }}
-                >
+              {showEveningLabel && (
+                <Typography variant="caption" sx={sectionLabelSx}>
                   Цей вечір
                 </Typography>
               )}
@@ -261,7 +278,7 @@ export default function PlayerNickPicker({
                   )}
                 </ListItemButton>
               ))}
-              {!searching && eveningOpts.length > 0 && (
+              {showOthersToggle && (
                 <>
                   <Divider />
                   <ListItemButton
@@ -289,20 +306,8 @@ export default function PlayerNickPicker({
                   </ListItemButton>
                 </>
               )}
-              {(searching || eveningOpts.length === 0) && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    display: 'block',
-                    px: 2,
-                    pt: 1.5,
-                    pb: 0.5,
-                    fontWeight: 700,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: 'text.secondary',
-                  }}
-                >
+              {showOthersLabel && (
+                <Typography variant="caption" sx={sectionLabelSx}>
                   інші гравці
                 </Typography>
               )}
@@ -315,7 +320,7 @@ export default function PlayerNickPicker({
                     <ListItemText primary={o.title} />
                   </ListItemButton>
                 ))}
-              {showOthers && othersVisible.length === 0 && (
+              {showOthers && !hasEveningHits && !hasOtherHits && (
                 <Typography sx={{ px: 2, py: 2, color: 'text.secondary', fontSize: 14 }}>
                   Нікого не знайдено
                 </Typography>
@@ -366,13 +371,21 @@ export default function PlayerNickPicker({
               title: `Додати «${inputValue}»`,
             });
           }
+          // Один хіт / одна група — без групових заголовків (flat search).
+          const eveHits = filtered.filter((o) => o.__group === 'evening').length;
+          const othHits = filtered.filter((o) => o.__group === 'others').length;
+          if (!(eveHits > 0 && othHits > 0)) {
+            return filtered.map((o) =>
+              o.__group ? { ...o, __group: undefined } : o,
+            );
+          }
           return filtered;
         }
         const noEvening = eveningOpts.length === 0;
         const othersExpanded = deskOthersOpen || noEvening;
         const evening = eveningOpts;
         const others = othersExpanded ? clubOpts : [];
-        // Без вечора — лише список клубу з заголовком групи, без зайвого toggle.
+        // Без вечора — лише список клубу, без зайвого toggle.
         if (noEvening) return others;
         return [
           ...evening,
