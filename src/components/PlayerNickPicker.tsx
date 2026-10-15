@@ -3,7 +3,6 @@ import {
   Autocomplete,
   Box,
   Dialog,
-  Divider,
   IconButton,
   InputAdornment,
   List,
@@ -16,16 +15,13 @@ import {
 import { useTheme } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ClearIcon from '@mui/icons-material/Clear';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { brandColors, fg } from '../theme/brand';
+import { brandColors } from '../theme/brand';
 import { nickMatches } from '../nickSearch';
 
 export type NickOption = {
   _id?: string;
   title: string;
   inputValue?: string;
-  /** Маркер рядка «інші гравці» у desktop-списку */
-  __othersToggle?: boolean;
   __group?: 'evening' | 'others';
   __guest?: boolean;
 };
@@ -57,6 +53,17 @@ function toEveningOptions(eveningPlayers: EveningPlayer[]): NickOption[] {
   }));
 }
 
+function optionsForQuery(
+  query: string,
+  eveningOpts: NickOption[],
+  clubOpts: NickOption[],
+  browseOptions: NickOption[],
+): NickOption[] {
+  const searching = Boolean(query.trim());
+  const pool = searching ? [...eveningOpts, ...clubOpts] : browseOptions;
+  return pool.filter((o) => nickMatches(o.title, query));
+}
+
 function toClubOptions(
   clubUsers: Props['clubUsers'],
   eveningKeys: Set<string>,
@@ -84,8 +91,6 @@ export default function PlayerNickPicker({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState('');
-  const [othersOpen, setOthersOpen] = React.useState(false);
-  const [deskOthersOpen, setDeskOthersOpen] = React.useState(false);
   const listRef = React.useRef<HTMLDivElement | null>(null);
 
   const eveningOpts = React.useMemo(() => {
@@ -111,10 +116,15 @@ export default function PlayerNickPicker({
   const openModal = () => {
     if (disabled) return;
     setQ('');
-    // Немає топу вечора — одразу показуємо клуб, без порожньої дірки.
-    setOthersOpen(eveningOpts.length === 0);
     setOpen(true);
   };
+
+  // Без запиту — гравці цього вечора. Клуб лише в пошуку.
+  // Парна команда турніру і так вузька: обидва id видимі одразу.
+  const browseOptions = React.useMemo(
+    () => (pendingIds?.length ? [...eveningOpts, ...clubOpts] : eveningOpts),
+    [pendingIds, eveningOpts, clubOpts],
+  );
 
   React.useEffect(() => {
     if (!open) return;
@@ -124,41 +134,14 @@ export default function PlayerNickPicker({
     return () => cancelAnimationFrame(id);
   }, [open, q]);
 
-  const matchQ = (title: string, query: string) => nickMatches(title, query);
-
   const pick = (title: string, id: string) => {
     onPick(title || `Гість ${seat}`, id || '');
     setOpen(false);
   };
 
-  const sectionLabelSx = {
-    display: 'block',
-    px: 2,
-    pt: 1.5,
-    pb: 0.5,
-    fontWeight: 700,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
-    color: 'text.secondary',
-  } as const;
-
   if (isMobile) {
     const searching = Boolean(q.trim());
-    const eveningVisible = eveningOpts.filter((o) => matchQ(o.title, q));
-    const showOthers = searching || othersOpen || eveningOpts.length === 0;
-    const othersVisible = showOthers
-      ? clubOpts.filter((o) => matchQ(o.title, q))
-      : [];
-    const hasEveningHits = eveningVisible.length > 0;
-    const hasOtherHits = othersVisible.length > 0;
-    // Під час пошуку заголовки секцій лише якщо обидві групи мають хіти.
-    const showEveningLabel = hasEveningHits && (!searching || hasOtherHits);
-    const showOthersLabel =
-      hasOtherHits &&
-      (searching
-        ? hasEveningHits
-        : eveningOpts.length > 0);
-    const showOthersToggle = !searching && eveningOpts.length > 0;
+    const visible = optionsForQuery(q, eveningOpts, clubOpts, browseOptions);
 
     return (
       <>
@@ -167,13 +150,13 @@ export default function PlayerNickPicker({
           fullWidth
           disabled={disabled}
           value={value}
-          onPointerDown={(e) => {
-            if (disabled || e.button !== 0) return;
-            // Не фокусити поле: blur() всередині onFocus лишає Mui-focused,
-            // і тема малює цю рамку червоною вже після закриття модалки.
+          onMouseDown={(e) => {
+            if (e.button !== 0) return;
+            // Не фокусити поле. blur() в onFocus лишав Mui-focused,
+            // і тема малювала рамку червоною після закриття модалки.
             e.preventDefault();
-            openModal();
           }}
+          onClick={openModal}
           onKeyDown={(e) => {
             if (disabled) return;
             if (e.key === 'Enter' || e.key === ' ') {
@@ -226,11 +209,7 @@ export default function PlayerNickPicker({
                 size="small"
                 placeholder="Пошук гравця"
                 value={q}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setQ(next);
-                  if (next.trim()) setOthersOpen(true);
-                }}
+                onChange={(e) => setQ(e.target.value)}
                 InputProps={{
                   endAdornment: q ? (
                     <InputAdornment position="end">
@@ -286,12 +265,7 @@ export default function PlayerNickPicker({
                   '& .MuiListItemButton-root': { flex: '0 0 auto' },
                 }}
               >
-                {showEveningLabel && (
-                  <Typography variant="caption" component="div" sx={sectionLabelSx}>
-                    Цей вечір
-                  </Typography>
-                )}
-                {eveningVisible.map((o) => (
+                {visible.map((o) => (
                   <ListItemButton
                     key={eveningKey({ id: o._id, title: o.title })}
                     onClick={() => pick(o.title, o._id ? String(o._id) : '')}
@@ -304,49 +278,7 @@ export default function PlayerNickPicker({
                     )}
                   </ListItemButton>
                 ))}
-                {showOthersToggle && (
-                  <>
-                    <Divider />
-                    <ListItemButton
-                      onClick={() => setOthersOpen((v) => !v)}
-                      sx={{ justifyContent: 'space-between' }}
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontWeight: 700,
-                          letterSpacing: '0.06em',
-                          textTransform: 'uppercase',
-                          color: 'text.secondary',
-                        }}
-                      >
-                        інші гравці
-                      </Typography>
-                      <ExpandMoreIcon
-                        sx={{
-                          color: 'text.secondary',
-                          transform: othersOpen ? 'rotate(180deg)' : 'none',
-                          transition: 'transform 0.15s',
-                        }}
-                      />
-                    </ListItemButton>
-                  </>
-                )}
-                {showOthersLabel && (
-                  <Typography variant="caption" component="div" sx={sectionLabelSx}>
-                    інші гравці
-                  </Typography>
-                )}
-                {showOthers &&
-                  othersVisible.map((o) => (
-                    <ListItemButton
-                      key={String(o._id)}
-                      onClick={() => pick(o.title, o._id ? String(o._id) : '')}
-                    >
-                      <ListItemText primary={o.title} />
-                    </ListItemButton>
-                  ))}
-                {showOthers && !hasEveningHits && !hasOtherHits && (
+                {searching && visible.length === 0 && (
                   <Typography sx={{ px: 2, py: 2, color: 'text.secondary', fontSize: 14 }}>
                     Нікого не знайдено
                   </Typography>
@@ -359,73 +291,41 @@ export default function PlayerNickPicker({
     );
   }
 
-  // Desktop Autocomplete
-  const deskOptions = React.useMemo(() => {
-    if (eveningOpts.length === 0) return [...clubOpts];
-    const opts: NickOption[] = [...eveningOpts];
-    if (deskOthersOpen) opts.push(...clubOpts);
-    opts.push({ title: 'інші гравці', __othersToggle: true });
-    return opts;
-  }, [eveningOpts, clubOpts, deskOthersOpen]);
-
   return (
     <Autocomplete
       size="small"
       disabled={disabled}
       value={value}
-      onOpen={() => setDeskOthersOpen(eveningOpts.length === 0)}
       onChange={(_e, newValue) => {
         if (typeof newValue === 'string') {
           onPick(newValue, '');
           return;
         }
-        if (!newValue || newValue.__othersToggle) return;
+        if (!newValue) return;
         if (newValue.inputValue) {
           onPick(String(newValue.inputValue), '');
           return;
         }
         onPick(newValue.title || `Гість ${seat}`, newValue._id ? String(newValue._id) : '');
       }}
-      filterOptions={(options, params) => {
+      filterOptions={(_options, params) => {
         const { inputValue } = params;
-        if (inputValue.trim()) {
-          const all = [...eveningOpts, ...clubOpts];
-          const filtered = all.filter((o) => nickMatches(o.title, inputValue));
-          const isExisting = all.some((o) => inputValue === o.title);
-          if (freeSolo && !isExisting) {
-            filtered.push({
-              inputValue,
-              title: `Додати «${inputValue}»`,
-            });
-          }
-          // Один хіт / одна група — без групових заголовків (flat search).
-          const eveHits = filtered.filter((o) => o.__group === 'evening').length;
-          const othHits = filtered.filter((o) => o.__group === 'others').length;
-          if (!(eveHits > 0 && othHits > 0)) {
-            return filtered.map((o) =>
-              o.__group ? { ...o, __group: undefined } : o,
-            );
-          }
-          return filtered;
+        const searching = Boolean(inputValue.trim());
+        const filtered = optionsForQuery(inputValue, eveningOpts, clubOpts, browseOptions);
+        const isExisting = [...eveningOpts, ...clubOpts].some((o) => inputValue === o.title);
+        if (searching && freeSolo && !isExisting) {
+          filtered.push({
+            inputValue,
+            title: `Додати «${inputValue}»`,
+          });
         }
-        const noEvening = eveningOpts.length === 0;
-        const othersExpanded = deskOthersOpen || noEvening;
-        const evening = eveningOpts;
-        const others = othersExpanded ? clubOpts : [];
-        // Без вечора — лише список клубу, без зайвого toggle.
-        if (noEvening) return others;
-        return [
-          ...evening,
-          ...others,
-          { title: 'інші гравці', __othersToggle: true },
-        ];
+        return filtered;
       }}
       selectOnFocus
       clearOnBlur
       handleHomeEndKeys
-      options={deskOptions}
+      options={browseOptions}
       freeSolo={freeSolo}
-      getOptionDisabled={(option) => Boolean(option.__othersToggle)}
       getOptionLabel={(option) => {
         if (typeof option === 'string') return option;
         if (option.inputValue) return option.inputValue;
@@ -435,79 +335,8 @@ export default function PlayerNickPicker({
         if (typeof val === 'string') return opt.title === val;
         return String(opt._id || '') === String(val._id || '') && opt.title === val.title;
       }}
-      groupBy={(option) => {
-        if (option.__othersToggle || option.inputValue) return '';
-        if (option.__group === 'evening') return 'Цей вечір';
-        if (option.__group === 'others') return 'інші гравці';
-        return '';
-      }}
-      renderGroup={(params) => (
-        <li key={params.key}>
-          {params.group ? (
-            <Typography
-              component="div"
-              variant="caption"
-              sx={{
-                px: 1.5,
-                pt: 1,
-                pb: 0.5,
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: 'text.secondary',
-              }}
-            >
-              {params.group}
-            </Typography>
-          ) : null}
-          <ul style={{ padding: 0, margin: 0 }}>{params.children}</ul>
-        </li>
-      )}
       renderOption={(props, option) => {
         const { key, ...optionProps } = props;
-        if (option.__othersToggle) {
-          return (
-            <li key={key} {...optionProps} style={{ padding: 0, opacity: 1 }}>
-              <Divider />
-              <Box
-                component="div"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setDeskOthersOpen((v) => !v);
-                }}
-                sx={{
-                  display: 'flex',
-                  width: '100%',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  px: 1.5,
-                  py: 1.25,
-                  cursor: 'pointer',
-                  color: fg(0.55),
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 700,
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  інші гравці
-                </Typography>
-                <ExpandMoreIcon
-                  fontSize="small"
-                  sx={{
-                    transform: deskOthersOpen ? 'rotate(180deg)' : 'none',
-                    transition: 'transform 0.15s',
-                  }}
-                />
-              </Box>
-            </li>
-          );
-        }
         return (
           <li key={key} {...optionProps}>
             <Box sx={{ display: 'flex', width: '100%', alignItems: 'center', gap: 1 }}>
