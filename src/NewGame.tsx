@@ -244,9 +244,11 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
 
   useEffect(() => {
     if (!isRatingGame || isEditingRatingGame) return;
-    const hasRealPlayers = Object.values(players).some(
-      (p: any) => p.id && !p.title?.startsWith('Гість')
-    );
+    const hasRealPlayers = Object.values(players).some((p: any) => {
+      if (p?.id) return true;
+      const title = String(p?.title || '');
+      return Boolean(title && !title.startsWith('Гість'));
+    });
     if (!hasRealPlayers) return;
     const state = {
       players,
@@ -517,15 +519,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       notify.error('Не всім розподілено нікнейми');
       return
     }
-    if (!isTournamentGame) {
-      const missingId = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some(
-        (seat) => players[seat]?.title && !String(players[seat].title).startsWith('Гість') && !players[seat].id
-      );
-      if (missingId) {
-        notify.error('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
-        return;
-      }
-    }
+    // Кастомний нік без id — гість, не акаунт. У фан-грі й рейтингу команди місць немає.
     setWinState(() => winner);
   }
 
@@ -550,10 +544,10 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     const effective = resolveTeamSeats(players);
     if (effective !== players) setPlayers(effective);
     if (isTournamentGame) {
-      const missingId = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some(
-        (seat) => effective[seat]?.title && !String(effective[seat].title).startsWith('Гість') && !effective[seat].id
+      const unresolvedTeam = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some(
+        (seat) => effective[seat]?.pendingTeamIds?.length && !effective[seat]?.id
       );
-      if (missingId) {
+      if (unresolvedTeam) {
         notify.error('Для кожного місця з командою оберіть гравця (конкретний акаунт)');
         return;
       }
