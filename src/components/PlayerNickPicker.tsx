@@ -2,7 +2,6 @@ import * as React from 'react';
 import {
   Autocomplete,
   Box,
-  createFilterOptions,
   Dialog,
   Divider,
   IconButton,
@@ -19,6 +18,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ClearIcon from '@mui/icons-material/Clear';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { brandColors, fg } from '../theme/brand';
+import { nickMatches } from '../nickSearch';
 
 export type NickOption = {
   _id?: string;
@@ -43,8 +43,6 @@ type Props = {
   pendingIds?: string[];
   onPick: (title: string, id: string) => void;
 };
-
-const filter = createFilterOptions<NickOption>();
 
 function eveningKey(p: { id?: string; title: string }) {
   return p.id ? `id:${p.id}` : `nick:${p.title.trim().toLowerCase()}`;
@@ -126,10 +124,7 @@ export default function PlayerNickPicker({
     return () => cancelAnimationFrame(id);
   }, [open, q]);
 
-  const matchQ = (title: string, query: string) => {
-    if (!query.trim()) return true;
-    return title.toLowerCase().includes(query.trim().toLowerCase());
-  };
+  const matchQ = (title: string, query: string) => nickMatches(title, query);
 
   const pick = (title: string, id: string) => {
     onPick(title || `Гість ${seat}`, id || '');
@@ -395,7 +390,7 @@ export default function PlayerNickPicker({
         const { inputValue } = params;
         if (inputValue.trim()) {
           const all = [...eveningOpts, ...clubOpts];
-          const filtered = filter(all, params);
+          const filtered = all.filter((o) => nickMatches(o.title, inputValue));
           const isExisting = all.some((o) => inputValue === o.title);
           if (freeSolo && !isExisting) {
             filtered.push({
