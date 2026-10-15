@@ -27,11 +27,14 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
 import {useAuth} from "./AuthProvider";
 import {vancouverTodayYmd} from "./utils/vancouverDate";
 import AbbrLegend from "./components/brand/AbbrLegend";
 import { confirmAction, notify } from "./components/feedback/feedback";
 import PlayerNickPicker from "./components/PlayerNickPicker";
+import { reseatPlayer } from "./reseatPlayer";
 
 /**
  * Палець ведучого потребує зони дотику ≥44px. Лише для сенсорних екранів:
@@ -184,6 +187,51 @@ function applySeatingFromTournament(
   setPlayers(restored);
 }
 
+const SEATS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+
+type SeatDrag = {
+  from: number;
+  to: number;
+  pointerId: number;
+  tops: number[];
+  height: number;
+  title: string;
+  x: number;
+  y: number;
+};
+
+/** Ціль обміну — за центром чіпа. Третина рядка вже достатня, бордюр — ні. */
+function seatForChipY(y: number, drag: { tops: number[]; height: number; from: number }) {
+  const { tops, height, from } = drag;
+  const count = tops.length;
+  const lead = height * 0.32;
+  let over = 0;
+  if (y < tops[0]) over = 0;
+  else if (y >= tops[count - 1] + height) over = count - 1;
+  else {
+    for (let i = 0; i < count; i++) {
+      if (y >= tops[i] && y < tops[i] + height) {
+        over = i;
+        break;
+      }
+    }
+  }
+  const overSeat = over + 1;
+  if (overSeat === from) return from;
+  if (from < overSeat) return y >= tops[over] + lead ? overSeat : Math.max(from, overSeat - 1);
+  return y <= tops[over] + height - lead ? overSeat : Math.min(from, overSeat + 1);
+}
+
+function swapSeatContents(players: Record<number, any>, from: number, to: number) {
+  if (from === to) return players;
+  const next = { ...players };
+  const a = next[from];
+  const b = next[to];
+  next[from] = { ...b, n: from };
+  next[to] = { ...a, n: to };
+  return next;
+}
+
 export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const { user, canRecordRatingGame } = useAuth();
   const location = useLocation();
@@ -222,6 +270,9 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
 
   const [players, _setPlayers] = React.useState(saved?.players || createInitialPlayers());
   const setPlayers = (item: any) => _setPlayers(() => item);
+  const sheetRef = React.useRef<HTMLDivElement>(null);
+  const flyFromRef = React.useRef<Map<string, number> | null>(null);
+  const [seatDrag, setSeatDrag] = React.useState<SeatDrag | null>(null);
   const [bonusAnchorEl, setBonusAnchorEl] = React.useState<HTMLElement | null>(null);
   const [bonusPlayerN, setBonusPlayerN] = React.useState<number>(0);
   const [killedShowInfo, setKilledShowInfo] = React.useState(false);
@@ -270,6 +321,50 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     localStorage.setItem(tournamentStorageKey, JSON.stringify(state));
   }, [players, votings, activeVoting, winState, hideRoles, isTournamentGame, tournamentStorageKey, readOnlyTournament, tournamentHidden]);
 
+  React.useEffect(() => {
+    if (SEATS.every((s) => players[s]?.rowKey)) return;
+    const next = { ...players };
+    for (const s of SEATS) {
+      if (next[s] && !next[s].rowKey) {
+        next[s] = { ...next[s], rowKey: `row-${Math.random().toString(36).slice(2, 10)}` };
+      }
+    }
+    setPlayers(next);
+  }, [players]);
+
+  React.useLayoutEffect(() => {
+    const before = flyFromRef.current;
+    const sheet = sheetRef.current;
+    if (!before || !sheet) return;
+    flyFromRef.current = null;
+    const movers: HTMLElement[] = [];
+    sheet.querySelectorAll<HTMLElement>('[data-seat-body]').forEach((el) => {
+      const prevTop = el.dataset.seatKey ? before.get(el.dataset.seatKey) : undefined;
+      if (prevTop == null) return;
+      const dy = prevTop - el.getBoundingClientRect().top;
+      if (!dy) return;
+      el.style.transition = 'none';
+      el.style.transform = `translateY(${dy}px)`;
+      el.style.zIndex = '4';
+      el.style.backgroundColor = 'var(--template-palette-dk-bg)';
+      movers.push(el);
+    });
+    if (!movers.length) return;
+    sheet.getBoundingClientRect();
+    requestAnimationFrame(() => {
+      movers.forEach((el) => {
+        el.style.transition = '';
+        el.style.transform = '';
+      });
+      window.setTimeout(() => {
+        movers.forEach((el) => {
+          el.style.zIndex = '';
+          el.style.backgroundColor = '';
+        });
+      }, 260);
+    });
+  }, [players]);
+
   const resetGame = () => {
     setPlayers(createInitialPlayers());
     setVotings(createInitialVotings());
@@ -312,34 +407,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       notify.info('Гра закінчена');
       return;
     }
-    const idStr = id ? String(id) : '';
-    const nextPlayers = { ...players };
-
-    // Той самий гравець на іншому місці → прибрати з попереднього слота.
-    for (const seat of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
-      if (seat === n) continue;
-      const p = nextPlayers[seat];
-      if (!p) continue;
-      const sameById = idStr && p.id && String(p.id) === idStr;
-      const sameByNick =
-        !idStr &&
-        !p.id &&
-        title &&
-        !title.startsWith('Гість') &&
-        String(p.title || '').trim() === title.trim();
-      if (!sameById && !sameByNick) continue;
-      nextPlayers[seat] = {
-        ...p,
-        title: `Гість ${seat}`,
-        id: '',
-        pendingTeamIds: undefined,
-      };
-    }
-
-    const next = { ...nextPlayers[n], title, id: idStr };
-    if (idStr) next.pendingTeamIds = undefined;
-    nextPlayers[n] = next;
-    setPlayers(nextPlayers);
+    setPlayers(reseatPlayer(players, n, title, id));
   };
 
   const addWarning = (n: number) => {
@@ -565,10 +633,13 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         : 'Відправити результати гри?',
       editingSaved ? 'Зберегти' : 'Відправити',
     ))) return;
-    const playersPayload = Object.values(effective).map((p: any) => ({
-      ...p,
-      bestTurn: Object.entries(p.bestTurn || {}).map(([seat, color]) => ({n: Number(seat), color})),
-    }));
+    const playersPayload = Object.values(effective).map((p: any) => {
+      const { rowKey, ...rest } = p;
+      return {
+        ...rest,
+        bestTurn: Object.entries(rest.bestTurn || {}).map(([seat, color]) => ({n: Number(seat), color})),
+      };
+    });
     if (isTournamentGame) {
       const payload = {
         tournamentId,
@@ -789,6 +860,59 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   /** Скидання форми є не в усіх режимах: перегляд турніру і редагування збереженої гри його не мають. */
   const showResetButton = !readOnlyTournament && !tournamentHidden && !isEditingRatingGame;
 
+  /** Поки немає ролей, фолів і першого вбитого — останню колонку замінює обмін місцями. */
+  const canReorderSeats = !readOnlyTournament && !tournamentHidden && !winState && SEATS.every((s) => {
+    const p = players[s];
+    return p && !p.warnings && !p.role && !p.killed;
+  });
+
+  const seatTone = (seat: number) => {
+    if (!seatDrag || !seat) return {};
+    if (seatDrag.from === seat) return { opacity: 0.4 };
+    if (seatDrag.to !== seatDrag.from && seatDrag.to === seat) return { backgroundColor: '#f3e4dc' };
+    return {};
+  };
+
+  const beginSeatDrag = (seat: number, e: React.PointerEvent<HTMLElement>) => {
+    if (!canReorderSeats || !sheetRef.current) return;
+    e.preventDefault();
+    const anchors = [...sheetRef.current.querySelectorAll<HTMLElement>('[data-seat-anchor]')];
+    if (anchors.length !== 10) return;
+    const tops = anchors.map((el) => el.getBoundingClientRect().top);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setSeatDrag({
+      from: seat,
+      to: seat,
+      pointerId: e.pointerId,
+      tops,
+      height: tops.length > 1 ? tops[1] - tops[0] : anchors[0].getBoundingClientRect().height,
+      title: String(players[seat]?.title || ''),
+      x: e.clientX,
+      y: e.clientY,
+    });
+  };
+
+  const moveSeatDrag = (e: React.PointerEvent<HTMLElement>) => {
+    setSeatDrag((prev) => {
+      if (!prev || prev.pointerId !== e.pointerId) return prev;
+      return { ...prev, to: seatForChipY(e.clientY - 1, prev), x: e.clientX, y: e.clientY };
+    });
+  };
+
+  const endSeatDrag = (e: React.PointerEvent<HTMLElement>) => {
+    if (!seatDrag || seatDrag.pointerId !== e.pointerId) return;
+    const { from, to } = seatDrag;
+    setSeatDrag(null);
+    if (to === from || !sheetRef.current) return;
+    const before = new Map<string, number>();
+    sheetRef.current.querySelectorAll<HTMLElement>('[data-seat-body]').forEach((el) => {
+      const key = el.dataset.seatKey;
+      if (key && !before.has(key)) before.set(key, el.getBoundingClientRect().top);
+    });
+    flyFromRef.current = before;
+    setPlayers(swapSeatContents(players, from, to));
+  };
+
   const bonusWinnerOpts = isTournamentGame ? BONUS_TOURNAMENT_WIN : BONUS_RATING_WIN;
   const bonusLoserOpts = isTournamentGame ? BONUS_TOURNAMENT_LOSS : BONUS_RATING_LOSS;
   const penaltyWinnerOpts = isTournamentGame ? PENALTY_TOURNAMENT_WIN : [];
@@ -970,10 +1094,8 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
               </Button>
             )}
           </Box>
-        <Grid minHeight={30} container columns={12} sx={{
+        <Grid ref={sheetRef} minHeight={30} container columns={12} sx={{
           p: 0,
-          // fontSize: '16px !important',
-          // justifyContent: 'center',
           textAlign: 'center',
           maxWidth: '1200px',
           width: '100%',
@@ -987,6 +1109,9 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             borderBottom: 'var(--Grid-borderWidth) solid',
             borderColor: 'divider',
           },
+          '& [data-seat-body]': {
+            transition: 'transform 240ms cubic-bezier(.2, .8, .2, 1)',
+          },
         }}>
           {
             [{n: 0}, ...Object.values(players)].map(({n}: any) => (
@@ -994,11 +1119,16 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                 {
                   (players[n]?.killed !== 1 || (n !== 0 && killedShowInfo)) && <>
                         <Grid {...(n !== 0 && cellButton(`Виставити гравця ${n} на голосування`, () => promoteVote(n)))}
-                              sx={{cursor: n !== 0 ? 'pointer' : 'default', p: '.2rem'}}
+                              data-seat-anchor={n ? '1' : undefined}
+                              sx={{cursor: n !== 0 ? 'pointer' : 'default', p: '.2rem', ...seatTone(n)}}
                               size={{xs: 1.5, sm: 1, lg: 1}}>
                           {n === 0 ? <ThumbUpIcon/> : n}
                         </Grid>
-                        <Grid sx={{p: '.3rem'}} size={{xs: 5.5, sm: 7.5, lg: 7.5}}>
+                        <Grid
+                          data-seat-body={n ? '1' : undefined}
+                          data-seat-key={n ? players[n]?.rowKey : undefined}
+                          sx={{p: '.3rem', ...seatTone(n)}}
+                          size={{xs: 5.5, sm: 7.5, lg: 7.5}}>
                           {n === 0 ? 'Нік' : (
                             <PlayerNickPicker
                               seat={n}
@@ -1012,19 +1142,27 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                             />
                           )}
                         </Grid>
-                        <Grid sx={{
+                        <Grid
+                          data-seat-body={n ? '1' : undefined}
+                          data-seat-key={n ? players[n]?.rowKey : undefined}
+                          sx={{
                           p: n === 0 ? '.5rem' : '.1rem',
                           // 3 і 4 фоли мають бути видно з першого погляду: фон ≥3:1 до тла сторінки (WCAG 1.4.11).
                           backgroundColor: players[n]?.warnings === 3 ? withAlpha(brandColors.ember, 0.75) : players[n]?.warnings === 4 ? withAlpha(brandColors.accent, 0.85) : 'transparent',
-                          cursor: n !== 0 ? 'pointer' : 'default'
+                          cursor: n !== 0 ? 'pointer' : 'default',
+                          ...seatTone(n),
                         }} {...(n !== 0 && cellButton(`Фол гравцю ${n}, зараз ${players[n].warnings}`, () => addWarning(n)))}
                           size={{xs: 1.75, sm: 2, lg: 1.5}}>
                           {n === 0 ? "Ф" : new Array(players[n].warnings).fill('⚠️').join('  ')}
                         </Grid>
-                        <Grid sx={{
+                        <Grid
+                          data-seat-body={n ? '1' : undefined}
+                          data-seat-key={n ? players[n]?.rowKey : undefined}
+                          sx={{
                           p: '.5rem',
                           fontWeight: n !== 0 ? 800 : '',
                           cursor: 'pointer',
+                          ...seatTone(n),
                         }} size={{xs: 2, sm: 1, lg: 1.5}}
                           {...cellButton(n === 0 ? (hideRoles ? 'Показати ролі' : 'Сховати ролі') : `Змінити роль гравця ${n}`, () => addRole(n))}>
                           {n === 0 ? 'Р' : hideRoles ? '?' : `${RolesPoolMap[Number(players[n].role)] ?? ''} `}
@@ -1055,6 +1193,32 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                       }
                     </Grid>
                 }
+                {canReorderSeats ? (
+                  <Grid
+                    data-seat-body={n ? '1' : undefined}
+                    data-seat-key={n ? players[n]?.rowKey : undefined}
+                    sx={{
+                      py: '.4rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: n ? 'grab' : 'default',
+                      touchAction: n ? 'none' : 'auto',
+                      ...seatTone(n),
+                    }}
+                    size={{xs: 1.25, sm: 0.5, lg: 0.5}}
+                    {...(n !== 0 ? {
+                      onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => beginSeatDrag(n, e),
+                      onPointerMove: moveSeatDrag,
+                      onPointerUp: endSeatDrag,
+                      onPointerCancel: endSeatDrag,
+                      role: 'button' as const,
+                      'aria-label': `Поміняти місцями ${players[n].title}`,
+                    } : { title: 'Поміняти місцями' })}
+                  >
+                    {n === 0 ? <AutorenewIcon sx={{ fontSize: 18 }} /> : <DragIndicatorIcon sx={{ fontSize: 18 }} />}
+                  </Grid>
+                ) : (
                 <Grid sx={{
                   fontWeight: n !== 0 ? 800 : '',
                   cursor: winState && n !== 0
@@ -1083,10 +1247,33 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                         : ''
                   }
                 </Grid>
+                )}
               </React.Fragment>
             ))
           }
         </Grid>
+        {seatDrag && (
+          <Box sx={{
+            position: 'fixed',
+            zIndex: 20,
+            left: seatDrag.x - 24,
+            top: seatDrag.y - 18,
+            pointerEvents: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            width: 220,
+            height: 34,
+            px: 1.5,
+            bgcolor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+            boxShadow: 3,
+            fontSize: 15,
+          }}>
+            {seatDrag.title}
+          </Box>
+        )}
         </Box>
 
         {Object.values(players).some((p: any) => p.killed === 1) && (
