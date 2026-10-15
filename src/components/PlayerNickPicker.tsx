@@ -88,7 +88,7 @@ export default function PlayerNickPicker({
   const [q, setQ] = React.useState('');
   const [othersOpen, setOthersOpen] = React.useState(false);
   const [deskOthersOpen, setDeskOthersOpen] = React.useState(false);
-  const listRef = React.useRef<HTMLUListElement | null>(null);
+  const listRef = React.useRef<HTMLDivElement | null>(null);
 
   const eveningOpts = React.useMemo(() => {
     if (pendingIds?.length) {
@@ -258,84 +258,96 @@ export default function PlayerNickPicker({
                 }}
               />
             </Box>
-            <List
+            {/* Скрол на обгортці: тема робить MuiList flex-колонкою — flex:1 на List
+                розтягував єдиний хіт на всю висоту (виглядало як вертикальний центр). */}
+            <Box
               ref={listRef}
-              disablePadding
               sx={{
                 flex: 1,
                 minHeight: 0,
                 overflow: 'auto',
-                py: 0,
+                WebkitOverflowScrolling: 'touch',
                 pb: 'env(safe-area-inset-bottom)',
-                display: 'block',
               }}
             >
-              {showEveningLabel && (
-                <Typography variant="caption" sx={sectionLabelSx}>
-                  Цей вечір
-                </Typography>
-              )}
-              {eveningVisible.map((o) => (
-                <ListItemButton
-                  key={eveningKey({ id: o._id, title: o.title })}
-                  onClick={() => pick(o.title, o._id ? String(o._id) : '')}
-                >
-                  <ListItemText primary={o.title} />
-                  {o.__guest && (
-                    <Typography variant="caption" sx={{ color: 'text.secondary', ml: 1 }}>
-                      гість
-                    </Typography>
-                  )}
-                </ListItemButton>
-              ))}
-              {showOthersToggle && (
-                <>
-                  <Divider />
+              <List
+                disablePadding
+                sx={{
+                  display: 'block',
+                  py: 0,
+                  height: 'auto',
+                  flex: 'none',
+                  justifyContent: 'flex-start',
+                  '& .MuiListItemButton-root': { flex: '0 0 auto' },
+                }}
+              >
+                {showEveningLabel && (
+                  <Typography variant="caption" component="div" sx={sectionLabelSx}>
+                    Цей вечір
+                  </Typography>
+                )}
+                {eveningVisible.map((o) => (
                   <ListItemButton
-                    onClick={() => setOthersOpen((v) => !v)}
-                    sx={{ justifyContent: 'space-between' }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        fontWeight: 700,
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                        color: 'text.secondary',
-                      }}
-                    >
-                      інші гравці
-                    </Typography>
-                    <ExpandMoreIcon
-                      sx={{
-                        color: 'text.secondary',
-                        transform: othersOpen ? 'rotate(180deg)' : 'none',
-                        transition: 'transform 0.15s',
-                      }}
-                    />
-                  </ListItemButton>
-                </>
-              )}
-              {showOthersLabel && (
-                <Typography variant="caption" sx={sectionLabelSx}>
-                  інші гравці
-                </Typography>
-              )}
-              {showOthers &&
-                othersVisible.map((o) => (
-                  <ListItemButton
-                    key={String(o._id)}
+                    key={eveningKey({ id: o._id, title: o.title })}
                     onClick={() => pick(o.title, o._id ? String(o._id) : '')}
                   >
                     <ListItemText primary={o.title} />
+                    {o.__guest && (
+                      <Typography variant="caption" sx={{ color: 'text.secondary', ml: 1 }}>
+                        гість
+                      </Typography>
+                    )}
                   </ListItemButton>
                 ))}
-              {showOthers && !hasEveningHits && !hasOtherHits && (
-                <Typography sx={{ px: 2, py: 2, color: 'text.secondary', fontSize: 14 }}>
-                  Нікого не знайдено
-                </Typography>
-              )}
-            </List>
+                {showOthersToggle && (
+                  <>
+                    <Divider />
+                    <ListItemButton
+                      onClick={() => setOthersOpen((v) => !v)}
+                      sx={{ justifyContent: 'space-between' }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 700,
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
+                          color: 'text.secondary',
+                        }}
+                      >
+                        інші гравці
+                      </Typography>
+                      <ExpandMoreIcon
+                        sx={{
+                          color: 'text.secondary',
+                          transform: othersOpen ? 'rotate(180deg)' : 'none',
+                          transition: 'transform 0.15s',
+                        }}
+                      />
+                    </ListItemButton>
+                  </>
+                )}
+                {showOthersLabel && (
+                  <Typography variant="caption" component="div" sx={sectionLabelSx}>
+                    інші гравці
+                  </Typography>
+                )}
+                {showOthers &&
+                  othersVisible.map((o) => (
+                    <ListItemButton
+                      key={String(o._id)}
+                      onClick={() => pick(o.title, o._id ? String(o._id) : '')}
+                    >
+                      <ListItemText primary={o.title} />
+                    </ListItemButton>
+                  ))}
+                {showOthers && !hasEveningHits && !hasOtherHits && (
+                  <Typography sx={{ px: 2, py: 2, color: 'text.secondary', fontSize: 14 }}>
+                    Нікого не знайдено
+                  </Typography>
+                )}
+              </List>
+            </Box>
           </Box>
         </Dialog>
       </>
