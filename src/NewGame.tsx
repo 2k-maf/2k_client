@@ -311,10 +311,35 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       notify.info('Гра закінчена');
       return;
     }
-    const next = {...players[n], title, id};
-    if (id) next.pendingTeamIds = undefined;
-    setPlayers({...players, [n]: next});
-  }
+    const idStr = id ? String(id) : '';
+    const nextPlayers = { ...players };
+
+    // Той самий гравець на іншому місці → прибрати з попереднього слота.
+    for (const seat of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+      if (seat === n) continue;
+      const p = nextPlayers[seat];
+      if (!p) continue;
+      const sameById = idStr && p.id && String(p.id) === idStr;
+      const sameByNick =
+        !idStr &&
+        !p.id &&
+        title &&
+        !title.startsWith('Гість') &&
+        String(p.title || '').trim() === title.trim();
+      if (!sameById && !sameByNick) continue;
+      nextPlayers[seat] = {
+        ...p,
+        title: `Гість ${seat}`,
+        id: '',
+        pendingTeamIds: undefined,
+      };
+    }
+
+    const next = { ...nextPlayers[n], title, id: idStr };
+    if (idStr) next.pendingTeamIds = undefined;
+    nextPlayers[n] = next;
+    setPlayers(nextPlayers);
+  };
 
   const addWarning = (n: number) => {
     if (readOnlyTournament || tournamentHidden) return;
