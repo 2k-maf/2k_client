@@ -82,6 +82,8 @@ type Props = {
 export default function GoogleButton({ onCredential, text = 'signin_with' }: Props) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [failed, setFailed] = React.useState(false);
+  // Поки GIS міняє кнопку (англійська → персональна, інколи дві одразу), слот лишається порожнім.
+  const [ready, setReady] = React.useState(false);
   // GIS тримає один callback на сторінку. Ref дає йому свіжий onCredential без повторної ініціалізації.
   const onCredentialRef = React.useRef(onCredential);
   React.useLayoutEffect(() => {
@@ -91,6 +93,9 @@ export default function GoogleButton({ onCredential, text = 'signin_with' }: Pro
   React.useEffect(() => {
     if (!googleEnabled) return;
     let cancelled = false;
+    let timer = 0;
+    let observer: MutationObserver | null = null;
+    setReady(false);
     loadGoogleIdentity()
       .then((gis) => {
         const container = containerRef.current;
@@ -111,6 +116,27 @@ export default function GoogleButton({ onCredential, text = 'signin_with' }: Pro
           // GIS приймає ширину лише в пікселях, від 200 до 400.
           width: Math.min(400, Math.max(200, container.offsetWidth)),
         });
+        const started = performance.now();
+        const settle = () => {
+          window.clearTimeout(timer);
+          if (cancelled) return;
+          const swapping = container.querySelectorAll('iframe').length > 1;
+          if (swapping) setReady(false);
+          const elapsed = performance.now() - started;
+          // Перший кадр — англійська кнопка. Даємо GIS час замінити її, не показуючи проміжне.
+          const delay = swapping ? 60 : elapsed < 400 ? 400 - elapsed : 80;
+          timer = window.setTimeout(() => {
+            if (cancelled) return;
+            if (container.querySelectorAll('iframe').length > 1) {
+              settle();
+              return;
+            }
+            setReady(true);
+          }, delay);
+        };
+        observer = new MutationObserver(settle);
+        observer.observe(container, { childList: true, subtree: true });
+        settle();
       })
       .catch((e) => {
         console.error(e);
@@ -118,6 +144,8 @@ export default function GoogleButton({ onCredential, text = 'signin_with' }: Pro
       });
     return () => {
       cancelled = true;
+      observer?.disconnect();
+      window.clearTimeout(timer);
     };
   }, [text]);
 
@@ -130,17 +158,38 @@ export default function GoogleButton({ onCredential, text = 'signin_with' }: Pro
     );
   }
   return (
-    <Box
-      ref={containerRef}
-      sx={{
-        width: '100%',
-        minHeight: 44,
-        display: 'flex',
-        justifyContent: 'center',
-        // Сторінка має color-scheme: dark, а iframe Google — light. Без цього
-        // браузер малює під кнопкою білий непрозорий фон.
-        colorScheme: 'light',
-      }}
-    />
+    <Box sx={{ position: 'relative', width: '100%', height: 40 }}>
+      {!ready && (
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: 999,
+            bgcolor: '#1f1f1f',
+          }}
+        />
+      )}
+      <Box
+        ref={containerRef}
+        sx={{
+          width: '100%',
+          height: 40,
+          overflow: 'hidden',
+          opacity: ready ? 1 : 0,
+          pointerEvents: ready ? 'auto' : 'none',
+          display: 'flex',
+          justifyContent: 'center',
+          // Сторінка має color-scheme: dark, а iframe Google — light. Без цього
+          // браузер малює під кнопкою білий непрозорий фон.
+          colorScheme: 'light',
+          '& > div': {
+            height: '40px !important',
+            maxHeight: 40,
+            overflow: 'hidden',
+          },
+        }}
+      />
+    </Box>
   );
 }
