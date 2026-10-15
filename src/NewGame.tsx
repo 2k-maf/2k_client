@@ -20,7 +20,7 @@ import {useEffect, useMemo} from "react";
 import axios from "./axios";
 import BrandPage from "./components/brand/BrandPage";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
-import {Autocomplete, createFilterOptions, Popover} from "@mui/material";
+import {Popover} from "@mui/material";
 import Box from "@mui/material/Box";
 import { invalidateClubRatingCache } from "./utils/clubRatingCache";
 import Button from "@mui/material/Button";
@@ -31,8 +31,7 @@ import {useAuth} from "./AuthProvider";
 import {vancouverTodayYmd} from "./utils/vancouverDate";
 import AbbrLegend from "./components/brand/AbbrLegend";
 import { confirmAction, notify } from "./components/feedback/feedback";
-
-const filter = createFilterOptions();
+import PlayerNickPicker from "./components/PlayerNickPicker";
 
 /**
  * Палець ведучого потребує зони дотику ≥44px. Лише для сенсорних екранів:
@@ -213,6 +212,8 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const [tournamentNumGames, setTournamentNumGames] = React.useState(0);
 
   const [clubUsers, setClubUsers] = React.useState([]);
+  /** Унікальні гравці вечора (розсадка + ігри сьогодні) для топу пікера. */
+  const [eveningPlayers, setEveningPlayers] = React.useState<Array<{ id: string; title: string }>>([]);
   const [winState, setWinState] = React.useState(saved?.winState || '');
   const [hideRoles, setHideRoles] = React.useState(saved?.hideRoles || false);
   const [preventSleepMode, setPreventSleepMode] = React.useState(true);
@@ -715,6 +716,23 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         })
         setClubUsers(() => array || []);
 
+        if (isRatingGame) {
+          try {
+            const { data: eve } = await axios.get('/club/evening-players');
+            setEveningPlayers(
+              (eve.players || []).map((p: any) => ({
+                id: p.id != null ? String(p.id) : '',
+                title: String(p.title || ''),
+              })).filter((p: { title: string }) => p.title),
+            );
+          } catch (e) {
+            console.error('Failed to load evening players', e);
+            setEveningPlayers([]);
+          }
+        } else {
+          setEveningPlayers([]);
+        }
+
         if (isEditingRatingGame) {
           const { data: game } = await axios.get(`/club/rating-game/${editGameId}`);
           setPlayers(playersFromApi(game.players));
@@ -981,71 +999,18 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                           {n === 0 ? <ThumbUpIcon/> : n}
                         </Grid>
                         <Grid sx={{p: '.3rem'}} size={{xs: 5.5, sm: 7.5, lg: 7.5}}>
-                          {n === 0 ? 'Нік' : <Autocomplete
-                            size={'small'}
-                            disabled={readOnlyTournament}
-                            value={players[n].title}
-                            onChange={(event, newValue) => {
-                              if (typeof newValue === 'string') {
-                                setPlayerNickname(n, newValue, '');
-                              } else if (newValue && newValue.inputValue) {
-                                setPlayerNickname(n, newValue.inputValue || newValue.inputValue?.title || '', newValue.inputValue?.id || '');
-                              } else {
-                                setPlayerNickname(n, newValue?.title || `Гість ${n}`, newValue?._id);
-                              }
-                            }}
-                            filterOptions={(options, params) => {
-                              const filtered = filter(options, params);
-
-                              const {inputValue} = params;
-                              const isExisting = options.some((option) => inputValue === option.title);
-                              if (inputValue !== '' && !isExisting) {
-                                filtered.push({
-                                  inputValue,
-                                  title: `Додати «${inputValue}»`,
-                                });
-                              }
-
-                              return filtered;
-                            }}
-                            selectOnFocus
-                            clearOnBlur
-                            handleHomeEndKeys
-                            options={(() => {
-                              const pending = (players[n] as any)?.pendingTeamIds as string[] | undefined;
-                              // Не ховаємо вже розсаджених: повторний вибір переносить
-                              // гравця (setPlayerNickname). Інакше clearOnBlur стирає нік,
-                              // бо value немає в options.
-                              const base = pending?.length
-                                ? clubUsers.filter((u: any) => pending.includes(String(u._id)))
-                                : clubUsers;
-                              return base.map((option: { nickname: string }) => ({ ...option, title: option.nickname }));
-                            })()}
-                            freeSolo={!readOnlyTournament && !(players[n] as any)?.pendingTeamIds?.length}
-                            getOptionLabel={(option) => {
-                              if (typeof option === 'string') {
-                                return option;
-                              }
-                              if (option.inputValue) {
-                                return option.inputValue;
-                              }
-                              return option.title;
-                            }}
-                            renderOption={(props, option) => {
-                              const {key, ...optionProps} = props;
-                              return (
-                                <li key={key} {...optionProps}>
-                                  {option.title}
-                                </li>
-                              );
-                            }}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                inputProps={{ ...params.inputProps, 'aria-label': `Нік гравця ${n}` }}
-                              />
-                            )}
-                          />}
+                          {n === 0 ? 'Нік' : (
+                            <PlayerNickPicker
+                              seat={n}
+                              value={players[n].title}
+                              disabled={readOnlyTournament}
+                              freeSolo={!readOnlyTournament && !(players[n] as any)?.pendingTeamIds?.length}
+                              clubUsers={clubUsers}
+                              eveningPlayers={eveningPlayers}
+                              pendingIds={(players[n] as any)?.pendingTeamIds}
+                              onPick={(title, id) => setPlayerNickname(n, title, id)}
+                            />
+                          )}
                         </Grid>
                         <Grid sx={{
                           p: n === 0 ? '.5rem' : '.1rem',
