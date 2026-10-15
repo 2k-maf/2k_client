@@ -113,7 +113,8 @@ export default function PlayerNickPicker({
   const openModal = () => {
     if (disabled) return;
     setQ('');
-    setOthersOpen(false);
+    // Немає топу вечора — одразу показуємо клуб, без порожньої дірки.
+    setOthersOpen(eveningOpts.length === 0);
     setOpen(true);
   };
 
@@ -260,7 +261,7 @@ export default function PlayerNickPicker({
                   )}
                 </ListItemButton>
               ))}
-              {!searching && (
+              {!searching && eveningOpts.length > 0 && (
                 <>
                   <Divider />
                   <ListItemButton
@@ -288,7 +289,7 @@ export default function PlayerNickPicker({
                   </ListItemButton>
                 </>
               )}
-              {searching && (
+              {(searching || eveningOpts.length === 0) && (
                 <Typography
                   variant="caption"
                   sx={{
@@ -319,11 +320,6 @@ export default function PlayerNickPicker({
                   Нікого не знайдено
                 </Typography>
               )}
-              {!eveningVisible.length && !searching && eveningOpts.length === 0 && (
-                <Typography sx={{ px: 2, py: 2, color: 'text.secondary', fontSize: 14 }}>
-                  Немає гравців цього вечора
-                </Typography>
-              )}
             </List>
           </Box>
         </Dialog>
@@ -333,6 +329,7 @@ export default function PlayerNickPicker({
 
   // Desktop Autocomplete
   const deskOptions = React.useMemo(() => {
+    if (eveningOpts.length === 0) return [...clubOpts];
     const opts: NickOption[] = [...eveningOpts];
     if (deskOthersOpen) opts.push(...clubOpts);
     opts.push({ title: 'інші гравці', __othersToggle: true });
@@ -344,7 +341,7 @@ export default function PlayerNickPicker({
       size="small"
       disabled={disabled}
       value={value}
-      onOpen={() => setDeskOthersOpen(false)}
+      onOpen={() => setDeskOthersOpen(eveningOpts.length === 0)}
       onChange={(_e, newValue) => {
         if (typeof newValue === 'string') {
           onPick(newValue, '');
@@ -371,8 +368,12 @@ export default function PlayerNickPicker({
           }
           return filtered;
         }
+        const noEvening = eveningOpts.length === 0;
+        const othersExpanded = deskOthersOpen || noEvening;
         const evening = eveningOpts;
-        const others = deskOthersOpen ? clubOpts : [];
+        const others = othersExpanded ? clubOpts : [];
+        // Без вечора — лише список клубу з заголовком групи, без зайвого toggle.
+        if (noEvening) return others;
         return [
           ...evening,
           ...others,
