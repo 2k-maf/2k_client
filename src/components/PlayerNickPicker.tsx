@@ -172,10 +172,19 @@ export default function PlayerNickPicker({
           fullWidth
           disabled={disabled}
           value={value}
-          onClick={openModal}
-          onFocus={(e) => {
-            e.target.blur();
+          onPointerDown={(e) => {
+            if (disabled || e.button !== 0) return;
+            // Не фокусити поле: blur() всередині onFocus лишає Mui-focused,
+            // і тема малює цю рамку червоною вже після закриття модалки.
+            e.preventDefault();
             openModal();
+          }}
+          onKeyDown={(e) => {
+            if (disabled) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openModal();
+            }
           }}
           inputProps={{ readOnly: true, 'aria-label': `Нік гравця ${seat}` }}
           sx={{
@@ -185,6 +194,7 @@ export default function PlayerNickPicker({
         <Dialog
           fullScreen
           open={open}
+          disableRestoreFocus
           onClose={() => setOpen(false)}
           TransitionProps={{
             onEntered: () => {
