@@ -241,9 +241,19 @@ export default function PlayerNickPicker({
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: brandColors.accent },
-                    '&:hover fieldset': { borderColor: brandColors.accent },
-                    '&.Mui-focused fieldset': { borderColor: brandColors.accent },
+                    '& fieldset': {
+                      borderColor: brandColors.accent,
+                      borderWidth: 1,
+                    },
+                    '&:hover fieldset': {
+                      borderColor: brandColors.accent,
+                      borderWidth: 1,
+                    },
+                    // MUI за замовчуванням робить focused border 2px — лишаємо 1px.
+                    '&.Mui-focused fieldset': {
+                      borderColor: brandColors.accent,
+                      borderWidth: '1px !important',
+                    },
                   },
                 }}
               />
