@@ -139,6 +139,14 @@ export default function PlayerNickPicker({
     setOpen(false);
   };
 
+  const isDefaultGuest = !value.trim() || value.trim().startsWith('Гість');
+  const canClear = !disabled && !isDefaultGuest;
+  const clearSeat = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onPick(`Гість ${seat}`, '');
+  };
+
   if (isMobile) {
     const searching = Boolean(q.trim());
     const visible = optionsForQuery(q, eveningOpts, clubOpts, browseOptions);
@@ -165,6 +173,24 @@ export default function PlayerNickPicker({
             }
           }}
           inputProps={{ readOnly: true, 'aria-label': `Нік гравця ${seat}` }}
+          InputProps={{
+            endAdornment: canClear ? (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  edge="end"
+                  aria-label={`Прибрати гравця з місця ${seat}`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onClick={clearSeat}
+                >
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ) : undefined,
+          }}
           sx={{
             '& .MuiOutlinedInput-root': { cursor: disabled ? 'default' : 'pointer' },
           }}
@@ -296,12 +322,16 @@ export default function PlayerNickPicker({
       size="small"
       disabled={disabled}
       value={value}
+      disableClearable={!canClear}
       onChange={(_e, newValue) => {
+        if (newValue == null || newValue === '') {
+          onPick(`Гість ${seat}`, '');
+          return;
+        }
         if (typeof newValue === 'string') {
           onPick(newValue, '');
           return;
         }
-        if (!newValue) return;
         if (newValue.inputValue) {
           onPick(String(newValue.inputValue), '');
           return;

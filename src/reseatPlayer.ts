@@ -63,11 +63,12 @@ export function reseatPlayer(
     nextPlayers[other] = { ...current, ...replacement };
   }
 
+  const clearingSeat = !String(title || '').trim() || String(title).trim().startsWith('Гість');
   nextPlayers[seat] = {
     ...nextPlayers[seat],
     title,
     id: idStr,
-    pendingTeamIds: idStr || displacedPlaced ? undefined : nextPlayers[seat]?.pendingTeamIds,
+    pendingTeamIds: idStr || displacedPlaced || clearingSeat ? undefined : nextPlayers[seat]?.pendingTeamIds,
   };
   return nextPlayers;
 }

@@ -41,6 +41,17 @@ test('іменний гість теж міняється з гравцем', ()
   expect(next[4].role).toBe(4);
 });
 
+test('очищення місця ставить гостя цього стільця і лишає роль', () => {
+  const src = seats();
+  src[1] = { ...src[1], id: '', title: 'А / Б', pendingTeamIds: ['a', 'b'] };
+  const next = reseatPlayer(src, 1, 'Гість 1', '');
+  expect(next[1].title).toBe('Гість 1');
+  expect(next[1].id).toBe('');
+  expect(next[1].role).toBe(3);
+  expect(next[1].pendingTeamIds).toBeUndefined();
+  expect(next[2].title).toBe('Боб');
+});
+
 test('новий гравець просто замінює нік на місці', () => {
   const next = reseatPlayer(seats(), 2, 'Чарлі', 'c');
   expect(next[2].title).toBe('Чарлі');
