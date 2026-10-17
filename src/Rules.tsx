@@ -3,8 +3,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import AppTheme from './theme/AppTheme';
 import DocPage, { DocSection, DocText, DocCardGrid, DocCard, DocTab } from './components/brand/DocPage';
-import DocTable, { Pill } from './components/brand/DocTable';
-import { brandColors, fg, withAlpha } from './theme/brand';
+import DocTable, { Pill, teamTone } from './components/brand/DocTable';
+import { brandColors, withAlpha } from './theme/brand';
 
 export const RULES_TABS: DocTab[] = [
   { label: 'Класична мафія', to: '/rules' },
@@ -35,10 +35,10 @@ export default function Rules(props: { disableCustomTheme?: boolean }) {
             columns={ROLE_COLUMNS}
             headers={['РОЛЬ', 'КОМАНДА', 'ЗДІБНІСТЬ']}
             rows={[
-              ['Мирний житель (×6)', <Pill tone="light">Мирні</Pill>, 'Голосує вдень за вилучення підозрюваних'],
-              ['Шериф (×1)', <Pill tone="light">Мирні</Pill>, 'Вночі перевіряє одного гравця — мафія чи ні'],
-              ['Мафія (×2)', <Pill tone="accent">Мафія</Pill>, 'Щоночі «вбиває» одного мирного'],
-              ['Дон (×1)', <Pill tone="accent">Мафія</Pill>, 'Вночі шукає Шерифа серед гравців'],
+              ['Мирний житель (×6)', <Pill tone={teamTone(false)}>Мирні</Pill>, 'Голосує вдень за вилучення підозрюваних'],
+              ['Шериф (×1)', <Pill tone={teamTone(false)}>Мирні</Pill>, 'Вночі перевіряє одного гравця — мафія чи ні'],
+              ['Мафія (×2)', <Pill tone={teamTone(true)}>Мафія</Pill>, 'Щоночі «вбиває» одного мирного'],
+              ['Дон (×1)', <Pill tone={teamTone(true)}>Мафія</Pill>, 'Вночі шукає Шерифа серед гравців'],
             ]}
           />
         </DocSection>
@@ -95,14 +95,20 @@ export default function Rules(props: { disableCustomTheme?: boolean }) {
 
         <DocSection index={7} title="Умови перемоги">
           <DocCardGrid>
-            <DocCard title="Мирні" filled={false} borderColor={fg(0.14)}>
+            <DocCard
+              title="Мирні"
+              labelColor={brandColors.accentHover}
+              filled={false}
+              borderColor={withAlpha(brandColors.accent, 0.4)}
+            >
               <Box component="span">Вилучено всю мафію разом з Доном.</Box>
             </DocCard>
             <DocCard
               title="Мафія"
-              labelColor={brandColors.accentHover}
+              labelColor="#f4f1ea"
               filled={false}
-              borderColor={withAlpha(brandColors.accent, 0.4)}
+              background="#0d1129"
+              borderColor="#0d1129"
             >
               <Box component="span">
                 Кількість мафії дорівнює кількості мирних, що залишились.

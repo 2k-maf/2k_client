@@ -5,7 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import AppTheme from '../theme/AppTheme';
 import ProfilePage from '../components/brand/ProfilePage';
 import BrandTable, { BrandColumn } from '../components/brand/BrandTable';
-import { Pill } from '../components/brand/DocTable';
+import { Pill, teamTone } from '../components/brand/DocTable';
 import axios from '../axios';
 import { monoSx } from '../theme/brand';
 
@@ -19,7 +19,7 @@ type Game = {
   points?: number;
 };
 
-/** Ролі мафії позначені акцентом, мирні — світлою пігулкою, як у правилах. */
+/** Мафія — чорна, мирні — червоні, як у правилах. */
 const MAFIA_ROLES = ['Маф', 'Дон'];
 
 const signed = (value?: number) => {
@@ -43,7 +43,7 @@ const COLUMNS: BrandColumn<Game>[] = [
     header: 'РОЛЬ',
     width: '110px',
     render: (game) => (
-      <Pill tone={MAFIA_ROLES.includes(game.role || '') ? 'accent' : 'light'}>{game.role}</Pill>
+      <Pill tone={teamTone(MAFIA_ROLES.includes(game.role || ''))}>{game.role}</Pill>
     ),
   },
   {
@@ -51,7 +51,7 @@ const COLUMNS: BrandColumn<Game>[] = [
     header: 'ПЕРЕМОГА',
     width: '120px',
     render: (game) => (
-      <Pill tone={game.winner === 'Маф' ? 'accent' : 'light'}>{game.winner}</Pill>
+      <Pill tone={teamTone(game.winner === 'Маф')}>{game.winner}</Pill>
     ),
   },
   {

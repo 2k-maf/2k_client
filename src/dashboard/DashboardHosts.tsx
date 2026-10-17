@@ -8,7 +8,7 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import AppTheme from '../theme/AppTheme';
 import ProfilePage from '../components/brand/ProfilePage';
 import BrandTable, { BrandColumn } from '../components/brand/BrandTable';
-import { Pill } from '../components/brand/DocTable';
+import { Pill, teamTone } from '../components/brand/DocTable';
 import axios from '../axios';
 import { useAuth } from '../AuthProvider';
 import { brandColors, brandFonts, monoSx } from '../theme/brand';
@@ -107,7 +107,7 @@ function gameColumns(showRecordedBy: boolean): BrandColumn<HostGame>[] {
       header: 'ПЕРЕМОГА',
       width: '110px',
       render: (game) => (
-        <Pill tone={game.winState === 'mafia' ? 'accent' : 'light'}>
+        <Pill tone={teamTone(game.winState === 'mafia')}>
           {game.winState === 'mafia' ? 'Маф' : 'Мир'}
         </Pill>
       ),

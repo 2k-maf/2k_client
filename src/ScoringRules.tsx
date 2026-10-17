@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import AppTheme from './theme/AppTheme';
 import DocPage, { DocSection, DocText } from './components/brand/DocPage';
-import DocTable, { Pill } from './components/brand/DocTable';
+import DocTable, { Pill, teamTone } from './components/brand/DocTable';
 import { RULES_TABS } from './Rules';
 import { brandColors, brandFonts, fg } from './theme/brand';
 
@@ -21,8 +21,8 @@ export default function ScoringRules(props: { disableCustomTheme?: boolean }) {
             columns="140px minmax(0,1fr)"
             headers={['КОМАНДА', 'РОЛІ']}
             rows={[
-              [<Pill tone="light">Мирні</Pill>, 'Мирний житель, Шериф'],
-              [<Pill tone="accent">Мафія</Pill>, 'Мафія (×2), Дон'],
+              [<Pill tone={teamTone(false)}>Мирні</Pill>, 'Мирний житель, Шериф'],
+              [<Pill tone={teamTone(true)}>Мафія</Pill>, 'Мафія (×2), Дон'],
             ]}
           />
         </DocSection>
@@ -50,8 +50,8 @@ export default function ScoringRules(props: { disableCustomTheme?: boolean }) {
             headers={['ВАШ ВИБІР', 'ХТО НАСПРАВДІ', 'БАЛИ']}
             align={['left', 'left', 'right']}
             rows={[
-              [<Pill tone="light">Чорний</Pill>, 'Мафія / Дон', <Pill tone="positive">+0.2</Pill>],
-              [<Pill tone="light">Чорний</Pill>, 'Мирний / Шериф', <Pill tone="negative">-0.2</Pill>],
+              [<Pill tone="black">Чорний</Pill>, 'Мафія / Дон', <Pill tone="positive">+0.2</Pill>],
+              [<Pill tone="black">Чорний</Pill>, 'Мирний / Шериф', <Pill tone="negative">-0.2</Pill>],
               [<Pill tone="accent">Червоний</Pill>, 'Мирний / Шериф', <Pill tone="positive">+0.1</Pill>],
               [<Pill tone="accent">Червоний</Pill>, 'Мафія / Дон', <Pill tone="negative">-0.1</Pill>],
             ]}

@@ -99,6 +99,7 @@ export function DocCard({
   title,
   filled = true,
   borderColor = fg(0.1),
+  background,
   children,
 }: {
   label?: string;
@@ -106,12 +107,13 @@ export function DocCard({
   title?: string;
   filled?: boolean;
   borderColor?: string;
+  background?: string;
   children: React.ReactNode;
 }) {
   return (
     <Box
       sx={{
-        background: filled ? brandColors.panel : 'transparent',
+        background: background ?? (filled ? brandColors.panel : 'transparent'),
         border: `1px solid ${borderColor}`,
         borderRadius: '16px',
         p: 2.75,
@@ -141,7 +143,7 @@ export function DocCard({
           {title}
         </Box>
       )}
-      <Box sx={{ fontSize: 14, lineHeight: 1.6, color: fg(0.7) }}>{children}</Box>
+      <Box sx={{ fontSize: 14, lineHeight: 1.6, color: background ? labelColor : fg(0.7) }}>{children}</Box>
     </Box>
   );
 }

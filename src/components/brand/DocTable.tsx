@@ -2,7 +2,11 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import { brandColors, brandFonts, monoSx, fg, withAlpha } from '../../theme/brand';
 
-export type PillTone = 'positive' | 'negative' | 'neutral' | 'accent' | 'light';
+export type PillTone = 'positive' | 'negative' | 'neutral' | 'accent' | 'light' | 'black';
+
+/** Чорний жетон мафії: чорнило бренду на пісочному тексті, читається і на світлій, і на темній схемі. */
+const MAFIA_BLACK = '#0d1129';
+const MAFIA_BLACK_INK = '#f4f1ea';
 
 const PILL_TONES: Record<PillTone, { bg: string; color: string }> = {
   positive: { bg: withAlpha(brandColors.positive, 0.14), color: brandColors.positive },
@@ -10,7 +14,13 @@ const PILL_TONES: Record<PillTone, { bg: string; color: string }> = {
   neutral: { bg: fg(0.08), color: fg(0.7) },
   accent: { bg: withAlpha(brandColors.accent, 0.14), color: brandColors.accentHover },
   light: { bg: fg(0.1), color: brandColors.band },
+  black: { bg: MAFIA_BLACK, color: MAFIA_BLACK_INK },
 };
+
+/** Мирні — червоний акцент, мафія — чорний. */
+export function teamTone(mafia: boolean): PillTone {
+  return mafia ? 'black' : 'accent';
+}
 
 /** Значення-пігулка: бали, команда, колір вибору. */
 export function Pill({ tone = 'neutral', children }: { tone?: PillTone; children: React.ReactNode }) {
