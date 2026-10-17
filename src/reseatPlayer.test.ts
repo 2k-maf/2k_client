@@ -1,11 +1,20 @@
 import { reseatPlayer } from './reseatPlayer';
 
-function seats() {
+type Seat = {
+  n: number;
+  title: string;
+  id: string;
+  role: number;
+  warnings: number;
+  pendingTeamIds?: string[];
+};
+
+function seats(): Record<number, Seat> {
   return {
-    1: { n: 1, title: 'Аліса', id: 'a', role: 3, warnings: 2, pendingTeamIds: undefined },
-    2: { n: 2, title: 'Боб', id: 'b', role: 0, warnings: 0, pendingTeamIds: undefined },
-    3: { n: 3, title: 'Гість 3', id: '', role: 1, warnings: 1, pendingTeamIds: undefined },
-    4: { n: 4, title: 'Петро', id: '', role: 4, warnings: 0, pendingTeamIds: undefined },
+    1: { n: 1, title: 'Аліса', id: 'a', role: 3, warnings: 2 },
+    2: { n: 2, title: 'Боб', id: 'b', role: 0, warnings: 0 },
+    3: { n: 3, title: 'Гість 3', id: '', role: 1, warnings: 1 },
+    4: { n: 4, title: 'Петро', id: '', role: 4, warnings: 0 },
   };
 }
 
