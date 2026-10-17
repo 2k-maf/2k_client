@@ -10,6 +10,7 @@ import { formatSeasonLabel } from '../utils/podium';
 import PodiumStack from './brand/PodiumStack';
 import GoogleSignIn from './GoogleSignIn';
 import UpcomingTournamentBanner from './UpcomingTournamentBanner';
+import SocialLinks from './SocialLinks';
 
 export default function Hero() {
   const { user } = useAuth();
@@ -100,12 +101,28 @@ export default function Hero() {
               }}
             >
               Два
+              <Box
+                component="span"
+                sx={{
+                  display: { xs: 'none', md: 'inline-flex' },
+                  verticalAlign: 'middle',
+                  ml: { md: 2, lg: 3 },
+                  mb: '0.12em',
+                  WebkitTextStroke: 0,
+                  color: brandColors.text,
+                }}
+              >
+                <SocialLinks />
+              </Box>
               <Box component="span" sx={{ display: { xs: 'inline', md: 'none' } }}>
                 {' '}
               </Box>
               <Box component="br" sx={{ display: { xs: 'none', md: 'block' } }} />
               Кольори
             </Typography>
+            <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+              <SocialLinks />
+            </Box>
 
             {user ? (
               <Typography

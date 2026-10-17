@@ -2,16 +2,10 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import InstagramIcon from '@mui/icons-material/Instagram';
-import YouTubeIcon from '@mui/icons-material/YouTube';
-import TelegramIcon from '@mui/icons-material/Telegram';
-import { SvgIconProps } from '@mui/material/SvgIcon';
 import { brandColors, brandFonts, fg } from '../theme/brand';
 import { publicStaticUrl } from '../utils/mediaUrl';
+import SocialLinks, { INSTAGRAM_URL } from './SocialLinks';
 
-const INSTAGRAM_URL = 'https://www.instagram.com/theukrainianmafia.vancouver/';
-const YOUTUBE_URL = 'https://www.youtube.com/@2kMafiaVan';
-const TELEGRAM_URL = 'https://t.me/+kW0ZPDBsdKY3MTMy';
 const PHONE = '+1 (403) 390-1484';
 
 export function Copyright() {
@@ -24,40 +18,6 @@ export function Copyright() {
       &nbsp;
       {new Date().getFullYear()}
     </Typography>
-  );
-}
-
-function SocialSquare({
-  href,
-  label,
-  Icon,
-}: {
-  href: string;
-  label: string;
-  Icon: React.ComponentType<SvgIconProps>;
-}) {
-  return (
-    <Box
-      component="a"
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={label}
-      sx={{
-        width: 44,
-        height: 44,
-        borderRadius: '12px',
-        border: `1px solid ${fg(0.1)}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: fg(0.7),
-        textDecoration: 'none',
-        '&:hover': { borderColor: brandColors.accent, color: brandColors.accentHover },
-      }}
-    >
-      <Icon sx={{ fontSize: 22 }} />
-    </Box>
   );
 }
 
@@ -161,11 +121,7 @@ export default function Footer() {
             </Box>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1.25 }}>
-          <SocialSquare href={INSTAGRAM_URL} label="Instagram" Icon={InstagramIcon} />
-          <SocialSquare href={YOUTUBE_URL} label="YouTube" Icon={YouTubeIcon} />
-          <SocialSquare href={TELEGRAM_URL} label="Telegram" Icon={TelegramIcon} />
-        </Box>
+        <SocialLinks />
       </Box>
       <Box component="span" sx={{ fontSize: 12, color: fg(0.6) }}>
         © Dva Kol'ory Vancouver Mafia Club {new Date().getFullYear()}
