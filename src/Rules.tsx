@@ -25,7 +25,7 @@ export default function Rules(props: { disableCustomTheme?: boolean }) {
             один одного (окрім мафії, яка знає своїх). Гра ведеться ведучим (суддею).
           </DocText>
           <DocText>
-            У класичній грі беруть участь <strong>10 гравців</strong>: 6 мирних (включно з Шерифом)
+            У класичній грі беруть участь <strong>10 гравців</strong>: 7 мирних (включно з Шерифом)
             та 3 мафії (включно з Доном).
           </DocText>
         </DocSection>
