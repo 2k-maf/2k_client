@@ -1,0 +1,22 @@
+# Короткі посилання на соцмережі: 2kmaf.ca/telegram тощо.
+#
+# Редирект робить статика Cloudflare Pages, функція не викликається. Тому шлях
+# не має бути в public/_routes.json: на шляхи функції цей файл не діє.
+#
+# 302, а не 301. Браузер кешує 301 без строку, а інвайт Telegram можна
+# відкликати. Після заміни посилання старий 301 вів би на мертвий інвайт.
+#
+# Pages не прирівнює /telegram/ до /telegram, тому кожен шлях має два рядки.
+# Без другого рядка /telegram/ віддає сторінку 404 SPA.
+#
+# Адреси мають збігатися з константами в src/components/SocialLinks.tsx.
+# Це перевіряє edge/redirects.test.mjs.
+
+/telegram    https://t.me/+kW0ZPDBsdKY3MTMy                            302
+/telegram/   https://t.me/+kW0ZPDBsdKY3MTMy                            302
+/youtube     https://www.youtube.com/@2kMafiaVan                        302
+/youtube/    https://www.youtube.com/@2kMafiaVan                        302
+/instagram   https://www.instagram.com/theukrainianmafia.vancouver/     302
+/instagram/  https://www.instagram.com/theukrainianmafia.vancouver/     302
+/threads     https://www.threads.com/@theukrainianmafia.vancouver       302
+/threads/    https://www.threads.com/@theukrainianmafia.vancouver       302
