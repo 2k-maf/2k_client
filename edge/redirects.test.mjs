@@ -6,7 +6,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
@@ -50,17 +50,31 @@ test('_redirects: жоден шлях не потрапляє у функцію 
     }
 });
 
-test('_redirects: адреси соцмереж збігаються з SocialLinks.tsx', () => {
+test('_redirects: кнопки соцмереж ведуть на короткі посилання', () => {
     const constants = Object.fromEntries(
         [...read('../src/components/SocialLinks.tsx').matchAll(/export const (\w+)_URL = '([^']+)'/g)]
             .map(([, name, url]) => [name.toLowerCase(), url]),
     );
     assert.deepEqual(Object.keys(constants).sort(), ['instagram', 'telegram', 'threads', 'youtube']);
     for (const [name, url] of Object.entries(constants)) {
-        for (const source of [`/${name}`, `/${name}/`]) {
-            const r = redirects.find((x) => x.source === source);
-            assert.ok(r, `немає короткого посилання ${source}`);
-            assert.equal(r.destination, url, `${source} веде не туди, куди кнопка на сайті`);
+        assert.equal(url, `https://2kmaf.ca/${name}`, `${name.toUpperCase()}_URL має бути коротким посиланням`);
+    }
+});
+
+// Посилання на 2kmaf.ca/<шлях> без правила відкрило б сторінку 404 SPA.
+test('_redirects: кожне коротке посилання в src/ має правило з / і без', () => {
+    const src = new URL('../src/', import.meta.url);
+    const paths = new Set();
+    for (const file of readdirSync(src, { recursive: true })) {
+        if (!/\.tsx?$/.test(file)) continue;
+        for (const [, path] of read(`../src/${file.replaceAll('\\', '/')}`).matchAll(/https:\/\/2kmaf\.ca\/(\w+)/g)) {
+            paths.add(path);
+        }
+    }
+    assert.ok(paths.size > 0);
+    for (const path of paths) {
+        for (const source of [`/${path}`, `/${path}/`]) {
+            assert.ok(redirects.some((x) => x.source === source), `немає правила ${source} у _redirects`);
         }
     }
 });

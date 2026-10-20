@@ -9,8 +9,12 @@
 # Pages не прирівнює /telegram/ до /telegram, тому кожен шлях має два рядки.
 # Без другого рядка /telegram/ віддає сторінку 404 SPA.
 # Це теж перевіряє edge/redirects.test.mjs.
+#
+# Це єдине місце зі справжніми адресами соцмереж. Кнопки на сайті ведуть
+# на https://2kmaf.ca/<шлях>. edge/redirects.test.mjs перевіряє, що кожен
+# такий шлях у src/ має правило тут.
 
-# Соцмережі. Адреси мають збігатися з константами в src/components/SocialLinks.tsx.
+# Соцмережі. На них ведуть кнопки з src/components/SocialLinks.tsx.
 /telegram    https://t.me/+kW0ZPDBsdKY3MTMy                            302
 /telegram/   https://t.me/+kW0ZPDBsdKY3MTMy                            302
 /youtube     https://www.youtube.com/@2kMafiaVan                        302
