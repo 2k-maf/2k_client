@@ -22,8 +22,6 @@ import Rating from "./Rating";
 import ScoringRules from "./ScoringRules";
 import Rules from "./Rules";
 import ResetPassword from "./ResetPassword";
-import {BudgetRedirect} from "./Budget";
-import {CalendarRedirect} from "./Calendar";
 import PublicTournamentPage from "./PublicTournamentPage";
 import NotFound from "./NotFound";
 
@@ -50,8 +48,6 @@ const App = () => {
           <Route path="login" element={<SignIn />} />
           <Route path="reset-password" element={<ResetPassword />} />
           <Route path="members" element={<MembersList />} />
-          <Route path="$" element={<BudgetRedirect />} />
-          <Route path="calendar" element={<CalendarRedirect />} />
           <Route path="clubs-rating" element={<Rating />} />
           <Route path="scoring" element={<ScoringRules />} />
           <Route path="rules" element={<Rules />} />

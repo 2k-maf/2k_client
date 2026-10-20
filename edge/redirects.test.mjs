@@ -26,6 +26,18 @@ test('_redirects: файл не порожній, кожне правило ма
     }
 });
 
+// Pages не прирівнює /x/ до /x: без пари /x/ віддає сторінку 404 SPA.
+test('_redirects: кожен шлях має пару зі слешем у кінці і ту саму адресу', () => {
+    const bySource = new Map(redirects.map((r) => [r.source, r.destination]));
+    assert.equal(bySource.size, redirects.length, 'шлях повторюється');
+    for (const r of redirects.filter((x) => !x.source.endsWith('/'))) {
+        assert.equal(bySource.get(`${r.source}/`), r.destination, `${r.source}/ не веде туди, куди ${r.source}`);
+    }
+    for (const r of redirects.filter((x) => x.source.endsWith('/'))) {
+        assert.ok(bySource.has(r.source.slice(0, -1)), `${r.source} без пари без слеша`);
+    }
+});
+
 // На шляхи функції Pages не застосовує _redirects: запит пішов би в API.
 test('_redirects: жоден шлях не потрапляє у функцію з _routes.json', () => {
     const { include } = JSON.parse(read('../public/_routes.json'));
