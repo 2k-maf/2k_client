@@ -15,10 +15,12 @@ function ThreadsIcon(props: SvgIconProps) {
 }
 import { brandColors, fg } from '../theme/brand';
 
-export const INSTAGRAM_URL = 'https://www.instagram.com/theukrainianmafia.vancouver/';
-export const YOUTUBE_URL = 'https://www.youtube.com/@2kMafiaVan';
-export const TELEGRAM_URL = 'https://t.me/+kW0ZPDBsdKY3MTMy';
-export const THREADS_URL = 'https://www.threads.com/@theukrainianmafia.vancouver';
+// Короткі посилання з public/_redirects: справжні адреси соцмереж живуть лише там.
+// Адреса абсолютна, бо dev-сервер CRA не виконує _redirects і на /telegram дав би 404 SPA.
+export const INSTAGRAM_URL = 'https://2kmaf.ca/instagram';
+export const YOUTUBE_URL = 'https://2kmaf.ca/youtube';
+export const TELEGRAM_URL = 'https://2kmaf.ca/telegram';
+export const THREADS_URL = 'https://2kmaf.ca/threads';
 
 function SocialSquare({
   href,
