@@ -153,7 +153,7 @@ DNS-записи живуть у Cloudflare. Повна схема з C4-діа�
 | `public/_routes.json` | які шляхи викликають функцію. **Новий кореневий маршрут в API без рядка тут віддаватиме `index.html`** |
 | `edge/proxy.mjs` | проксі API й аватарів; браузерна навігація на `/clubs` отримує `index.html`, а не JSON |
 | `public/_headers` | security headers і річний кеш для `/static/*` |
-| `public/_redirects` | короткі посилання `2kmaf.ca/telegram`, `/youtube`, `/instagram`, `/threads` (302, без функції) |
+| `public/_redirects` | короткі посилання `2kmaf.ca/telegram`, `/youtube`, `/instagram`, `/threads`, `/$` (бюджет), `/calendar` (302, без функції) |
 | `.github/workflows/deploy.yml` | збірка → `wrangler pages deploy` → перевірка бандла й `/hello` (повтори до 60 с) |
 
 Безкоштовний ліміт — 100 000 викликів функції на добу. Статика його не витрачає.
