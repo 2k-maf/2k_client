@@ -26,6 +26,13 @@
 /tiktok      https://www.tiktok.com/@mafia.in.van                       302
 /tiktok/     https://www.tiktok.com/@mafia.in.van                       302
 
+# Telegram для біо в Instagram і Threads. Кожен шлях має свій інвайт:
+# Telegram рахує вступи окремо для кожного інвайту, так видно джерело.
+/ig_telegram   https://t.me/+5ChjXv2reD44MGMy                          302
+/ig_telegram/  https://t.me/+5ChjXv2reD44MGMy                          302
+/th_telegram   https://t.me/+9RA3oB056RRlN2Uy                          302
+/th_telegram/  https://t.me/+9RA3oB056RRlN2Uy                          302
+
 # Бюджет клубу (Google Sheets) і календар (Google Sites).
 # Pages порівнює шлях без декодування, тому /%24 (закодований $) має свої рядки.
 /$           https://docs.google.com/spreadsheets/d/1Rmp0EHC4pm5u8frgDozMUt7s3XSLwUTJyH2Okys4aqs/  302
