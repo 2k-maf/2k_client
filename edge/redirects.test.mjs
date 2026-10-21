@@ -55,7 +55,7 @@ test('_redirects: кнопки соцмереж ведуть на короткі
         [...read('../src/components/SocialLinks.tsx').matchAll(/export const (\w+)_URL = '([^']+)'/g)]
             .map(([, name, url]) => [name.toLowerCase(), url]),
     );
-    assert.deepEqual(Object.keys(constants).sort(), ['instagram', 'telegram', 'threads', 'youtube']);
+    assert.deepEqual(Object.keys(constants).sort(), ['instagram', 'telegram', 'threads', 'tiktok', 'youtube']);
     for (const [name, url] of Object.entries(constants)) {
         assert.equal(url, `https://2kmaf.ca/${name}`, `${name.toUpperCase()}_URL має бути коротким посиланням`);
     }
