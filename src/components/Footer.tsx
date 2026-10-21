@@ -6,7 +6,7 @@ import { brandColors, brandFonts, fg } from '../theme/brand';
 import { publicStaticUrl } from '../utils/mediaUrl';
 import SocialLinks, { INSTAGRAM_URL } from './SocialLinks';
 
-const PHONE = '+1 (403) 390-1484';
+const SUPPORT_EMAIL = 'support@2kmaf.ca';
 
 export function Copyright() {
   return (
@@ -108,7 +108,7 @@ export default function Footer() {
             </Box>
             <Box
               component="a"
-              href={`tel:${PHONE.replace(/[^+\d]/g, '')}`}
+              href={`mailto:${SUPPORT_EMAIL}`}
               sx={{
                 fontFamily: brandFonts.mono,
                 fontSize: 14,
@@ -117,7 +117,7 @@ export default function Footer() {
                 '&:hover': { color: brandColors.accentHover },
               }}
             >
-              {PHONE}
+              {SUPPORT_EMAIL}
             </Box>
           </Box>
         </Box>
