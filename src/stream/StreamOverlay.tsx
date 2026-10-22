@@ -49,9 +49,11 @@ function useTransparentPage() {
 
 function NominatedPanel({ game }: { game: OverlayGame }) {
   return (
-    <section className={styles.panel} aria-label="Гра і номінація">
-      <div className={styles.panelHead}>Гра {game.game}</div>
-      <div className={styles.panelLabel}>Номіновані</div>
+    <section className={styles.panel} aria-label="Гра і голосування">
+      <div className={styles.panelHead}>
+        <span>Гра {game.game}</span>
+        <span>Голосування</span>
+      </div>
       <div className={styles.nominated}>
         {game.nominated.map((seat) => (
           <span key={seat} className={styles.nomSeat}>{seat}</span>
