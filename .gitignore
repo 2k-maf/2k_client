@@ -2,6 +2,8 @@ node_modules
 .idea
 9or10mafia_api.code-workspace
 .env
+# Локальний доступ до OBS на машині ведучого. Не комітити.
+public/obs-ws.json
 
 # Локальна база знань агента (не комітиться)
 AGENTS.md
@@ -19,6 +21,9 @@ types/
 
 # Логи dev.sh / dev.ps1
 .dev-logs/
+
+# Окремі робочі копії. Не комітити.
+.worktrees/
 
 # Результат збірки. CI збирає його сам (.github/workflows/deploy.yml).
 build/
