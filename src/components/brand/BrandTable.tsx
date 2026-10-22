@@ -69,7 +69,8 @@ export default function BrandTable<T>({
   const lastShown = safePage * pageSize + pageRows.length;
 
   return (
-    <Box sx={{ borderTop: `1px solid ${fg(0.14)}`, overflowX: 'auto' }}>
+    <Box sx={{ borderTop: `1px solid ${fg(0.14)}` }}>
+      <Box sx={{ overflowX: 'auto' }}>
       <Box sx={{ minWidth }}>
         {/* Сітка з div: ролі ARIA повертають читачу екрана рядки й колонки таблиці. */}
         <Box role="table">
@@ -151,6 +152,8 @@ export default function BrandTable<T>({
 
         {loading && <StateRow>Завантаження…</StateRow>}
         {!loading && rows.length === 0 && <StateRow>{emptyText}</StateRow>}
+      </Box>
+      </Box>
 
         {paginated && !loading && rows.length > 0 && (
           <Box
@@ -158,8 +161,11 @@ export default function BrandTable<T>({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              gap: 2,
               px: 1.5,
               py: 2.5,
+              // На вузькому екрані кнопки лишаються біля лівого краю, а не в кінці широкої таблиці.
+              '@media (max-width: 899.95px)': { justifyContent: 'flex-start' },
             }}
           >
             <Box component="span" sx={monoSx(12, HEADER_COLOR)}>
@@ -190,7 +196,6 @@ export default function BrandTable<T>({
             </Box>
           </Box>
         )}
-      </Box>
     </Box>
   );
 }
