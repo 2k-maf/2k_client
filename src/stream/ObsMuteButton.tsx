@@ -5,14 +5,13 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import { keyframes } from '@mui/material/styles';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { brandColors } from '../theme/brand';
 import { obsConfigFromEnv } from './obsAudio';
 import ObsHostDialog from './ObsHostDialog';
 import {
   hostFromObsUrl,
   readStoredObsHost,
-  readStoredObsPassword,
   resolveObsUrl,
   writeStoredObsHost,
 } from './obsHost';
@@ -65,52 +64,21 @@ function withStoredHost(config: ObsConfig): ObsConfig {
 }
 
 function useObsConfig(): {
-  config: ObsConfig | null;
+  config: ObsConfig;
   ready: boolean;
-  setHost: (host: string, password?: string) => void;
+  setHost: (host: string) => void;
 } {
-  const [envConfig] = useState(() => {
-    const fromEnv = obsConfigFromEnv({
-      url: process.env.REACT_APP_OBS_WS_URL,
-      password: process.env.REACT_APP_OBS_WS_PASSWORD,
-    });
-    if (fromEnv) return withStoredHost(fromEnv);
-    const password = readStoredObsPassword();
-    if (!password) return null;
-    return { url: resolveObsUrl('', readStoredObsHost()), password };
+  const [config, setConfig] = useState<ObsConfig>(() => {
+    const fromEnv = obsConfigFromEnv({ url: process.env.REACT_APP_OBS_WS_URL });
+    return withStoredHost(fromEnv ?? { url: '', password: '' });
   });
-  const [config, setConfig] = useState<ObsConfig | null>(envConfig);
-  const [ready, setReady] = useState(Boolean(envConfig));
 
-  useEffect(() => {
-    if (envConfig) return undefined;
-    let cancelled = false;
-    fetch('/obs-ws.json')
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: { url?: string; password?: string } | null) => {
-        if (cancelled || !data) return;
-        const next = obsConfigFromEnv(data);
-        if (next) setConfig(withStoredHost(next));
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [envConfig]);
-
-  const setHost = (host: string, password?: string) => {
-    setConfig((current) => {
-      const nextPassword = password || current?.password || readStoredObsPassword();
-      if (!nextPassword) return current;
-      writeStoredObsHost(host, password);
-      return { url: resolveObsUrl(current?.url ?? '', host), password: nextPassword };
-    });
+  const setHost = (host: string) => {
+    writeStoredObsHost(host);
+    setConfig(withStoredHost({ url: process.env.REACT_APP_OBS_WS_URL ?? '', password: '' }));
   };
 
-  return { config, ready, setHost };
+  return { config, ready: true, setHost };
 }
 
 const labelSx = { display: 'none', '@media (min-width: 940px)': { display: 'inline' } } as const;
@@ -147,7 +115,7 @@ const floatingSx = (audible: boolean, muted: boolean, live: boolean) => ({
 /** Кнопка ведучого: глушить звук OBS або, без звʼязку, просить адресу іншого сервера. */
 export default function ObsMuteButton({ variant = 'floating' }: Props) {
   const { config, ready, setHost } = useObsConfig();
-  const { snapshot, toggle } = useObsAudio(config?.url ?? '', config?.password ?? '', Boolean(config));
+  const { snapshot, toggle } = useObsAudio(config.url, '', true);
   const [hostOpen, setHostOpen] = useState(false);
   const disconnected = ready && snapshot.phase !== 'live';
   const disconnectLabel = 'OBS немає звʼязку. Змінити адресу';
@@ -156,10 +124,9 @@ export default function ObsMuteButton({ variant = 'floating' }: Props) {
     <ObsHostDialog
       open={hostOpen}
       initialHost={hostFromObsUrl(config?.url ?? '') || '127.0.0.1'}
-      needsPassword={!config?.password}
       onClose={() => setHostOpen(false)}
-      onSubmit={(host, password) => {
-        setHost(host, password);
+      onSubmit={(host) => {
+        setHost(host);
         setHostOpen(false);
       }}
     />

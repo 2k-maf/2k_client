@@ -19,18 +19,16 @@ import {
 type Props = {
   open: boolean;
   initialHost: string;
-  needsPassword: boolean;
   onClose: () => void;
-  onSubmit: (host: string, password?: string) => void;
+  onSubmit: (host: string) => void;
 };
 
 /**
  * Чотири числа і крапки між ними. Крапку вводити не треба:
  * повний октет сам переходить у наступне поле.
  */
-export default function ObsHostDialog({ open, initialHost, needsPassword, onClose, onSubmit }: Props) {
+export default function ObsHostDialog({ open, initialHost, onClose, onSubmit }: Props) {
   const [octets, setOctets] = useState<Octets>(['', '', '', '']);
-  const [password, setPassword] = useState('');
   const inputs = useRef<Array<HTMLInputElement | null>>([null, null, null, null]);
   const host = hostFromOctets(octets);
 
@@ -38,7 +36,6 @@ export default function ObsHostDialog({ open, initialHost, needsPassword, onClos
     if (!open) return undefined;
     const next = octetsFromHost(initialHost);
     setOctets(next);
-    setPassword('');
     const index = next.every(Boolean) ? 3 : Math.max(0, next.findIndex((part) => !part));
     const timer = window.setTimeout(() => {
       const field = inputs.current[index];
@@ -80,8 +77,8 @@ export default function ObsHostDialog({ open, initialHost, needsPassword, onClos
     } else if (event.key === 'Backspace' && octets[index] === '' && index > 0) {
       event.preventDefault();
       focusAt(index - 1);
-    } else if (event.key === 'Enter' && host && (!needsPassword || password)) {
-      onSubmit(host, needsPassword ? password : undefined);
+    } else if (event.key === 'Enter' && host) {
+      onSubmit(host);
     }
   };
 
@@ -125,23 +122,13 @@ export default function ObsHostDialog({ open, initialHost, needsPassword, onClos
             </React.Fragment>
           ))}
         </div>
-        {needsPassword ? (
-          <TextField
-            label="Пароль OBS"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            fullWidth
-            sx={{ mt: 2 }}
-          />
-        ) : null}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onClose}>Скасувати</Button>
         <Button
           variant="contained"
-          disabled={!host || (needsPassword && !password)}
-          onClick={() => host && onSubmit(host, needsPassword ? password : undefined)}
+          disabled={!host}
+          onClick={() => host && onSubmit(host)}
         >
           Підключити
         </Button>

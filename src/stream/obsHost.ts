@@ -1,6 +1,5 @@
 /** Окремий ключ: стара адреса іншого комп’ютера більше не підміняє цей ноутбук. */
 const HOST_KEY = 'obs-host-choice';
-const PASSWORD_KEY = 'obs-host-password';
 
 export type Octets = [string, string, string, string];
 
@@ -92,15 +91,6 @@ export function readStoredObsHost(): string | null {
   }
 }
 
-export function readStoredObsPassword(): string {
-  try {
-    return localStorage.getItem(PASSWORD_KEY) ?? '';
-  } catch {
-    return '';
-  }
-}
-
-export function writeStoredObsHost(host: string, password?: string): void {
+export function writeStoredObsHost(host: string): void {
   localStorage.setItem(HOST_KEY, host);
-  if (password) localStorage.setItem(PASSWORD_KEY, password);
 }

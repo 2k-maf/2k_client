@@ -11,13 +11,22 @@ test('глушить усі джерела, поки хоч одне чутно'
   expect(desiredMuted([true, true])).toBe(false);
 });
 
-test('без адреси чи пароля кнопки немає', () => {
-  expect(obsConfigFromEnv({ url: '', password: 'x' })).toBeNull();
-  expect(obsConfigFromEnv({ url: 'ws://127.0.0.1:4455', password: '' })).toBeNull();
+test('підключення не вимагає пароля', () => {
+  expect(obsConfigFromEnv({ url: '' })).toBeNull();
   expect(obsConfigFromEnv({ url: ' ws://127.0.0.1:4455 ', password: 'x' })).toEqual({
     url: 'ws://127.0.0.1:4455',
-    password: 'x',
+    password: '',
   });
+});
+
+test('без пароля сесія не надсилає автентифікацію', async () => {
+  const sent: unknown[] = [];
+  const session = new ObsAudioSession('', (payload) => sent.push(payload), () => {});
+  await session.handleMessage(JSON.stringify({
+    op: 0,
+    d: { rpcVersion: 1, authentication: { challenge: 'challenge', salt: 'salt' } },
+  }));
+  expect(sent[0]).toEqual({ op: 1, d: { rpcVersion: 1, eventSubscriptions: 8 } });
 });
 
 test('підпис obs-websocket збігається з sha256', async () => {

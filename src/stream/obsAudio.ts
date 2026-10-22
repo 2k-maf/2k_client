@@ -25,9 +25,8 @@ export function desiredMuted(mutedFlags: boolean[]): boolean {
 
 export function obsConfigFromEnv(env: { url?: string; password?: string }): { url: string; password: string } | null {
   const url = env.url?.trim() ?? '';
-  const password = env.password ?? '';
-  if (!url || !password) return null;
-  return { url, password };
+  if (!url) return null;
+  return { url, password: '' };
 }
 
 /** obs-websocket: base64(sha256(base64(sha256(password + salt)) + challenge)). */
@@ -89,7 +88,7 @@ export class ObsAudioSession {
         eventSubscriptions: INPUT_EVENTS,
       };
       const { challenge, salt } = msg.d.authentication ?? {};
-      if (challenge && salt) d.authentication = await obsAuthentication(this.password, salt, challenge);
+      if (this.password && challenge && salt) d.authentication = await obsAuthentication(this.password, salt, challenge);
       this.send({ op: IDENTIFY, d });
       return;
     }
