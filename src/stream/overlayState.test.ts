@@ -1,4 +1,4 @@
-import { avatarOnPublicSite, playersFromClub, reduceOverlay, TEST_OVERLAY } from './overlayState';
+import { avatarOnPublicSite, emptyOverlay, overlayFromActive, playersFromClub, reduceOverlay, TEST_OVERLAY } from './overlayState';
 
 const roleAt = (seat: number, game = TEST_OVERLAY) => game.players.find((player) => player.seat === seat)?.role;
 
@@ -77,6 +77,28 @@ test('рейтинг клубу сідає на перші десять місц
   expect(next.players[1].role).toBe('maf');
   expect(next.players).toHaveLength(10);
   expect(next.players[9].nickname).toBe('Гравець 10');
+});
+
+test('знімок діючої гри сідає на стіл, порожня відповідь не вигадує гру', () => {
+  const game = overlayFromActive({
+    game: 2,
+    nominated: [3, 3, 0, 7],
+    players: [
+      { seat: 2, nickname: 'Rabbit', avatarUrl: '/avatars/rabbit.webp', role: 'don' },
+      ...Array.from({ length: 9 }, (_, index) => {
+        const seat = index < 1 ? 1 : index + 2;
+        return { seat, nickname: `Гравець ${seat}`, avatarUrl: '', role: seat === 4 ? 'sher' : null };
+      }),
+    ],
+  });
+
+  expect(game?.game).toBe(2);
+  expect(game?.nominated).toEqual([3, 7]);
+  expect(game?.players[1].nickname).toBe('Rabbit');
+  expect(game?.players[1].role).toBe('don');
+  expect(game?.players[3].role).toBe('sher');
+  expect(overlayFromActive({ game: null, players: [] })).toBeNull();
+  expect(emptyOverlay().players.every((player) => player.role === null)).toBe(true);
 });
 
 test('локальна аватарка відкривається з сайту клубу', () => {

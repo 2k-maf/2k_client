@@ -35,6 +35,7 @@ import AbbrLegend from "./components/brand/AbbrLegend";
 import { confirmAction, notify } from "./components/feedback/feedback";
 import PlayerNickPicker from "./components/PlayerNickPicker";
 import { reseatPlayer } from "./reseatPlayer";
+import { activeGamePayload, planActiveSync, votingFromNominated } from "./stream/activeGameSync";
 
 /**
  * Палець ведучого потребує зони дотику ≥44px. Лише для сенсорних екранів:
@@ -156,6 +157,24 @@ function playersFromApi(apiPlayers: any[]): Record<number, any> {
   return restored;
 }
 
+/** Діюча гра з бекенду → місця форми. Ролі вже роздані, тож нуль лишається лише там, де їх ще немає. */
+function playersFromActiveGame(apiPlayers: Array<{ seat?: number; nickname?: string; id?: string; role?: unknown }>) {
+  const restored = createInitialPlayers();
+  const mafiaSlot = { n: 0 };
+  const ordered = [...(apiPlayers || [])].sort((a, b) => Number(a.seat) - Number(b.seat));
+  for (const player of ordered) {
+    const seat = Number(player.seat);
+    if (seat < 1 || seat > 10) continue;
+    restored[seat] = {
+      ...restored[seat],
+      title: player.nickname || restored[seat].title,
+      id: player.id || '',
+      role: apiRoleToUiRole(player.role, mafiaSlot),
+    };
+  }
+  return restored;
+}
+
 function applySeatingFromTournament(
   seatMap: Record<string, { userIds: string[] }> | undefined,
   clubMemberList: any[],
@@ -270,6 +289,10 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
 
   const [players, _setPlayers] = React.useState(saved?.players || createInitialPlayers());
   const setPlayers = (item: any) => _setPlayers(() => item);
+  /** Розсадка, з якої зібрана діюча гра. Правки йдуть лише в неї. */
+  const [liveSeatingId, setLiveSeatingId] = React.useState<string | null>(null);
+  const holdLiveSync = React.useRef(false);
+  const syncBaseline = React.useRef<string | null>(null);
   const sheetRef = React.useRef<HTMLDivElement>(null);
   const flyFromRef = React.useRef<Map<string, number> | null>(null);
   const [seatDrag, setSeatDrag] = React.useState<SeatDrag | null>(null);
@@ -312,6 +335,22 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [players, votings, activeVoting, winState, hideRoles, isRatingGame, isEditingRatingGame]);
+
+  useEffect(() => {
+    if (!isRatingGame || isEditingRatingGame || holdLiveSync.current || !liveSeatingId) return;
+    const payload = activeGamePayload(players, activeVoting);
+    const plan = planActiveSync(syncBaseline.current, payload, liveSeatingId);
+    syncBaseline.current = plan.baseline;
+    if (!plan.body) return;
+    const body = plan.body;
+    const timer = window.setTimeout(() => {
+      if (holdLiveSync.current) return;
+      axios.put('/club/active-rating-game', body).catch((e) => {
+        console.error('Failed to sync active rating game', e);
+      });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [players, activeVoting, isRatingGame, isEditingRatingGame, liveSeatingId]);
 
   useEffect(() => {
     if (!isTournamentGame || !tournamentStorageKey || readOnlyTournament || tournamentHidden) return;
@@ -380,7 +419,16 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     if (tournamentStorageKey) localStorage.removeItem(tournamentStorageKey);
   };
 
-  /** Підтвердження + очищення localStorage; для рейтингової гри знову тягнемо розсадку вечора / останньої гри. */
+  /** Підтягнути діючу гру вечора в форму, не відправляючи її назад як правку. */
+  const applyLiveGame = (live: { seatingId?: string | null; game?: number | null; players?: any[]; nominated?: unknown }) => {
+    syncBaseline.current = null;
+    setLiveSeatingId(live?.seatingId ? String(live.seatingId) : null);
+    if (live?.game == null || live.players?.length !== 10) return;
+    setPlayers(playersFromActiveGame(live.players));
+    setActiveVoting(votingFromNominated(live.nominated) as any);
+  };
+
+  /** Підтвердження + очищення localStorage; для рейтингової гри знову тягнемо діючу гру вечора. */
   const resetFormWithConfirm = async () => {
     if (readOnlyTournament || tournamentHidden || !formCanReset) return;
     if (!(await confirmAction('Скинути форму? Локальний кеш гри в браузері буде очищено.', 'Скинути'))) {
@@ -388,18 +436,14 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     }
     resetGame();
     if (!isRatingGame) return;
+    holdLiveSync.current = true;
     try {
-      const { data: lastGame } = await axios.get('/club/last-game-players');
-      if (!lastGame.players?.length) return;
-      const restored = createInitialPlayers();
-      lastGame.players.forEach((p: any) => {
-        if (p.seat >= 1 && p.seat <= 10) {
-          restored[p.seat] = { ...restored[p.seat], title: p.title, id: p.id || '' };
-        }
-      });
-      setPlayers(restored);
+      const { data: live } = await axios.get('/club/active-rating-game');
+      applyLiveGame(live);
     } catch (e) {
-      console.error('Failed to reload seating after reset', e);
+      console.error('Failed to reload active rating game', e);
+    } finally {
+      holdLiveSync.current = false;
     }
   };
 
@@ -686,6 +730,15 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     }
     notify.success('Гру збережено');
     resetGame();
+    holdLiveSync.current = true;
+    try {
+      const { data: live } = await axios.get('/club/active-rating-game');
+      applyLiveGame(live);
+    } catch (e) {
+      console.error('Failed to load next active rating game', e);
+    } finally {
+      holdLiveSync.current = false;
+    }
   }
 
   useEffect(() => {
@@ -814,20 +867,17 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
             return !String(p.title).startsWith('Гість');
           }
         );
-        if (isRatingGame && !savedHasRealPlayers) {
+        if (isRatingGame) {
           try {
-            const { data: lastGame } = await axios.get('/club/last-game-players');
-            if (lastGame.players?.length) {
-              const restored = createInitialPlayers();
-              lastGame.players.forEach((p: any) => {
-                if (p.seat >= 1 && p.seat <= 10) {
-                  restored[p.seat] = { ...restored[p.seat], title: p.title, id: p.id };
-                }
-              });
-              setPlayers(restored);
+            const { data: live } = await axios.get('/club/active-rating-game');
+            setLiveSeatingId(live.seatingId ? String(live.seatingId) : null);
+            if (!savedHasRealPlayers && live.game != null && live.players?.length === 10) {
+              setPlayers(playersFromActiveGame(live.players));
+              const vote = votingFromNominated(live.nominated);
+              if (vote) setActiveVoting(vote as any);
             }
           } catch (e) {
-            console.error('Failed to load last game players', e);
+            console.error('Failed to load active rating game', e);
           }
         }
       } catch (e: any) {

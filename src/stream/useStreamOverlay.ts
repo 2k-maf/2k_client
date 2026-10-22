@@ -1,28 +1,43 @@
 import { useEffect, useReducer } from 'react';
 import axios from '../axios';
 import { CLUB_ID } from '../constants/club';
-import { playersFromClub, reduceOverlay, TEST_OVERLAY } from './overlayState';
+import { emptyOverlay, overlayFromActive, reduceOverlay } from './overlayState';
+
+const POLL_MS = 1000;
 
 /**
- * Стан плашок діючої гри.
- *
- * Ніки й аватарки беруться з рейтингу клубу. Ролі, номінація і ведучий
- * поки тестові: коли з'явиться сокет, його повідомлення підуть у той самий dispatch.
+ * Діюча гра клубу. Сторінка оверлею питає її щосекунди і підміняє плашки цілком:
+ * розсадка, ролі, номер гри й поточне голосування.
  */
 export function useStreamOverlay() {
-  const [game, dispatch] = useReducer(reduceOverlay, TEST_OVERLAY);
+  const [game, dispatch] = useReducer(reduceOverlay, undefined, emptyOverlay);
 
   useEffect(() => {
     let cancelled = false;
-    axios.post('/club/rating', { clubId: CLUB_ID })
-      .then(({ data }) => {
+    let inflight = false;
+
+    const pull = async () => {
+      if (inflight) return;
+      inflight = true;
+      try {
+        const { data } = await axios.get('/public/active-rating-game', {
+          params: { clubId: CLUB_ID },
+        });
         if (cancelled) return;
-        const rows = Array.isArray(data?.players) ? data.players : [];
-        if (!rows.length) return;
-        dispatch({ type: 'players', players: playersFromClub(rows) });
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
+        dispatch({ type: 'snapshot', game: overlayFromActive(data) ?? emptyOverlay() });
+      } catch {
+        // Мережа впала — лишаємо останній стіл, щоб OBS не блимав порожнім.
+      } finally {
+        inflight = false;
+      }
+    };
+
+    pull();
+    const timer = window.setInterval(pull, POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, []);
 
   return game;

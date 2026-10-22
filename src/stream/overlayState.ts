@@ -1,9 +1,6 @@
 /**
  * Стан оверлею діючої рейтингової гри.
- *
- * Зараз сторінка показує тестовий знімок. Події нижче — той самий контракт,
- * яким пізніше вебсокет бекенду оновлюватиме плашки, гравців і ролі:
- * хук лише диспатчить OverlayEvent у reduceOverlay.
+ * Хук опитує бекенд і кладе знімок у reduceOverlay.
  */
 
 export type OverlayRole = 'cit' | 'maf' | 'don' | 'sher';
@@ -61,10 +58,66 @@ function seat(n: number, role: OverlayRole, extra: Partial<OverlayPlayer> = {}):
   };
 }
 
-/**
- * Порожній стіл: ніки й аватарки підставить рейтинг клубу.
- * Ролі лишаються на місцях, доки сокет не пришле свої.
- */
+function blankSeat(seat: number): OverlayPlayer {
+  return {
+    seat,
+    nickname: '',
+    avatarUrl: null,
+    role: null,
+    starred: false,
+    speaking: false,
+    eliminated: false,
+  };
+}
+
+/** Порожній стіл, доки бекенд не віддав діючу гру. */
+export function emptyOverlay(): OverlayGame {
+  return {
+    table: 1,
+    game: 1,
+    nominated: [],
+    referee: { name: '', category: 1 },
+    players: Array.from({ length: SEATS }, (_, index) => blankSeat(index + 1)),
+  };
+}
+
+/** Відповідь GET /public/active-rating-game → знімок плашок. null — гри немає. */
+export function overlayFromActive(data: unknown): OverlayGame | null {
+  if (!data || typeof data !== 'object') return null;
+  const body = data as { game?: unknown; nominated?: unknown; players?: unknown };
+  const gameNumber = Number(body.game);
+  if (!Number.isInteger(gameNumber) || gameNumber < 1 || !Array.isArray(body.players) || body.players.length !== SEATS) {
+    return null;
+  }
+  const players: OverlayPlayer[] = [];
+  for (let seat = 1; seat <= SEATS; seat += 1) {
+    const row = body.players.find((item) => {
+      if (!item || typeof item !== 'object') return false;
+      return Number((item as { seat?: unknown }).seat) === seat;
+    }) as { nickname?: unknown; avatarUrl?: unknown; role?: unknown } | undefined;
+    if (!row) return null;
+    const nickname = typeof row.nickname === 'string' ? row.nickname.trim().slice(0, 64) : '';
+    const avatarUrl = typeof row.avatarUrl === 'string' && row.avatarUrl.trim() ? row.avatarUrl.trim() : null;
+    players.push({
+      ...blankSeat(seat),
+      nickname,
+      avatarUrl,
+      role: isRole(row.role) ? row.role : null,
+    });
+  }
+  const nominated = Array.isArray(body.nominated)
+    ? cleanSeats(body.nominated.map((seat) => Number(seat)))
+    : [];
+  return {
+    table: 1,
+    game: gameNumber,
+    nominated,
+    referee: { name: '', category: 1 },
+    players,
+  };
+}
+
+/** Фікстура редюсера. Сторінка оверлею стартує з emptyOverlay, не звідси. */
 export const TEST_OVERLAY: OverlayGame = {
   table: 1,
   game: 1,
