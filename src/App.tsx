@@ -23,6 +23,7 @@ import ScoringRules from "./ScoringRules";
 import Rules from "./Rules";
 import ResetPassword from "./ResetPassword";
 import PublicTournamentPage from "./PublicTournamentPage";
+import StreamOverlay from "./stream/StreamOverlay";
 import NotFound from "./NotFound";
 
 /** Окремий інстанс NewGame на кожну гру турніру — після збереження / зміни URL форма не тягне стан попередньої гри. */
@@ -53,6 +54,7 @@ const App = () => {
           <Route path="rules" element={<Rules />} />
           <Route path="clubs" element={<ClubsList />} />
           <Route path="tournaments/:id" element={<PublicTournamentPage />} />
+          <Route path="overlay" element={<StreamOverlay />} />
           <Route path="new-game" element={<NewGame />} />
           <Route path="profile" element={<PrivateRoute Component={DashboardHome}/>} />
           <Route path="profile/users" element={<PrivateRoute Component={DashboardUsers}/>} />

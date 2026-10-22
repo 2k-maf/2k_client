@@ -23,6 +23,21 @@
     <link rel="icon" type="image/png" sizes="192x192" href="%PUBLIC_URL%/brand/dk-icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="%PUBLIC_URL%/brand/dk-icon-512.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/brand/dk-apple-touch-180.png" />
+    <!-- Оверлей стріму має бути прозорим ще до гідрації React, інакше OBS малює білий кадр. -->
+    <style>
+      html.stream-overlay,
+      html.stream-overlay body,
+      html.stream-overlay #root {
+        background: transparent !important;
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+    <script>
+      if (/^\/overlay\/?$/.test(location.pathname)) {
+        document.documentElement.classList.add('stream-overlay');
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

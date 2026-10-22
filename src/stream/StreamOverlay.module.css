@@ -1,0 +1,216 @@
+.viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.stage {
+  --plate: #ff7a00;
+  --ink: #161616;
+  --paper: #ffffff;
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: top left;
+  background: transparent;
+  color: var(--ink);
+  font-family: Inter, Helvetica, Arial, sans-serif;
+}
+
+.stage,
+.stage * {
+  box-sizing: border-box;
+}
+
+.panel {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  min-width: 188px;
+  padding: 10px 14px 12px;
+  border-radius: 10px;
+  background: var(--paper);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.panelHead {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.panelLabel {
+  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.nominated {
+  display: flex;
+  gap: 8px;
+  min-height: 32px;
+  margin-top: 8px;
+}
+
+.nomSeat {
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--plate);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.referee {
+  position: absolute;
+  top: 22px;
+  right: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+.mark {
+  display: block;
+  height: 42px;
+  width: auto;
+}
+
+.wordmark {
+  color: #fff;
+  font-family: Satoshi, Helvetica, Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  white-space: nowrap;
+}
+
+.players {
+  position: absolute;
+  right: 22px;
+  bottom: 18px;
+  left: 22px;
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 3px solid var(--plate);
+  border-radius: 10px;
+  background: #111;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.eliminated {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.photo {
+  position: relative;
+  aspect-ratio: 1;
+  background: #2a2a2a;
+}
+
+.photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo img.fallback {
+  object-fit: contain;
+  padding: 14%;
+  background: #f3f3f3;
+  filter: grayscale(1) contrast(1.5);
+}
+
+.roleIcon {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  border-radius: 50%;
+  background: rgba(12, 12, 14, 0.88);
+  color: #fff;
+}
+
+.roleIcon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0;
+  background: transparent;
+  filter: none;
+}
+
+.don {
+  box-shadow: inset 0 0 0 1.5px #f0c36a;
+}
+
+.sher {
+  background: #fa2b1e;
+}
+
+.namebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 4px 7px 5px;
+  background: var(--paper);
+}
+
+.seat {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--plate);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.nick {
+  overflow: hidden;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
