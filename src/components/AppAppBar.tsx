@@ -17,6 +17,7 @@ import StarIcon from '@mui/icons-material/Star';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import RemoteAvatar from './brand/RemoteAvatar';
 import ColorModeToggle from '../theme/ColorModeToggle';
+import ObsMuteButton, { compactHeaderQuery } from '../stream/ObsMuteButton';
 import Sitemark from './SitemarkIcon';
 import { OutlinedActionIconButton } from './OutlinedActionIconButton';
 import GoogleSignIn from './GoogleSignIn';
@@ -181,6 +182,14 @@ export default function AppAppBar() {
   // На сторінці гри шапка вміщує таймер і кнопку «30». На вузькому екрані для них
   // бракує місця, тож текстова назва поруч зі знаком ховається.
   const isNarrow = useMediaQuery('(max-width:599.95px)', { noSsr: true });
+  const isCompactHeader = useMediaQuery(compactHeaderQuery, { noSsr: true });
+  // Кнопка звуку є на кожній сторінці протоколу. На вузькій шапці вона займає місце теми.
+  const soundInHeader = isCompactHeader && (
+    pathname === '/new-game'
+    || pathname.endsWith('new-game-rating')
+    || pathname.startsWith('/profile/rating-game/')
+    || /^\/profile\/tournament\/[^/]+\/game\//.test(pathname)
+  );
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -442,7 +451,11 @@ export default function AppAppBar() {
             }
           </Box>
           <Box sx={{display: 'flex', '@media (min-width: 940px)': {display: 'none'}, gap: 1, alignItems: 'center', flexShrink: 0}}>
-            <ColorModeToggle size="medium"/>
+            {soundInHeader ? (
+              <ObsMuteButton variant="toolbar" />
+            ) : (
+              <ColorModeToggle size="medium"/>
+            )}
             <IconButton aria-label="Відкрити меню" aria-expanded={open} onClick={toggleDrawer(true)}>
               <MenuIcon/>
             </IconButton>
@@ -461,8 +474,11 @@ export default function AppAppBar() {
                   sx={{
                     display: 'flex',
                     justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    gap: 1,
                   }}
                 >
+                  {soundInHeader ? <ColorModeToggle size="medium" /> : null}
                   <OutlinedActionIconButton aria-label="Закрити меню" onClick={toggleDrawer(false)}>
                     <CloseRoundedIcon />
                   </OutlinedActionIconButton>

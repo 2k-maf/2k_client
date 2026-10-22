@@ -17,6 +17,7 @@ import Stack from "@mui/material/Stack";
 import MuiCard from "@mui/material/Card";
 import Grid from "@mui/material/Grid2";
 import {useEffect, useMemo} from "react";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import axios from "./axios";
 import BrandPage from "./components/brand/BrandPage";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
@@ -36,6 +37,7 @@ import { confirmAction, notify } from "./components/feedback/feedback";
 import PlayerNickPicker from "./components/PlayerNickPicker";
 import { reseatPlayer } from "./reseatPlayer";
 import { votingFromNominated } from "./stream/activeGameSync";
+import ObsMuteButton, { compactHeaderQuery } from "./stream/ObsMuteButton";
 import { useActiveGameSync } from "./stream/useActiveGameSync";
 
 /**
@@ -939,11 +941,13 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const bonusLoserOpts = isTournamentGame ? BONUS_TOURNAMENT_LOSS : BONUS_RATING_LOSS;
   const penaltyWinnerOpts = isTournamentGame ? PENALTY_TOURNAMENT_WIN : [];
   const penaltyLoserOpts = isTournamentGame ? PENALTY_TOURNAMENT_LOSS : [];
+  const soundInHeader = useMediaQuery(compactHeaderQuery, { noSsr: true });
 
   if (tournamentHidden) {
     return (
       <AppTheme {...props}>
         <CssBaseline enableColorScheme />
+        {soundInHeader ? null : <ObsMuteButton />}
         <BrandPage documentTitle="Турнірна гра">
           <Typography sx={{ textAlign: 'center' }}>
             Результати цієї гри приховані до завершення турніру.
@@ -956,6 +960,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme/>
+      {soundInHeader ? null : <ObsMuteButton />}
       <BrandPage
         eyebrow="Протокол гри"
         title={isTournamentGame ? 'Турнірна гра' : isEditingRatingGame ? 'Редагування гри' : isRatingGame ? 'Рейтингова гра' : 'Фан гра'}
