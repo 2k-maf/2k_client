@@ -11,9 +11,9 @@ import { obsConfigFromEnv } from './obsAudio';
 import ObsHostDialog from './ObsHostDialog';
 import {
   hostFromObsUrl,
-  obsUrlForHost,
   readStoredObsHost,
   readStoredObsPassword,
+  resolveObsUrl,
   writeStoredObsHost,
 } from './obsHost';
 import { useObsAudio } from './useObsAudio';
@@ -61,8 +61,7 @@ type Props = {
 };
 
 function withStoredHost(config: ObsConfig): ObsConfig {
-  const host = readStoredObsHost();
-  return host ? { ...config, url: obsUrlForHost(config.url, host) } : config;
+  return { ...config, url: resolveObsUrl(config.url, readStoredObsHost()) };
 }
 
 function useObsConfig(): {
@@ -76,9 +75,9 @@ function useObsConfig(): {
       password: process.env.REACT_APP_OBS_WS_PASSWORD,
     });
     if (fromEnv) return withStoredHost(fromEnv);
-    const host = readStoredObsHost();
     const password = readStoredObsPassword();
-    return host && password ? { url: obsUrlForHost('', host), password } : null;
+    if (!password) return null;
+    return { url: resolveObsUrl('', readStoredObsHost()), password };
   });
   const [config, setConfig] = useState<ObsConfig | null>(envConfig);
   const [ready, setReady] = useState(Boolean(envConfig));
@@ -107,7 +106,7 @@ function useObsConfig(): {
       const nextPassword = password || current?.password || readStoredObsPassword();
       if (!nextPassword) return current;
       writeStoredObsHost(host, password);
-      return { url: obsUrlForHost(current?.url ?? '', host), password: nextPassword };
+      return { url: resolveObsUrl(current?.url ?? '', host), password: nextPassword };
     });
   };
 
@@ -156,7 +155,7 @@ export default function ObsMuteButton({ variant = 'floating' }: Props) {
   const dialog = (
     <ObsHostDialog
       open={hostOpen}
-      initialHost={hostFromObsUrl(config?.url ?? '')}
+      initialHost={hostFromObsUrl(config?.url ?? '') || '127.0.0.1'}
       needsPassword={!config?.password}
       onClose={() => setHostOpen(false)}
       onSubmit={(host, password) => {

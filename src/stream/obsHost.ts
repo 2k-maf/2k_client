@@ -1,4 +1,5 @@
-const HOST_KEY = 'obs-host';
+/** Окремий ключ: стара адреса іншого комп’ютера більше не підміняє цей ноутбук. */
+const HOST_KEY = 'obs-host-choice';
 const PASSWORD_KEY = 'obs-host-password';
 
 export type Octets = [string, string, string, string];
@@ -75,6 +76,11 @@ export function obsUrlForHost(currentUrl: string, host: string): string {
     // Порожня або бита адреса: лишаємо стандартний порт OBS.
   }
   return `${protocol}//${host}:${port}`;
+}
+
+/** Без збереженої адреси керуємо OBS на цьому ж ноутбуці. */
+export function resolveObsUrl(configuredUrl: string, storedHost: string | null): string {
+  return obsUrlForHost(configuredUrl, storedHost || '127.0.0.1');
 }
 
 export function readStoredObsHost(): string | null {

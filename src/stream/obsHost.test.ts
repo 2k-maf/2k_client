@@ -5,6 +5,7 @@ import {
   octetComplete,
   octetsFromHost,
   octetsFromText,
+  resolveObsUrl,
 } from './obsHost';
 
 test('адреса розкладається на чотири числа', () => {
@@ -33,6 +34,12 @@ test('повний октет сам переходить далі, без кр�
   expect(octetComplete('25')).toBe(false);
   expect(octetComplete('1')).toBe(false);
   expect(octetComplete('256')).toBe(false);
+});
+
+test('без збереженої адреси підключення йде на цей ноутбук', () => {
+  expect(resolveObsUrl('ws://192.168.1.73:4455', null)).toBe('ws://127.0.0.1:4455');
+  expect(resolveObsUrl('', null)).toBe('ws://127.0.0.1:4455');
+  expect(resolveObsUrl('ws://192.168.1.73:4455', '10.0.0.8')).toBe('ws://10.0.0.8:4455');
 });
 
 test('новий хост зберігає порт і схему', () => {
