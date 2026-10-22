@@ -35,7 +35,8 @@ import AbbrLegend from "./components/brand/AbbrLegend";
 import { confirmAction, notify } from "./components/feedback/feedback";
 import PlayerNickPicker from "./components/PlayerNickPicker";
 import { reseatPlayer } from "./reseatPlayer";
-import { activeGamePayload, planActiveSync, votingFromNominated } from "./stream/activeGameSync";
+import { votingFromNominated } from "./stream/activeGameSync";
+import { useActiveGameSync } from "./stream/useActiveGameSync";
 
 /**
  * Палець ведучого потребує зони дотику ≥44px. Лише для сенсорних екранів:
@@ -158,7 +159,9 @@ function playersFromApi(apiPlayers: any[]): Record<number, any> {
 }
 
 /** Діюча гра з бекенду → місця форми. Ролі вже роздані, тож нуль лишається лише там, де їх ще немає. */
-function playersFromActiveGame(apiPlayers: Array<{ seat?: number; nickname?: string; id?: string; role?: unknown }>) {
+function playersFromActiveGame(
+  apiPlayers: Array<{ seat?: number; nickname?: string; id?: string; role?: unknown; fouls?: number; killed?: number }>,
+) {
   const restored = createInitialPlayers();
   const mafiaSlot = { n: 0 };
   const ordered = [...(apiPlayers || [])].sort((a, b) => Number(a.seat) - Number(b.seat));
@@ -170,6 +173,8 @@ function playersFromActiveGame(apiPlayers: Array<{ seat?: number; nickname?: str
       title: player.nickname || restored[seat].title,
       id: player.id || '',
       role: apiRoleToUiRole(player.role, mafiaSlot),
+      warnings: Number.isInteger(player.fouls) ? player.fouls : 0,
+      killed: player.killed === 1 ? 1 : 0,
     };
   }
   return restored;
@@ -289,10 +294,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
 
   const [players, _setPlayers] = React.useState(saved?.players || createInitialPlayers());
   const setPlayers = (item: any) => _setPlayers(() => item);
-  /** Розсадка, з якої зібрана діюча гра. Правки йдуть лише в неї. */
-  const [liveSeatingId, setLiveSeatingId] = React.useState<string | null>(null);
-  const holdLiveSync = React.useRef(false);
-  const syncBaseline = React.useRef<string | null>(null);
+  const adoptLiveGame = useActiveGameSync(isRatingGame && !isEditingRatingGame, players, activeVoting);
   const sheetRef = React.useRef<HTMLDivElement>(null);
   const flyFromRef = React.useRef<Map<string, number> | null>(null);
   const [seatDrag, setSeatDrag] = React.useState<SeatDrag | null>(null);
@@ -335,22 +337,6 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [players, votings, activeVoting, winState, hideRoles, isRatingGame, isEditingRatingGame]);
-
-  useEffect(() => {
-    if (!isRatingGame || isEditingRatingGame || holdLiveSync.current || !liveSeatingId) return;
-    const payload = activeGamePayload(players, activeVoting);
-    const plan = planActiveSync(syncBaseline.current, payload, liveSeatingId);
-    syncBaseline.current = plan.baseline;
-    if (!plan.body) return;
-    const body = plan.body;
-    const timer = window.setTimeout(() => {
-      if (holdLiveSync.current) return;
-      axios.put('/club/active-rating-game', body).catch((e) => {
-        console.error('Failed to sync active rating game', e);
-      });
-    }, 400);
-    return () => window.clearTimeout(timer);
-  }, [players, activeVoting, isRatingGame, isEditingRatingGame, liveSeatingId]);
 
   useEffect(() => {
     if (!isTournamentGame || !tournamentStorageKey || readOnlyTournament || tournamentHidden) return;
@@ -421,11 +407,20 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
 
   /** Підтягнути діючу гру вечора в форму, не відправляючи її назад як правку. */
   const applyLiveGame = (live: { seatingId?: string | null; game?: number | null; players?: any[]; nominated?: unknown }) => {
-    syncBaseline.current = null;
-    setLiveSeatingId(live?.seatingId ? String(live.seatingId) : null);
-    if (live?.game == null || live.players?.length !== 10) return;
-    setPlayers(playersFromActiveGame(live.players));
-    setActiveVoting(votingFromNominated(live.nominated) as any);
+    if (live?.game != null && live.players?.length === 10) {
+      setPlayers(playersFromActiveGame(live.players));
+      setActiveVoting(votingFromNominated(live.nominated) as any);
+    }
+    adoptLiveGame(live?.seatingId ? String(live.seatingId) : null);
+  };
+
+  const reloadLiveGame = async () => {
+    try {
+      const { data: live } = await axios.get('/club/active-rating-game');
+      applyLiveGame(live);
+    } catch (e) {
+      console.error('Failed to load active rating game', e);
+    }
   };
 
   /** Підтвердження + очищення localStorage; для рейтингової гри знову тягнемо діючу гру вечора. */
@@ -435,16 +430,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       return;
     }
     resetGame();
-    if (!isRatingGame) return;
-    holdLiveSync.current = true;
-    try {
-      const { data: live } = await axios.get('/club/active-rating-game');
-      applyLiveGame(live);
-    } catch (e) {
-      console.error('Failed to reload active rating game', e);
-    } finally {
-      holdLiveSync.current = false;
-    }
+    if (isRatingGame) await reloadLiveGame();
   };
 
   const setPlayerNickname = (n: number, title: string, id: string) => {
@@ -730,15 +716,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     }
     notify.success('Гру збережено');
     resetGame();
-    holdLiveSync.current = true;
-    try {
-      const { data: live } = await axios.get('/club/active-rating-game');
-      applyLiveGame(live);
-    } catch (e) {
-      console.error('Failed to load next active rating game', e);
-    } finally {
-      holdLiveSync.current = false;
-    }
+    await reloadLiveGame();
   }
 
   useEffect(() => {
@@ -870,12 +848,12 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
         if (isRatingGame) {
           try {
             const { data: live } = await axios.get('/club/active-rating-game');
-            setLiveSeatingId(live.seatingId ? String(live.seatingId) : null);
             if (!savedHasRealPlayers && live.game != null && live.players?.length === 10) {
               setPlayers(playersFromActiveGame(live.players));
               const vote = votingFromNominated(live.nominated);
               if (vote) setActiveVoting(vote as any);
             }
+            adoptLiveGame(live.seatingId ? String(live.seatingId) : null);
           } catch (e) {
             console.error('Failed to load active rating game', e);
           }

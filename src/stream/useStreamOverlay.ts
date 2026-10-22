@@ -3,11 +3,11 @@ import axios from '../axios';
 import { CLUB_ID } from '../constants/club';
 import { emptyOverlay, overlayFromActive, reduceOverlay } from './overlayState';
 
-const POLL_MS = 1000;
+const POLL_MS = 3000;
 
 /**
- * Діюча гра клубу. Сторінка оверлею питає її щосекунди і підміняє плашки цілком:
- * розсадка, ролі, номер гри й поточне голосування.
+ * Діюча гра клубу. Сторінка оверлею питає її кожні три секунди і підміняє плашки цілком:
+ * розсадка, ролі, фоли, вибуття, номер гри й поточне голосування.
  */
 export function useStreamOverlay() {
   const [game, dispatch] = useReducer(reduceOverlay, undefined, emptyOverlay);

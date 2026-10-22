@@ -11,6 +11,8 @@ export type OverlayPlayer = {
   avatarUrl: string | null;
   /** null — роль ще не відкрита на стрімі. */
   role: OverlayRole | null;
+  /** Фоли за протоколом ведучого, 0–4. */
+  fouls: number;
   starred: boolean;
   speaking: boolean;
   eliminated: boolean;
@@ -41,21 +43,13 @@ export function isSeat(value: unknown): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= SEATS;
 }
 
-function isRole(value: unknown): value is OverlayRole | null {
-  return value === null || (typeof value === 'string' && ROLES.has(value));
+/** Мафія і дон на стрімі читаються сталевою плашкою, решта місць — базовим червоним. */
+export function plateTone(role: OverlayRole | null): 'steel' | 'base' {
+  return role === 'maf' || role === 'don' ? 'steel' : 'base';
 }
 
-function seat(n: number, role: OverlayRole, extra: Partial<OverlayPlayer> = {}): OverlayPlayer {
-  return {
-    seat: n,
-    nickname: '',
-    avatarUrl: null,
-    role,
-    starred: false,
-    speaking: false,
-    eliminated: false,
-    ...extra,
-  };
+function isRole(value: unknown): value is OverlayRole | null {
+  return value === null || (typeof value === 'string' && ROLES.has(value));
 }
 
 function blankSeat(seat: number): OverlayPlayer {
@@ -64,10 +58,15 @@ function blankSeat(seat: number): OverlayPlayer {
     nickname: '',
     avatarUrl: null,
     role: null,
+    fouls: 0,
     starred: false,
     speaking: false,
     eliminated: false,
   };
+}
+
+function seat(n: number, role: OverlayRole, extra: Partial<OverlayPlayer> = {}): OverlayPlayer {
+  return { ...blankSeat(n), role, ...extra };
 }
 
 /** Порожній стіл, доки бекенд не віддав діючу гру. */
@@ -94,15 +93,18 @@ export function overlayFromActive(data: unknown): OverlayGame | null {
     const row = body.players.find((item) => {
       if (!item || typeof item !== 'object') return false;
       return Number((item as { seat?: unknown }).seat) === seat;
-    }) as { nickname?: unknown; avatarUrl?: unknown; role?: unknown } | undefined;
+    }) as { nickname?: unknown; avatarUrl?: unknown; role?: unknown; fouls?: unknown; eliminated?: unknown } | undefined;
     if (!row) return null;
     const nickname = typeof row.nickname === 'string' ? row.nickname.trim().slice(0, 64) : '';
     const avatarUrl = typeof row.avatarUrl === 'string' && row.avatarUrl.trim() ? row.avatarUrl.trim() : null;
+    const fouls = Number(row.fouls);
     players.push({
       ...blankSeat(seat),
       nickname,
       avatarUrl,
       role: isRole(row.role) ? row.role : null,
+      fouls: Number.isInteger(fouls) && fouls >= 0 && fouls <= 4 ? fouls : 0,
+      eliminated: row.eliminated === true,
     });
   }
   const nominated = Array.isArray(body.nominated)

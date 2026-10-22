@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { publicStaticUrl, resolveMediaUrl } from '../utils/mediaUrl';
 import styles from './StreamOverlay.module.css';
-import { avatarOnPublicSite, type OverlayGame, type OverlayPlayer } from './overlayState';
+import { avatarOnPublicSite, plateTone, type OverlayGame, type OverlayPlayer } from './overlayState';
 import { useStreamOverlay } from './useStreamOverlay';
 
 const STAGE_W = 1920;
@@ -89,8 +89,10 @@ function PlayerPhoto({ player }: { player: OverlayPlayer }) {
 
 function PlayerCard({ player }: { player: OverlayPlayer }) {
   const roleIcon = player.role ? ROLE_ICON[player.role] : undefined;
+  const tone = plateTone(player.role) === 'steel' ? ` ${styles.steel}` : '';
+  const eliminated = player.eliminated ? ` ${styles.eliminated}` : '';
   return (
-    <article className={player.eliminated ? `${styles.card} ${styles.eliminated}` : styles.card}>
+    <article className={`${styles.card}${tone}${eliminated}`}>
       <div className={styles.photo}>
         <PlayerPhoto player={player} />
         {roleIcon && (
@@ -102,6 +104,11 @@ function PlayerCard({ player }: { player: OverlayPlayer }) {
       <div className={styles.namebar}>
         <span className={styles.seat}>{player.seat}</span>
         <span className={styles.nick}>{player.nickname}</span>
+        {player.fouls > 0 && (
+          <span className={styles.fouls} aria-label={`Фолів: ${player.fouls}`}>
+            {Array.from({ length: player.fouls }, (_, i) => <span key={i} className={styles.foul} />)}
+          </span>
+        )}
       </div>
     </article>
   );
