@@ -48,6 +48,7 @@ function useTransparentPage() {
 }
 
 function NominatedPanel({ game }: { game: OverlayGame }) {
+  const roleAt = (seat: number) => game.players.find((player) => player.seat === seat)?.role ?? null;
   return (
     <section className={styles.panel} aria-label="Гра і голосування">
       <div className={styles.panelHead}>
@@ -55,9 +56,14 @@ function NominatedPanel({ game }: { game: OverlayGame }) {
         <span>Голосування</span>
       </div>
       <div className={styles.nominated}>
-        {game.nominated.map((seat) => (
-          <span key={seat} className={styles.nomSeat}>{seat}</span>
-        ))}
+        {game.nominated.map((seat) => {
+          const black = plateTone(roleAt(seat)) === 'steel';
+          return (
+            <span key={seat} className={black ? `${styles.nomSeat} ${styles.nomBlack}` : styles.nomSeat}>
+              {seat}
+            </span>
+          );
+        })}
       </div>
     </section>
   );
@@ -96,7 +102,7 @@ function PlayerCard({ player }: { player: OverlayPlayer }) {
       <div className={styles.photo}>
         <PlayerPhoto player={player} />
         {roleIcon && (
-          <span className={`${styles.roleIcon} ${player.role === 'don' ? styles.don : styles.sher}`}>
+          <span className={player.role === 'sher' ? `${styles.roleIcon} ${styles.sher}` : styles.roleIcon}>
             <img src={roleIcon} alt={player.role === 'don' ? 'Дон' : 'Шериф'} />
           </span>
         )}
@@ -106,7 +112,7 @@ function PlayerCard({ player }: { player: OverlayPlayer }) {
         <span className={styles.nick}>{player.nickname}</span>
         {player.fouls > 0 && (
           <span className={styles.fouls} aria-label={`Фолів: ${player.fouls}`}>
-            {Array.from({ length: player.fouls }, (_, i) => <span key={i} className={styles.foul} />)}
+            {'!'.repeat(player.fouls)}
           </span>
         )}
       </div>

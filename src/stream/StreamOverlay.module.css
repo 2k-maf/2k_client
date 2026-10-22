@@ -70,6 +70,10 @@
   font-variant-numeric: tabular-nums;
 }
 
+.nomBlack {
+  background: #111111;
+}
+
 .referee {
   position: absolute;
   top: 22px;
@@ -115,6 +119,8 @@
 }
 
 .card {
+  --bar: var(--plate);
+
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -126,6 +132,7 @@
 
 .steel {
   --plate: var(--steel);
+  --bar: #111111;
 }
 
 .eliminated {
@@ -176,10 +183,6 @@
   filter: none;
 }
 
-.don {
-  box-shadow: inset 0 0 0 1.5px #f0c36a;
-}
-
 .sher {
   background: #fa2b1e;
 }
@@ -190,7 +193,8 @@
   gap: 6px;
   min-height: 36px;
   padding: 4px 7px 5px;
-  background: var(--paper);
+  background: var(--bar);
+  color: #fff;
 }
 
 .seat {
@@ -200,25 +204,21 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--plate);
-  color: #fff;
+  background: #fff;
+  color: var(--bar);
   font-size: 12px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
 .fouls {
-  display: flex;
   flex: none;
-  gap: 3px;
   margin-left: auto;
-}
-
-.foul {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--plate);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1;
 }
 
 .nick {
