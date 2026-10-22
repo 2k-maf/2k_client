@@ -86,7 +86,8 @@ const labelSx = { display: 'none', '@media (min-width: 940px)': { display: 'inli
 const floatingSx = (audible: boolean, muted: boolean, live: boolean) => ({
   position: 'fixed',
   right: 16,
-  bottom: 16,
+  // Смуга хедера 60px. Кнопка стоїть одразу під нею, з тим самим відступом, що й справа.
+  top: 76,
   zIndex: 1400,
   minHeight: 48,
   minWidth: 48,
