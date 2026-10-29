@@ -84,7 +84,7 @@ test('знімок діючої гри сідає на стіл, порожня 
     game: 2,
     nominated: [3, 3, 0, 7],
     players: [
-      { seat: 2, nickname: 'Rabbit', avatarUrl: '/avatars/rabbit.webp', role: 'don', fouls: 3, eliminated: true },
+      { seat: 2, nickname: 'Rabbit', avatarUrl: '/avatars/rabbit.webp', role: 'don', fouls: 3, killed: 2, eliminated: true },
       ...Array.from({ length: 9 }, (_, index) => {
         const seat = index < 1 ? 1 : index + 2;
         return { seat, nickname: `Гравець ${seat}`, avatarUrl: '', role: seat === 4 ? 'sher' : null };
@@ -98,6 +98,8 @@ test('знімок діючої гри сідає на стіл, порожня 
   expect(game?.players[1].role).toBe('don');
   expect(game?.players[1].fouls).toBe(3);
   expect(game?.players[1].eliminated).toBe(true);
+  expect(game?.players[1].killed).toBe(2);
+  expect(game?.players[3].killed).toBe(0);
   expect(game?.players[3].role).toBe('sher');
   expect(game?.players[3].fouls).toBe(0);
   expect(game?.players[3].eliminated).toBe(false);

@@ -23,6 +23,11 @@ test('голосування бере місця кандидатів, поро�
   players[4] = { title: 'Rabbit', id: 'abc', role: 3, warnings: 2, killed: 1 };
   const live = activeGamePayload(players, { candidates: [[4, 2], [4, 2], [0, 1], [8, 0]] });
   expect(live.players[3]).toEqual({ seat: 4, nickname: 'Rabbit', id: 'abc', role: 'don', fouls: 2, killed: 1 });
+  players[5] = { title: 'Kit', id: '', role: 0, killed: 2 };
+  players[6] = { title: 'Pes', id: '', role: 0, killed: 3 };
+  const marks = activeGamePayload(players, null);
+  expect(marks.players[4].killed).toBe(2);
+  expect(marks.players[5].killed).toBe(3);
   expect(live.nominated).toEqual([4, 8]);
   expect(shouldSyncActiveGame(live)).toBe(true);
 });

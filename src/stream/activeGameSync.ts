@@ -1,3 +1,5 @@
+import { seatMark } from '../seatMark';
+
 /**
  * Форма ведучого → діюча гра на бекенді.
  * Роль 0 у таблиці ще не роздана: на стрім ідуть лише дон, шериф і мафія.
@@ -11,7 +13,7 @@ export type LiveSeat = {
   id: string;
   role: LiveRole | null;
   fouls: number;
-  killed: 0 | 1;
+  killed: 0 | 1 | 2 | 3;
 };
 
 export type LivePayload = { players: LiveSeat[]; nominated: number[] };
@@ -58,7 +60,7 @@ export function activeGamePayload(
       id: player.id ? String(player.id) : '',
       role: uiRoleToLive(player.role),
       fouls: Number.isInteger(fouls) && fouls >= 0 && fouls <= 4 ? fouls : 0,
-      killed: player.killed === 1 ? 1 : 0,
+      killed: seatMark(player.killed),
     });
   }
   return { players: list, nominated: seatsFrom(activeVoting?.candidates) };

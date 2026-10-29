@@ -12,6 +12,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import HeartBrokenIcon from '@mui/icons-material/HeartBroken';
+import LogoutIcon from '@mui/icons-material/Logout';
 import WarningIcon from '@mui/icons-material/Warning';
 import Stack from "@mui/material/Stack";
 import MuiCard from "@mui/material/Card";
@@ -38,6 +39,7 @@ import PlayerNickPicker from "./components/PlayerNickPicker";
 import { reseatPlayer } from "./reseatPlayer";
 import { votingFromNominated } from "./stream/activeGameSync";
 import ObsMuteButton, { compactHeaderQuery } from "./stream/ObsMuteButton";
+import { nextSeatMark, seatMark, seatMarkAction } from "./seatMark";
 import { useActiveGameSync } from "./stream/useActiveGameSync";
 
 /**
@@ -176,7 +178,7 @@ function playersFromActiveGame(
       id: player.id || '',
       role: apiRoleToUiRole(player.role, mafiaSlot),
       warnings: Number.isInteger(player.fouls) ? player.fouls : 0,
-      killed: player.killed === 1 ? 1 : 0,
+      killed: seatMark(player.killed),
     };
   }
   return restored;
@@ -476,9 +478,9 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
       notify.info('Гра закінчена');
       return;
     }
-    const hasFirstKilled = Object.values(players).some((p: any) => p.n !== n && p.killed === 1);
-    if (hasFirstKilled && players[n].killed !== 1) return;
-    setPlayers({...players, [n]: {...players[n], killed: players[n].killed === 1 ? 0 : 1, bestTurn: players[n].killed === 1 ? {} : players[n].bestTurn}});
+    const firstKilledTaken = Object.values(players).some((p: any) => p.n !== n && p.killed === 1);
+    const killed = nextSeatMark(players[n].killed, firstKilledTaken);
+    setPlayers({...players, [n]: {...players[n], killed, bestTurn: killed === 1 ? players[n].bestTurn : {}}});
   }
 
   const isPlayerWinner = (n: number) => {
@@ -877,10 +879,6 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
     return Object.values(players).filter((player: any) => player.role).map((player: any) => player.role)
   }, [players]);
 
-  const killedPool = useMemo(() => {
-    return Object.values(players).filter((player: any) => player.killed).map((player: any) => player.killed)
-  }, [players]);
-
   /** Скидання форми є не в усіх режимах: перегляд турніру і редагування збереженої гри його не мають. */
   const showResetButton = !readOnlyTournament && !tournamentHidden && !isEditingRatingGame;
 
@@ -1025,7 +1023,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                   { term: <ThumbUpIcon titleAccess="Голосування" sx={{ fontSize: 16 }} />, text: 'номер гравця — виставити на голосування' },
                   { term: 'Ф', text: 'фоли' },
                   { term: 'Р', text: 'роль; заголовок ховає ролі' },
-                  { term: <HeartBrokenIcon titleAccess="Перший вбитий" sx={{ fontSize: 16 }} />, text: 'перший вбитий' },
+                  { term: <HeartBrokenIcon titleAccess="Перший вбитий" sx={{ fontSize: 16 }} />, text: 'перший вбитий, далі в цій колонці — вбитий, потім пішов зі столу' },
                 ]}
               />
               {/* Підписи ролей беремо з RolesPoolMap, тож легенда не розійдеться з колонкою «Р». */}
@@ -1248,19 +1246,14 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                 ) : (
                 <Grid sx={{
                   fontWeight: n !== 0 ? 800 : '',
-                  cursor: winState && n !== 0
-                    ? 'pointer'
-                    : n !== 0 && (!killedPool.includes(1) || players[n]?.killed === 1) ? 'pointer' : 'default',
+                  cursor: n !== 0 ? 'pointer' : 'default',
                   py: '.4rem',
-                  opacity: !winState && n !== 0 && killedPool.includes(1) && players[n]?.killed !== 1 ? 0.3 : 1,
                   fontSize: players[n]?.killed === 1 && !winState ? '0.7rem' : 'inherit',
                 }} size={{xs: 1.25, sm: 0.5, lg: 0.5}}
                    {...(n !== 0 && cellButton(
                      winState
                        ? `Бонус гравцю ${n}`
-                       : players[n]?.killed === 1
-                         ? `Зняти з гравця ${n} позначку першого вбитого`
-                         : `Позначити гравця ${n} першим вбитим`,
+                       : seatMarkAction(players[n]?.killed, Object.values(players).some((p: any) => p.killed === 1), n),
                      (el) => (winState ? openBonusPopover(el, n) : killPlayer(n)),
                    ))}>
                   {winState && n !== 0
@@ -1271,7 +1264,11 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
                       ? <HeartBrokenIcon/>
                       : players[n]?.killed === 1
                         ? `${Object.keys(players[n].bestTurn || {}).length}/5`
-                        : ''
+                        : players[n]?.killed === 2
+                          ? <HeartBrokenIcon sx={{ fontSize: '0.9rem' }} />
+                          : players[n]?.killed === 3
+                            ? <LogoutIcon sx={{ fontSize: '0.9rem' }} />
+                            : ''
                   }
                 </Grid>
                 )}

@@ -1,3 +1,5 @@
+import { seatMark, type SeatMark } from '../seatMark';
+
 /**
  * Стан оверлею діючої рейтингової гри.
  * Хук опитує бекенд і кладе знімок у reduceOverlay.
@@ -13,6 +15,8 @@ export type OverlayPlayer = {
   role: OverlayRole | null;
   /** Фоли за протоколом ведучого, 0–4. */
   fouls: number;
+  /** 0 чисто, 1 перший вбитий, 2 вбитий, 3 пішов зі столу. */
+  killed: SeatMark;
   starred: boolean;
   speaking: boolean;
   eliminated: boolean;
@@ -59,6 +63,7 @@ function blankSeat(seat: number): OverlayPlayer {
     avatarUrl: null,
     role: null,
     fouls: 0,
+    killed: 0,
     starred: false,
     speaking: false,
     eliminated: false,
@@ -93,18 +98,20 @@ export function overlayFromActive(data: unknown): OverlayGame | null {
     const row = body.players.find((item) => {
       if (!item || typeof item !== 'object') return false;
       return Number((item as { seat?: unknown }).seat) === seat;
-    }) as { nickname?: unknown; avatarUrl?: unknown; role?: unknown; fouls?: unknown; eliminated?: unknown } | undefined;
+    }) as { nickname?: unknown; avatarUrl?: unknown; role?: unknown; fouls?: unknown; killed?: unknown; eliminated?: unknown } | undefined;
     if (!row) return null;
     const nickname = typeof row.nickname === 'string' ? row.nickname.trim().slice(0, 64) : '';
     const avatarUrl = typeof row.avatarUrl === 'string' && row.avatarUrl.trim() ? row.avatarUrl.trim() : null;
     const fouls = Number(row.fouls);
+    const killed = seatMark(row.killed);
     players.push({
       ...blankSeat(seat),
       nickname,
       avatarUrl,
       role: isRole(row.role) ? row.role : null,
       fouls: Number.isInteger(fouls) && fouls >= 0 && fouls <= 4 ? fouls : 0,
-      eliminated: row.eliminated === true,
+      killed,
+      eliminated: row.eliminated === true || killed !== 0,
     });
   }
   const nominated = Array.isArray(body.nominated)

@@ -93,14 +93,34 @@ function PlayerPhoto({ player }: { player: OverlayPlayer }) {
   return <img src={src} alt="" onError={() => setFailed(true)} />;
 }
 
+function OutMark({ kind }: { kind: 'killed' | 'left' }) {
+  const killed = kind === 'killed';
+  return (
+    <span className={killed ? `${styles.outMark} ${styles.kill}` : styles.outMark} aria-label={killed ? 'Вбитий' : 'Пішов зі столу'}>
+      {killed ? (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M12 21s-6.5-4.2-6.5-9A3.7 3.7 0 0 1 12 9.2 3.7 3.7 0 0 1 18.5 12C18.5 16.8 12 21 12 21z" />
+          <path d="M12 8.2 14 12l-2 1.4 2 3.6" fill="none" stroke="#111" strokeWidth="1.7" strokeLinecap="round" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M10 4H5v16h5v-2H7V6h3V4zm2.2 4.2 1.4-1.4L19 12l-5.4 5.2-1.4-1.4 2.8-2.8H9v-2h6l-2.8-2.8z" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
 function PlayerCard({ player }: { player: OverlayPlayer }) {
   const roleIcon = player.role ? ROLE_ICON[player.role] : undefined;
   const tone = plateTone(player.role) === 'steel' ? ` ${styles.steel}` : '';
-  const eliminated = player.eliminated ? ` ${styles.eliminated}` : '';
+  const dimmed = player.eliminated ? ` ${styles.dimmed}` : '';
+  const out = player.killed === 1 || player.killed === 2 ? 'killed' : player.killed === 3 ? 'left' : null;
   return (
-    <article className={`${styles.card}${tone}${eliminated}`}>
-      <div className={styles.photo}>
+    <article className={`${styles.card}${tone}`}>
+      <div className={`${styles.photo}${dimmed}`}>
         <PlayerPhoto player={player} />
+        {out && <OutMark kind={out} />}
         {roleIcon && (
           <span className={player.role === 'sher' ? `${styles.roleIcon} ${styles.sher}` : styles.roleIcon}>
             <img src={roleIcon} alt={player.role === 'don' ? 'Дон' : 'Шериф'} />
