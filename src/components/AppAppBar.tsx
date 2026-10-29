@@ -31,6 +31,7 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {useEffect} from "react";
 import { confirmAction } from './feedback/feedback';
+import { playSpeechChime, primeSpeechChime, stopSpeechChime, takeSpeechChime, type SpeechChime } from './speechTimerChime';
 
 /** Кільце навколо аватара — інакше фото зливається зі смугою хедера. Літера-заглушка — кольору тексту смуги. */
 const headerAvatarSx = {
@@ -128,6 +129,8 @@ export default function AppAppBar() {
   // Таймер стоїть, доки ведучий його не торкнеться. Стан компонента, а не модуля:
   // інакше після першого запуску таймер сам біг на кожній новій сторінці гри.
   const [stopWatchRunning, setStopWatchRunning] = React.useState(false);
+  /** Який сигнал уже зіграв у цьому відліку, щоб рендер не повторив його. */
+  const chimePlayed = React.useRef<SpeechChime | null>(null);
   const [liveTournament, setLiveTournament] = React.useState<{ id: string; name: string } | null>(null);
 
   const stopWatchFmt = stopWatch.toString().padStart(2, '0');
@@ -139,7 +142,11 @@ export default function AppAppBar() {
   }, [stopWatchRunning]);
 
   useEffect(() => {
-    if (!stopWatchRunning || stopWatch > 0) return;
+    if (!stopWatchRunning) return;
+    const claimed = takeSpeechChime(stopWatch, chimePlayed.current);
+    chimePlayed.current = claimed.played;
+    if (claimed.chime) playSpeechChime(claimed.chime);
+    if (stopWatch > 0) return;
     setStopWatchRunning(false);
     // Час вийшов: телефон ведучого вібрує, щоб не дивитися на екран. iOS вібрацію не підтримує.
     navigator.vibrate?.(400);
@@ -168,6 +175,9 @@ export default function AppAppBar() {
   }, [fetchLiveTournament]);
 
   const startStopWatch = (seconds = SPEECH_SECONDS) => {
+    chimePlayed.current = null;
+    stopSpeechChime();
+    primeSpeechChime();
     setStopWatch(seconds);
     setStopWatchRunning(true);
   }
