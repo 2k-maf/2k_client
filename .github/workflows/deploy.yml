@@ -77,7 +77,12 @@ jobs:
         if: vars.SITE_URL != ''
         run: |
           set -euo pipefail
-          BUNDLE=$(node -e "process.stdout.write(require('./build/asset-manifest.json').entrypoints[0])")
+          # Перший entrypoint — CSS. JS іде слідом, і саме його Content-Type має бути javascript.
+          BUNDLE=$(node -e "
+            const js = require('./build/asset-manifest.json').entrypoints.find((file) => file.endsWith('.js'));
+            if (!js) { console.error('У збірці немає JS entrypoint'); process.exit(1); }
+            process.stdout.write(js);
+          ")
           echo "Очікуваний бандл: $BUNDLE"
           # Публікація на edge розходиться за секунди, але не миттєво.
           for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
