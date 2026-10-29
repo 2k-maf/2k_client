@@ -43,6 +43,12 @@ export async function handle(request, env, ctx) {
         return withSecurityHeaders(await serveAvatar(request, env, ctx, url));
     }
 
+    // Картка розсадки — картинка API. Браузер відкриває її як сторінку
+    // (Accept: text/html), інакше isNavigation віддав би index.html.
+    if (url.pathname === '/public/rating-table.png') {
+        return withSecurityHeaders(await proxyApi(request, env, url));
+    }
+
     // SPA-маршрут /clubs і API GET /clubs мають однаковий шлях. Браузер, що
     // відкриває сторінку (оновлення, пряме посилання), має отримати
     // index.html, а не JSON. axios ніколи не надсилає Accept: text/html.

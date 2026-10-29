@@ -77,6 +77,17 @@ test('навігація браузера на /clubs віддає index.html, �
     assert.equal(await res.text(), '<html>index</html>');
 });
 
+test('картка розсадки відкривається як картинка, а не як сторінка', async () => {
+    reply = () => new Response('PNG', { headers: { 'content-type': 'image/png' } });
+    const res = await handle(new Request('https://site.test/public/rating-table.png?clubId=abc', {
+        headers: { accept: 'text/html,application/xhtml+xml', 'sec-fetch-mode': 'navigate' },
+    }), ENV, CTX);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://abc123.lambda-url.us-west-2.on.aws/public/rating-table.png?clubId=abc');
+    assert.equal(res.headers.get('content-type'), 'image/png');
+    assert.equal(await res.text(), 'PNG');
+});
+
 test('isNavigation: axios за замовчуванням навігацією не є', () => {
     assert.equal(isNavigation(new Request('https://s/clubs', { headers: { accept: 'application/json, text/plain, */*' } })), false);
     assert.equal(isNavigation(new Request('https://s/clubs', { method: 'POST', headers: { accept: 'text/html' } })), false);
