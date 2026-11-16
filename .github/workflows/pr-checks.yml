@@ -33,8 +33,8 @@ jobs:
       - name: Встановити залежності
         run: pnpm install --frozen-lockfile
 
-      # Pages Function (edge/) не входить у tsconfig і не має власної збірки
-      # CRA, тому перевіряється окремо: тести й пробне пакування wrangler.
+      # Pages Function (edge/) не входить у tsconfig і не входить у збірку
+      # Vite, тому перевіряється окремо: тести й пробне пакування wrangler.
       - name: Тести Pages Function
         run: node --test edge/*.test.mjs
 
@@ -43,12 +43,10 @@ jobs:
           WRANGLER_SEND_METRICS: "false"
         run: pnpm exec wrangler pages functions build --outdir "$RUNNER_TEMP/functions"
 
-      # tsconfig.json уже має "noEmit": true, але прапорець ставимо явно:
-      # він не дає збірці записати файли, якщо конфіг колись зміниться.
-      - name: Перевірити типи
-        run: pnpm exec tsc --noEmit
+      - name: Тести фронтенду
+        run: pnpm test
 
-      # CI=true від GitHub Actions робить попередження react-scripts
-      # помилками. Збірка тут проходить рівно ті ж перевірки, що й деплой.
+      # Скрипт build спершу запускає tsc --noEmit, тож окремий крок типів
+      # не потрібен. Збірка тут проходить рівно ті ж перевірки, що й деплой.
       - name: Зібрати продакшн-версію
         run: pnpm run build

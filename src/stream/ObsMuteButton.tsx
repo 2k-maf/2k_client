@@ -69,13 +69,13 @@ function useObsConfig(): {
   setHost: (host: string) => void;
 } {
   const [config, setConfig] = useState<ObsConfig>(() => {
-    const fromEnv = obsConfigFromEnv({ url: process.env.REACT_APP_OBS_WS_URL });
+    const fromEnv = obsConfigFromEnv({ url: import.meta.env.REACT_APP_OBS_WS_URL });
     return withStoredHost(fromEnv ?? { url: '', password: '' });
   });
 
   const setHost = (host: string) => {
     writeStoredObsHost(host);
-    setConfig(withStoredHost({ url: process.env.REACT_APP_OBS_WS_URL ?? '', password: '' }));
+    setConfig(withStoredHost({ url: import.meta.env.REACT_APP_OBS_WS_URL ?? '', password: '' }));
   };
 
   return { config, ready: true, setHost };

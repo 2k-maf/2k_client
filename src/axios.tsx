@@ -5,7 +5,7 @@ import axios from "axios";
 // статика Pages. Порожній baseURL дає відносні
 // запити, тому CORS і абсолютний хост API не потрібні.
 // Локальна розробка задає REACT_APP_API_URL (див. env.example).
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || '';
+axios.defaults.baseURL = import.meta.env.REACT_APP_API_URL || '';
 
 declare module 'axios' {
   interface AxiosRequestConfig<D = any> {

@@ -93,7 +93,7 @@ async function proxyApi(request, env, url) {
 }
 
 /**
- * Хешовані файли CRA. У /static/ лежать лише js, css і медіа, тож HTML тут
+ * Хешовані файли Vite. У /static/ лежать лише js, css і медіа, тож HTML тут
  * означає SPA-fallback Pages: файлу в цьому деплої немає.
  *
  * Так буває під час деплою: новий index.html уже живий, а запит на новий

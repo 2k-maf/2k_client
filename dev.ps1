@@ -235,7 +235,7 @@ function Initialize-Stack {
     Write-Info "Фронтенд -> http://localhost:$($script:ClientPort)  ($ClientDir)"
 }
 
-# Логи йдуть у файли: react-scripts інакше чистить екран і затирає вивід API.
+# Логи йдуть у файли: дев-сервер фронтенду інакше чистить екран і затирає вивід API.
 function Start-Stack {
     param([switch]$Hidden)
     $common = @{ PassThru = $true }
@@ -260,7 +260,7 @@ function Invoke-Cleanup {
         Stop-Tree -ProcessId $state.apiPid
         Remove-Item $StateFile -Force
     }
-    # Підстраховка: react-scripts і mongodb-memory-server іноді переживають смерть
+    # Підстраховка: дев-сервер фронтенду і mongodb-memory-server іноді переживають смерть
     # батька, а живий процес тримає .mongo-local і наступний запуск падає.
     Start-Sleep -Milliseconds 800
     Stop-Port -Port $script:ClientPort
@@ -343,7 +343,7 @@ function Invoke-Start {
     @{ apiPid = $script:ApiProc.Id; clientPid = $script:ClientProc.Id } |
         ConvertTo-Json | Set-Content -Path $StateFile
 
-    # Порт відкривається раніше за першу компіляцію CRA, тож чекати недовго.
+    # Порт відкривається раніше за першу компіляцію фронтенду, тож чекати недовго.
     $deadline = (Get-Date).AddSeconds(180)
     while ($true) {
         $apiUp    = [bool](Get-PortPid -Port $script:ApiPort)
