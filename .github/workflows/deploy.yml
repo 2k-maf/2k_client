@@ -38,17 +38,17 @@ jobs:
           cache: pnpm
 
       # --frozen-lockfile забороняє мовчазне оновлення залежностей.
-      # Це важливо: react-scripts у package.json заданий як "latest",
-      # тож без лок-файлу кожна збірка брала б іншу версію.
       - name: Встановити залежності
         run: pnpm install --frozen-lockfile
 
       - name: Тести Pages Function
         run: node --test edge/*.test.mjs
 
-      # GitHub Actions задає CI=true, а react-scripts у такому режимі
-      # вважає попередження помилками. Це навмисно: збірка з попередженнями
-      # у прод не потрапляє.
+      - name: Тести фронтенду
+        run: pnpm test
+
+      # Скрипт build спершу запускає tsc --noEmit: Vite сам типи не перевіряє,
+      # а збірка з помилками типів у прод не потрапляє.
       - name: Зібрати продакшн-версію
         run: pnpm run build
 
@@ -77,11 +77,12 @@ jobs:
         if: vars.SITE_URL != ''
         run: |
           set -euo pipefail
-          # Перший entrypoint — CSS. JS іде слідом, і саме його Content-Type має бути javascript.
+          # Vite не пише asset-manifest.json, тож бандл беремо з тегу script у build/index.html.
           BUNDLE=$(node -e "
-            const js = require('./build/asset-manifest.json').entrypoints.find((file) => file.endsWith('.js'));
-            if (!js) { console.error('У збірці немає JS entrypoint'); process.exit(1); }
-            process.stdout.write(js);
+            const html = require('fs').readFileSync('build/index.html', 'utf8');
+            const m = html.match(/<script[^>]+src=\"\/(static\/[^\"]+\.js)\"/);
+            if (!m) { console.error('У збірці немає JS entrypoint'); process.exit(1); }
+            process.stdout.write(m[1]);
           ")
           echo "Очікуваний бандл: $BUNDLE"
           # Публікація на edge розходиться за секунди, але не миттєво.

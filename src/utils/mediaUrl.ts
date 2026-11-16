@@ -21,9 +21,5 @@ export function resolveMediaUrl(url: string | null | undefined): string | undefi
 /** Static files from `public/` (always root-relative so deep routes resolve correctly). */
 export function publicStaticUrl(path: string): string {
   const normalized = path.startsWith('/') ? path : `/${path}`;
-  const raw =
-    typeof process !== 'undefined' && process.env.PUBLIC_URL != null
-      ? String(process.env.PUBLIC_URL).replace(/\/$/, '')
-      : '';
-  return `${raw}${normalized}`;
+  return `${import.meta.env.BASE_URL.replace(/\/$/, '')}${normalized}`;
 }

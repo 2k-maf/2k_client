@@ -25,7 +25,7 @@ function TikTokIcon(props: SvgIconProps) {
 import { brandColors, fg } from '../theme/brand';
 
 // Короткі посилання з public/_redirects: справжні адреси соцмереж живуть лише там.
-// Адреса абсолютна, бо dev-сервер CRA не виконує _redirects і на /telegram дав би 404 SPA.
+// Адреса абсолютна, бо dev-сервер Vite не виконує _redirects і на /telegram дав би 404 SPA.
 export const INSTAGRAM_URL = 'https://2kmaf.ca/instagram';
 export const YOUTUBE_URL = 'https://2kmaf.ca/youtube';
 export const TELEGRAM_URL = 'https://2kmaf.ca/telegram';

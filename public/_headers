@@ -8,7 +8,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   X-XSS-Protection: 1; mode=block
 
-# Імена файлів CRA хешує, вміст за таким іменем ніколи не змінюється.
+# Імена файлів Vite хешує, вміст за таким іменем ніколи не змінюється.
 # /static/* іде через edge/proxy.mjs: SPA index.html на відсутній файл (гонка
 # деплою) функція замінює на 404 без кешу, тож цей Cache-Control його не отруїть.
 /static/*

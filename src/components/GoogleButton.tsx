@@ -4,7 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import { fg } from '../theme/brand';
 
 // Публічний Client ID OAuth. Без нього інтерфейс Google не показуємо зовсім.
-const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_ID = import.meta.env.REACT_APP_GOOGLE_CLIENT_ID || '';
 const GIS_SRC = 'https://accounts.google.com/gsi/client';
 
 export const googleEnabled = Boolean(GOOGLE_CLIENT_ID);

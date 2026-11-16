@@ -127,7 +127,7 @@ cleanup() {
         kill_tree "$saved_api"
         rm -f "$STATE_FILE"
     fi
-    # Підстраховка: react-scripts і mongodb-memory-server іноді переживають смерть
+    # Підстраховка: дев-сервер фронтенду і mongodb-memory-server іноді переживають смерть
     # батька, а живий процес тримає .mongo-local і наступний запуск падає.
     sleep 1
     kill_port "$CLIENT_PORT"
@@ -237,7 +237,7 @@ prepare() {
     info "Фронтенд → http://localhost:$CLIENT_PORT  ($CLIENT_DIR)"
 }
 
-# Логи йдуть у файли, а в термінал — з префіксами: react-scripts інакше чистить
+# Логи йдуть у файли, а в термінал — з префіксами: дев-сервер фронтенду інакше чистить
 # екран і затирає вивід API. nohup тримає процеси живими після закриття
 # терміналу у фоновому режимі; у режимі up їх однаково зупиняє trap.
 launch() {
@@ -277,7 +277,7 @@ cmd_start() {
     disown -a
     printf '%s %s\n' "$API_PID" "$CLIENT_PID" > "$STATE_FILE"
 
-    # Порт відкривається раніше за першу компіляцію CRA, тож чекати недовго.
+    # Порт відкривається раніше за першу компіляцію фронтенду, тож чекати недовго.
     local waited=0 failed=""
     until [[ -n "$(port_pid "$API_PORT")" && -n "$(port_pid "$CLIENT_PORT")" ]]; do
         kill -0 "$API_PID"    2>/dev/null || failed='API'

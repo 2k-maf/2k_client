@@ -3,29 +3,30 @@ import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import NewGame from './NewGame';
 import axios from './axios';
+import type { Mock } from 'vitest';
 
-jest.mock('react-router-dom', () => {
-  const ReactLib = jest.requireActual('react');
+vi.mock('react-router-dom', async () => {
+  const ReactLib = await vi.importActual<typeof import('react')>('react');
   const Link = ({ to, children, ...rest }: any) => ReactLib.createElement('a', { href: String(to), ...rest }, children);
   return {
     useLocation: () => ({ pathname: '/new-game-rating', search: '', hash: '', state: null }),
-    useNavigate: () => jest.fn(),
+    useNavigate: () => vi.fn(),
     useParams: () => ({}),
     Link,
     NavLink: Link,
   };
-}, { virtual: true });
+});
 
-jest.mock('./axios', () => ({
+vi.mock('./axios', () => ({
   __esModule: true,
-  default: { get: jest.fn(), put: jest.fn(), post: jest.fn() },
+  default: { get: vi.fn(), put: vi.fn(), post: vi.fn() },
 }));
 
-jest.mock('./AuthProvider', () => ({
+vi.mock('./AuthProvider', () => ({
   useAuth: () => ({ user: { _id: 'club1', authType: 'Клуб' }, canRecordRatingGame: true }),
 }));
 
-const mocked = axios as unknown as { get: jest.Mock; put: jest.Mock; post: jest.Mock };
+const mocked = axios as unknown as { get: Mock; put: Mock; post: Mock };
 
 const livePlayers = Array.from({ length: 10 }, (_, i) => ({
   seat: i + 1,
@@ -47,7 +48,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  jest.useFakeTimers();
+  vi.useFakeTimers();
   localStorage.clear();
   mocked.get.mockImplementation(async (url: string) => {
     if (url === '/club/active-rating-game') {
@@ -65,8 +66,8 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   host.remove();
-  jest.useRealTimers();
-  jest.clearAllMocks();
+  vi.useRealTimers();
+  vi.clearAllMocks();
 });
 
 async function mountForm() {
@@ -85,7 +86,7 @@ function click(label: string) {
 }
 
 async function flushSync() {
-  await act(async () => { jest.advanceTimersByTime(1000); });
+  await act(async () => { vi.advanceTimersByTime(1000); });
 }
 
 const lastBody = () => mocked.put.mock.calls[mocked.put.mock.calls.length - 1][1];
@@ -121,7 +122,7 @@ test('невдалий запис повторюється, а не губить
   await flushSync();
   expect(mocked.put).toHaveBeenCalledTimes(1);
 
-  await act(async () => { jest.advanceTimersByTime(3500); });
+  await act(async () => { vi.advanceTimersByTime(3500); });
   expect(mocked.put).toHaveBeenCalledTimes(2);
   expect(lastBody().players[3].role).toBe('maf');
 });

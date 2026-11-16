@@ -7,4 +7,4 @@
  * Тримай REACT_APP_CLUB_ID і фолбек однаковими. Розходження між ними
  * лишає публічну сторінку рейтингу порожньою.
  */
-export const CLUB_ID = process.env.REACT_APP_CLUB_ID || '67c0dc3b110964e2fdac7b37';
+export const CLUB_ID = import.meta.env.REACT_APP_CLUB_ID || '67c0dc3b110964e2fdac7b37';
