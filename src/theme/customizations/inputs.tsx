@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { alpha, Theme, Components } from '@mui/material/styles';
 import { outlinedInputClasses } from '@mui/material/OutlinedInput';
+import { inputLabelClasses } from '@mui/material/InputLabel';
 import { svgIconClasses } from '@mui/material/SvgIcon';
 import { toggleButtonGroupClasses } from '@mui/material/ToggleButtonGroup';
 import { toggleButtonClasses } from '@mui/material/ToggleButton';
@@ -495,10 +496,30 @@ export const inputsCustomizations: Components<Theme> = {
   },
   MuiInputLabel: {
     styleOverrides: {
-      root: {
+      root: ({ theme }) => ({
         // MuiFormLabel adds marginBottom for standalone labels; InputLabel must not have it.
         marginBottom: 0,
-      },
+        // MUI puts the resting label of an outlined field at Y 16px (medium) and 9px (small),
+        // which is the centre of a 56px or 40px field. MuiOutlinedInput above makes the
+        // fields 40px and 36px, so the label sat 6px below the centre. These offsets centre
+        // a 20px label line; X 13px matches the 12px root padding plus the 1px border.
+        [`&.${inputLabelClasses.outlined}:not(.${inputLabelClasses.shrink})`]: {
+          transform: 'translate(13px, 10px) scale(1)',
+        },
+        [`&.${inputLabelClasses.outlined}.${inputLabelClasses.sizeSmall}:not(.${inputLabelClasses.shrink})`]: {
+          transform: 'translate(13px, 8px) scale(1)',
+        },
+        // The floating label sits on the top border. The real border is on the root, and
+        // the <fieldset> notch is transparent, so nothing cut a gap and the line crossed the
+        // text. The label gets the field background from 40% of its height down: that hides
+        // the border and the 3px focus outline above it. The top stays transparent over the
+        // surface behind the field.
+        [`&.${inputLabelClasses.outlined}.${inputLabelClasses.shrink}`]: {
+          padding: '0 4px',
+          marginLeft: -4,
+          background: `linear-gradient(to bottom, transparent 40%, ${(theme.vars || theme).palette.background.default} 40%)`,
+        },
+      }),
     },
   },
   MuiInputAdornment: {
