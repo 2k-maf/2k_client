@@ -23,6 +23,7 @@ import axios from "./axios";
 import { useAuth } from './AuthProvider';
 import GoogleSignUpBlock, { GoogleSignUpData, signUpErrorMessage } from './components/GoogleSignUp';
 import {useEffect} from "react";
+import { BIRTH_DATE_MIN, birthDateMax } from './utils/birthDate';
 import InputLabel from "@mui/material/InputLabel";
 import Select, {SelectChangeEvent} from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -126,6 +127,9 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
     const password = document.getElementById('password') as HTMLInputElement;
     const name = document.getElementById('name') as HTMLInputElement;
     const nickname = document.getElementById('nickname') as HTMLInputElement;
+    const birthDate = document.getElementById('birthDate') as HTMLInputElement;
+    // Дату народження надсилаємо лише заповнену.
+    const birth = birthDate.value ? { birthDate: birthDate.value } : {};
     const body = google
       ? {
           name: name.value,
@@ -133,6 +137,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
           clubs: [clubSelectId],
           googleCredential: google.credential,
           ...(password.value ? { password: password.value } : {}),
+          ...birth,
         }
       : {
           name: name.value,
@@ -140,6 +145,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
           email: email.value,
           password: password.value,
           clubs: [clubSelectId],
+          ...birth,
         };
     setSubmitError('');
     try {
@@ -243,6 +249,18 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 error={passwordError}
                 helperText={passwordErrorMessage}
                 color={passwordError ? 'error' : 'primary'}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel htmlFor="birthDate">Дата народження</FormLabel>
+              <TextField
+                fullWidth
+                id="birthDate"
+                name="birthDate"
+                type="date"
+                autoComplete="bday"
+                helperText="Необов'язково. Бачить лише адміністратор вашого клубу."
+                slotProps={{ htmlInput: { min: BIRTH_DATE_MIN, max: birthDateMax() } }}
               />
             </FormControl>
             {/*<FormControlLabel*/}
