@@ -9,6 +9,7 @@ import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import AddchartIcon from '@mui/icons-material/Addchart';
+import CakeIcon from '@mui/icons-material/Cake';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
@@ -23,6 +24,7 @@ import { useAuth } from '../AuthProvider';
 import axios from '../axios';
 import { invalidateClubRatingCache } from '../utils/clubRatingCache';
 import { resolveMediaUrl } from '../utils/mediaUrl';
+import { BIRTH_DATE_MIN, birthDateInputValue, birthDateMax } from '../utils/birthDate';
 import { brandColors } from '../theme/brand';
 import { notify } from '../components/feedback/feedback';
 
@@ -52,6 +54,22 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
   const [clubSelectId, setClubSelectId] = useState('');
   const [periodName, setPeriodName] = useState('');
   const [nickname, setNickname] = useState('');
+  /** Лише власна дата учасника; дату від клубу сюди не підставляємо. */
+  const [birthDate, setBirthDate] = useState('');
+  const [savedBirthDate, setSavedBirthDate] = useState('');
+  const [birthDateSaving, setBirthDateSaving] = useState(false);
+
+  useEffect(() => {
+    if (isClub) return;
+    axios
+      .get('/user/birth-date')
+      .then(({ data }) => {
+        const value = birthDateInputValue(data?.birthDate);
+        setBirthDate(value);
+        setSavedBirthDate(value);
+      })
+      .catch((e) => console.error(e));
+  }, [isClub]);
 
   useEffect(() => {
     async function fetchData() {
@@ -105,6 +123,25 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
       notify.success('Нікнейм оновлено');
     } catch (e: any) {
       notify.error(e?.response?.data?.message || 'Помилка при оновленні нікнейму');
+    }
+  };
+
+  const handleSaveBirthDate = async (value: string) => {
+    setBirthDateSaving(true);
+    try {
+      const { data } = await axios.put('/user/birth-date', { birthDate: value || null });
+      const saved = birthDateInputValue(data?.birthDate);
+      setBirthDate(saved);
+      setSavedBirthDate(saved);
+      notify.success(value ? 'Дату народження збережено' : 'Дату народження видалено');
+    } catch (e: any) {
+      notify.error(
+        e?.response?.data?.error === 'Invalid birth date'
+          ? 'Некоректна дата народження'
+          : 'Помилка при збереженні дати народження',
+      );
+    } finally {
+      setBirthDateSaving(false);
     }
   };
 
@@ -268,6 +305,44 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
               Змінити
             </Button>
           </ProfileCard>
+
+          {!isClub && (
+            <ProfileCard
+              icon={<CakeIcon />}
+              label="АКАУНТ"
+              title="Дата народження"
+              hint="Необов'язково. Бачить лише адміністратор вашого клубу."
+            >
+              <TextField
+                fullWidth
+                type="date"
+                label="Дата народження"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                slotProps={{
+                  inputLabel: { shrink: true },
+                  htmlInput: { min: BIRTH_DATE_MIN, max: birthDateMax() },
+                }}
+              />
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="contained"
+                  endIcon={<ChevronRightRoundedIcon />}
+                  disabled={birthDateSaving || !birthDate || birthDate === savedBirthDate}
+                  onClick={() => handleSaveBirthDate(birthDate)}
+                >
+                  Зберегти
+                </Button>
+                <Button
+                  variant="outlined"
+                  disabled={birthDateSaving || !savedBirthDate}
+                  onClick={() => handleSaveBirthDate('')}
+                >
+                  Очистити
+                </Button>
+              </Box>
+            </ProfileCard>
+          )}
 
           <GoogleLinkCard />
         </ProfileCardGrid>

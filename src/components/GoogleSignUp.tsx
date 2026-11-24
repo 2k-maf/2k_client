@@ -60,6 +60,9 @@ export function signUpErrorMessage(e: any, withGoogle: boolean): string {
   if (status === 401 && withGoogle) {
     return 'Підтвердження Google застаріло. Натисніть кнопку Google ще раз.';
   }
+  if (status === 422 && data?.error === 'Invalid birth date') {
+    return 'Перевірте дату народження: рік від 1900, не пізніше сьогодні.';
+  }
   if (status === 422) {
     return 'Сервер не прийняв дані. Перевірте заповнені поля.';
   }
