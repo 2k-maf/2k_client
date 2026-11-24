@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
 import IconButton from '@mui/material/IconButton';
 import Switch from '@mui/material/Switch';
-import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -19,12 +18,14 @@ import axios from '../axios';
 import { brandColors, brandFonts, monoSx } from '../theme/brand';
 import { notify } from '../components/feedback/feedback';
 import { useAuth } from '../AuthProvider';
+import BirthDateFields from '../components/BirthDateFields';
 import {
-  BIRTH_DATE_MIN,
-  birthDateInputValue,
-  birthDateMax,
+  EMPTY_MONTH_DAY,
   formatBirthDate,
   MemberBirthDate,
+  MonthDay,
+  monthDayValue,
+  parseMonthDay,
   withClubBirthDate,
 } from '../utils/birthDate';
 
@@ -48,7 +49,7 @@ export default function DashboardUsers(props: { disableCustomTheme?: boolean }) 
   const isClub = useAuth().user?.authType === 'Клуб';
   /** Учасник, чию дату від клубу зараз редагують, і чернетка дати. */
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState<MonthDay>(EMPTY_MONTH_DAY);
 
   useEffect(() => {
     async function fetchData() {
@@ -86,16 +87,21 @@ export default function DashboardUsers(props: { disableCustomTheme?: boolean }) 
     };
 
     const saveBirthDate = async (member: ClubMember) => {
+      const value = monthDayValue(draft);
+      if (value === null) {
+        notify.error('Виберіть і день, і місяць або очистьте обидва');
+        return;
+      }
       setSavingId(member._id);
       try {
-        const { data } = await axios.put(`/club/users/${member._id}/birth-date`, { birthDate: draft || null });
-        const clubBirthDate = birthDateInputValue(data?.clubBirthDate) || null;
+        const { data } = await axios.put(`/club/users/${member._id}/birth-date`, { birthDate: value || null });
+        const clubBirthDate = monthDayValue(parseMonthDay(data?.clubBirthDate)) || null;
         setMembers((prev) => prev.map((m) => (m._id === member._id ? withClubBirthDate(m, clubBirthDate) : m)));
         setEditingId(null);
       } catch (e: any) {
         notify.error(
           e?.response?.data?.error === 'Invalid birth date'
-            ? 'Некоректна дата народження'
+            ? 'Некоректний день народження'
             : e?.response?.data?.error || 'Дату не змінено',
         );
       } finally {
@@ -106,23 +112,16 @@ export default function DashboardUsers(props: { disableCustomTheme?: boolean }) 
     const birthDateColumn: BrandColumn<ClubMember> = {
       key: 'birthDate',
       header: 'НАРОДЖЕННЯ',
-      width: '220px',
+      width: '320px',
       render: (member) =>
         editingId === member._id ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TextField
+            <BirthDateFields
               size="small"
-              type="date"
               value={draft}
               disabled={savingId === member._id}
-              onChange={(e) => setDraft(e.target.value)}
-              slotProps={{
-                htmlInput: {
-                  min: BIRTH_DATE_MIN,
-                  max: birthDateMax(),
-                  'aria-label': `Дата народження від клубу: ${member.nickname || member.name || ''}`,
-                },
-              }}
+              onChange={setDraft}
+              ariaLabel={`Від клубу, ${member.nickname || member.name || ''}`}
             />
             <IconButton
               size="small"
@@ -153,10 +152,10 @@ export default function DashboardUsers(props: { disableCustomTheme?: boolean }) 
             )}
             <IconButton
               size="small"
-              aria-label={`Змінити дату народження від клубу: ${member.nickname || member.name || ''}`}
+              aria-label={`Змінити день народження від клубу: ${member.nickname || member.name || ''}`}
               disabled={savingId !== null}
               onClick={() => {
-                setDraft(birthDateInputValue(member.clubBirthDate));
+                setDraft(parseMonthDay(member.clubBirthDate));
                 setEditingId(member._id);
               }}
             >
@@ -234,7 +233,7 @@ export default function DashboardUsers(props: { disableCustomTheme?: boolean }) 
           pageSize={20}
           loading={loading}
           emptyText={query ? 'Учасника не знайдено.' : 'У клубі поки немає учасників.'}
-          minWidth={isClub ? 960 : 740}
+          minWidth={isClub ? 1060 : 740}
         />
       </ProfilePage>
     </AppTheme>

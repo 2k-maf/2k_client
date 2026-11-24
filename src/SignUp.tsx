@@ -7,6 +7,7 @@ import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
 import Link from '@mui/material/Link';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -23,7 +24,8 @@ import axios from "./axios";
 import { useAuth } from './AuthProvider';
 import GoogleSignUpBlock, { GoogleSignUpData, signUpErrorMessage } from './components/GoogleSignUp';
 import {useEffect} from "react";
-import { BIRTH_DATE_MIN, birthDateMax } from './utils/birthDate';
+import BirthDateFields from './components/BirthDateFields';
+import { EMPTY_MONTH_DAY, MonthDay, monthDayValue } from './utils/birthDate';
 import InputLabel from "@mui/material/InputLabel";
 import Select, {SelectChangeEvent} from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -41,6 +43,8 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
   const [clubs, setClubs] = React.useState([]);
   const [google, setGoogle] = React.useState<GoogleSignUpData | null>(null);
   const [submitError, setSubmitError] = React.useState('');
+  const [birth, setBirth] = React.useState<MonthDay>(EMPTY_MONTH_DAY);
+  const [birthError, setBirthError] = React.useState(false);
   const { setToken } = useAuth();
   const navigate = useNavigate();
 
@@ -114,6 +118,11 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       setNickNameErrorMessage('');
     }
 
+    // Поле необов'язкове, але вибрати лише день або лише місяць не можна.
+    const birthIncomplete = monthDayValue(birth) === null;
+    setBirthError(birthIncomplete);
+    if (birthIncomplete) isValid = false;
+
     return isValid;
   };
 
@@ -127,9 +136,9 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
     const password = document.getElementById('password') as HTMLInputElement;
     const name = document.getElementById('name') as HTMLInputElement;
     const nickname = document.getElementById('nickname') as HTMLInputElement;
-    const birthDate = document.getElementById('birthDate') as HTMLInputElement;
-    // Дату народження надсилаємо лише заповнену.
-    const birth = birthDate.value ? { birthDate: birthDate.value } : {};
+    // День народження надсилаємо лише заповнений. validateInputs уже відсік неповний.
+    const birthDate = monthDayValue(birth);
+    const birthField = birthDate ? { birthDate } : {};
     const body = google
       ? {
           name: name.value,
@@ -137,7 +146,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
           clubs: [clubSelectId],
           googleCredential: google.credential,
           ...(password.value ? { password: password.value } : {}),
-          ...birth,
+          ...birthField,
         }
       : {
           name: name.value,
@@ -145,7 +154,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
           email: email.value,
           password: password.value,
           clubs: [clubSelectId],
-          ...birth,
+          ...birthField,
         };
     setSubmitError('');
     try {
@@ -251,17 +260,21 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 color={passwordError ? 'error' : 'primary'}
               />
             </FormControl>
-            <FormControl>
-              <FormLabel htmlFor="birthDate">Дата народження</FormLabel>
-              <TextField
-                fullWidth
-                id="birthDate"
-                name="birthDate"
-                type="date"
-                autoComplete="bday"
-                helperText="Необов'язково. Бачить лише адміністратор вашого клубу."
-                slotProps={{ htmlInput: { min: BIRTH_DATE_MIN, max: birthDateMax() } }}
+            <FormControl error={birthError}>
+              <FormLabel component="legend">День народження</FormLabel>
+              <BirthDateFields
+                value={birth}
+                error={birthError}
+                onChange={(value) => {
+                  setBirth(value);
+                  setBirthError(false);
+                }}
               />
+              <FormHelperText>
+                {birthError
+                  ? 'Виберіть і день, і місяць або залиште обидва порожніми.'
+                  : "Необов'язково, без року. Бачить лише адміністратор вашого клубу."}
+              </FormHelperText>
             </FormControl>
             {/*<FormControlLabel*/}
             {/*  control={<Checkbox value="allowExtraEmails" color="primary" />}*/}
