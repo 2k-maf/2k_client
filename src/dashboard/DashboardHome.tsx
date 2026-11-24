@@ -24,7 +24,8 @@ import { useAuth } from '../AuthProvider';
 import axios from '../axios';
 import { invalidateClubRatingCache } from '../utils/clubRatingCache';
 import { resolveMediaUrl } from '../utils/mediaUrl';
-import { BIRTH_DATE_MIN, birthDateInputValue, birthDateMax } from '../utils/birthDate';
+import BirthDateFields from '../components/BirthDateFields';
+import { EMPTY_MONTH_DAY, MonthDay, monthDayValue, parseMonthDay } from '../utils/birthDate';
 import { brandColors } from '../theme/brand';
 import { notify } from '../components/feedback/feedback';
 
@@ -55,18 +56,20 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
   const [periodName, setPeriodName] = useState('');
   const [nickname, setNickname] = useState('');
   /** Лише власна дата учасника; дату від клубу сюди не підставляємо. */
-  const [birthDate, setBirthDate] = useState('');
+  const [birth, setBirth] = useState<MonthDay>(EMPTY_MONTH_DAY);
+  /** Збережене значення `MM-DD` або ''. */
   const [savedBirthDate, setSavedBirthDate] = useState('');
   const [birthDateSaving, setBirthDateSaving] = useState(false);
+  const birthDraft = monthDayValue(birth);
 
   useEffect(() => {
     if (isClub) return;
     axios
       .get('/user/birth-date')
       .then(({ data }) => {
-        const value = birthDateInputValue(data?.birthDate);
-        setBirthDate(value);
-        setSavedBirthDate(value);
+        const value = parseMonthDay(data?.birthDate);
+        setBirth(value);
+        setSavedBirthDate(monthDayValue(value) || '');
       })
       .catch((e) => console.error(e));
   }, [isClub]);
@@ -130,15 +133,15 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
     setBirthDateSaving(true);
     try {
       const { data } = await axios.put('/user/birth-date', { birthDate: value || null });
-      const saved = birthDateInputValue(data?.birthDate);
-      setBirthDate(saved);
-      setSavedBirthDate(saved);
-      notify.success(value ? 'Дату народження збережено' : 'Дату народження видалено');
+      const saved = parseMonthDay(data?.birthDate);
+      setBirth(saved);
+      setSavedBirthDate(monthDayValue(saved) || '');
+      notify.success(value ? 'День народження збережено' : 'День народження видалено');
     } catch (e: any) {
       notify.error(
         e?.response?.data?.error === 'Invalid birth date'
-          ? 'Некоректна дата народження'
-          : 'Помилка при збереженні дати народження',
+          ? 'Некоректний день народження'
+          : 'Помилка при збереженні дня народження',
       );
     } finally {
       setBirthDateSaving(false);
@@ -310,26 +313,16 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
             <ProfileCard
               icon={<CakeIcon />}
               label="АКАУНТ"
-              title="Дата народження"
-              hint="Необов'язково. Бачить лише адміністратор вашого клубу."
+              title="День народження"
+              hint="Необов'язково, без року. Бачить лише адміністратор вашого клубу."
             >
-              <TextField
-                fullWidth
-                type="date"
-                label="Дата народження"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                slotProps={{
-                  inputLabel: { shrink: true },
-                  htmlInput: { min: BIRTH_DATE_MIN, max: birthDateMax() },
-                }}
-              />
+              <BirthDateFields value={birth} onChange={setBirth} disabled={birthDateSaving} />
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
                   variant="contained"
                   endIcon={<ChevronRightRoundedIcon />}
-                  disabled={birthDateSaving || !birthDate || birthDate === savedBirthDate}
-                  onClick={() => handleSaveBirthDate(birthDate)}
+                  disabled={birthDateSaving || !birthDraft || birthDraft === savedBirthDate}
+                  onClick={() => birthDraft && handleSaveBirthDate(birthDraft)}
                 >
                   Зберегти
                 </Button>

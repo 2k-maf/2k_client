@@ -1,25 +1,55 @@
-import { vancouverTodayYmd } from './vancouverDate';
+/**
+ * День народження: лише день і місяць, без року. Сервер зберігає рядок `MM-DD`.
+ * Клуб може привітати людину, але не знає її віку.
+ */
 
-/** Межі як на сервері: рік від 1900, не в майбутньому. Сервер усе одно перевіряє сам. */
-export const BIRTH_DATE_MIN = '1900-01-01';
+/** Чернетка з двох списків. Порожній рядок — значення ще не вибрано. */
+export type MonthDay = { month: string; day: string };
 
-/** Сьогодні у Ванкувері — верхня межа для <input type="date" />. */
-export function birthDateMax(): string {
-  return vancouverTodayYmd();
+export const EMPTY_MONTH_DAY: MonthDay = { month: '', day: '' };
+
+/** Назви місяців у родовому відмінку: «17 травня». */
+export const MONTHS_GENITIVE = [
+  'січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
+  'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня',
+];
+
+/** Назви місяців для списку вибору. */
+export const MONTHS_NOMINATIVE = [
+  'Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень',
+  'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень',
+];
+
+const MONTH_DAY = /^(\d{2})-(\d{2})$/;
+
+/** Днів у місяці без року: у лютому 29, щоб 29 лютого можна було вказати. */
+export function daysInMonth(month: string): number {
+  const m = Number(month);
+  if (!m) return 31;
+  return new Date(Date.UTC(2000, m, 0)).getUTCDate();
 }
 
-/** YYYY-MM-DD з відповіді сервера; без часового поясу, щоб дата не з'їхала на день. */
-export function birthDateInputValue(value: string | null | undefined): string {
-  const m = /^(\d{4}-\d{2}-\d{2})/.exec(value ?? '');
-  return m ? m[1] : '';
+/** `MM-DD` з сервера → чернетка. Інший формат дає порожню чернетку. */
+export function parseMonthDay(value: string | null | undefined): MonthDay {
+  const m = MONTH_DAY.exec(value ?? '');
+  return m ? { month: m[1], day: m[2] } : EMPTY_MONTH_DAY;
 }
 
-/** dd.mm.yyyy для таблиці або «—». */
+/**
+ * Чернетка → значення для сервера.
+ * '' — нічого не вибрано (очистити), `MM-DD` — повна дата, null — вибрано лише щось одне.
+ */
+export function monthDayValue({ month, day }: MonthDay): string | null {
+  if (!month && !day) return '';
+  if (!month || !day || Number(day) > daysInMonth(month)) return null;
+  return `${month}-${day}`;
+}
+
+/** «17 травня» для таблиці або «—». */
 export function formatBirthDate(value: string | null | undefined): string {
-  const ymd = birthDateInputValue(value);
-  if (!ymd) return '—';
-  const [y, m, d] = ymd.split('-');
-  return `${d}.${m}.${y}`;
+  const { month, day } = parseMonthDay(value);
+  if (!month) return '—';
+  return `${Number(day)} ${MONTHS_GENITIVE[Number(month) - 1]}`;
 }
 
 export type BirthDateSource = 'self' | 'club' | null;
