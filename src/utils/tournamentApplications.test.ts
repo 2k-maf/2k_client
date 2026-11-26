@@ -7,6 +7,7 @@ import {
   createLatestGuard,
   isAuthSettled,
   resolveApplyView,
+  tournamentHeaderUrl,
 } from './tournamentApplications';
 
 const base = {
@@ -121,6 +122,15 @@ describe('isAuthSettled', () => {
   });
   it('токен є, а користувача ще немає: чекаємо', () => {
     expect(isAuthSettled(false, 'jwt')).toBe(false);
+  });
+});
+
+describe('tournamentHeaderUrl', () => {
+  it('клуб: авторизований ендпоінт', () => {
+    expect(tournamentHeaderUrl('abc', true)).toBe('/tournament/abc');
+  });
+  it('гість або гравець: публічний ендпоінт', () => {
+    expect(tournamentHeaderUrl('abc', false)).toBe('/public/tournament/abc');
   });
 });
 

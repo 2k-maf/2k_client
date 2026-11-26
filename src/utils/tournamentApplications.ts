@@ -62,6 +62,14 @@ export function isAuthSettled(hasUser: boolean, storedToken: string | null): boo
   return hasUser || !storedToken;
 }
 
+/**
+ * URL заголовка турніру. Публічний ендпоінт віддає 404 для чернеток поза вікном видимості,
+ * тож клуб читає турнір авторизованим запитом (власник бачить його завжди).
+ */
+export function tournamentHeaderUrl(id: string, isClubUser: boolean): string {
+  return isClubUser ? `/tournament/${id}` : `/public/tournament/${id}`;
+}
+
 /** Лічильник запитів: лише останній запуск має право записувати стан. */
 export function createLatestGuard() {
   let current = 0;

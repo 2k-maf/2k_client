@@ -14,6 +14,9 @@ import {
   APPLICATION_ACTION_UA,
   applicationActions,
   applicationErrorMessage,
+  createLatestGuard,
+  isAuthSettled,
+  tournamentHeaderUrl,
   type ApplicationRow,
   type ApplicationStatus,
 } from './utils/tournamentApplications';
@@ -32,27 +35,35 @@ export default function TournamentApplicationsPage(props: { disableCustomTheme?:
   const isOwner =
     user?.authType === 'Клуб' && tournament != null && String(user._id) === String(tournament.clubId);
 
+  const isClubUser = user?.authType === 'Клуб';
+  const authSettled = isAuthSettled(Boolean(user), localStorage.getItem('jwt_token'));
+  const headerGuard = React.useRef(createLatestGuard()).current;
+
   React.useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
+    // Поки auth не усталився, не вантажимо: інакше клуб-власник побачить 404 публічного ендпоінта.
+    if (!id || !authSettled) return;
+    const requestId = headerGuard.next();
     (async () => {
       try {
-        const { data } = await axios.get<TournamentInfo>(`/public/tournament/${id}`);
-        if (!cancelled) {
-          setTournament(data);
-          setError(null);
+        let data: TournamentInfo;
+        try {
+          ({ data } = await axios.get<TournamentInfo>(tournamentHeaderUrl(id, isClubUser)));
+        } catch (e: any) {
+          // Клуб не власник цього турніру: авторизований запит дає 404, читаємо публічний.
+          if (!isClubUser || e?.response?.status !== 404) throw e;
+          ({ data } = await axios.get<TournamentInfo>(tournamentHeaderUrl(id, false)));
         }
+        if (!headerGuard.isLatest(requestId)) return;
+        setTournament(data);
+        setError(null);
       } catch (e: any) {
-        if (!cancelled) {
-          setTournament(null);
-          setError(e?.response?.status === 404 ? 'Турнір не знайдено або сторінка недоступна.' : 'Не вдалося завантажити.');
-        }
+        if (!headerGuard.isLatest(requestId)) return;
+        setTournament(null);
+        setError(e?.response?.status === 404 ? 'Турнір не знайдено або сторінка недоступна.' : 'Не вдалося завантажити.');
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
+    return () => headerGuard.invalidate();
+  }, [id, isClubUser, authSettled, headerGuard]);
 
   const loadList = React.useCallback(async () => {
     if (!id || !tournament) return;
