@@ -6,12 +6,10 @@ import CssBaseline from '@mui/material/CssBaseline';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
-import { styled } from '@mui/material/styles';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import AddchartIcon from '@mui/icons-material/Addchart';
 import CakeIcon from '@mui/icons-material/Cake';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
@@ -20,6 +18,7 @@ import AppTheme from '../theme/AppTheme';
 import ProfilePage from '../components/brand/ProfilePage';
 import ProfileCard, { ProfileCardGrid } from '../components/brand/ProfileCard';
 import GoogleLinkCard from '../components/GoogleLinkCard';
+import AvatarUploadButton from '../components/AvatarUploadButton';
 import { useAuth } from '../AuthProvider';
 import axios from '../axios';
 import { invalidateClubRatingCache } from '../utils/clubRatingCache';
@@ -28,20 +27,6 @@ import BirthDateFields from '../components/BirthDateFields';
 import { EMPTY_MONTH_DAY, MonthDay, monthDayValue, parseMonthDay } from '../utils/birthDate';
 import { brandColors } from '../theme/brand';
 import { notify } from '../components/feedback/feedback';
-
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
-
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
 
 type Club = { _id: string; name: string };
 
@@ -148,27 +133,6 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
     }
   };
 
-  const handleUploadAvatar = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (file.size > MAX_AVATAR_BYTES) {
-      notify.error('Файл занадто великий (макс. 2MB)');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const { data } = await axios.post('/user/avatar', { image: reader.result });
-        data?.token && setToken(data.token);
-        invalidateClubRatingCache();
-        notify.success(isClub ? 'Логотип клубу збережено' : 'Аватар оновлено');
-      } catch (e: any) {
-        notify.error(e?.response?.data?.error || 'Помилка при завантаженні');
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
   const avatarSrc = resolveMediaUrl(user?.avatarUrl);
 
   return (
@@ -202,14 +166,7 @@ export default function DashboardHome(props: { disableCustomTheme?: boolean }) {
                   }}
                 />
               )}
-              <Button component="label" variant="outlined" startIcon={<CloudUploadIcon />}>
-                Завантажити
-                <VisuallyHiddenInput
-                  type="file"
-                  accept=".jpg, .jpeg, .png"
-                  onChange={handleUploadAvatar}
-                />
-              </Button>
+              <AvatarUploadButton isClub={isClub} />
             </Box>
           </ProfileCard>
 
