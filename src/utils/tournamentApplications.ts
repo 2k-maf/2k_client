@@ -53,3 +53,23 @@ export function applicationErrorMessage(serverError: unknown): string {
   if (typeof serverError === 'string' && serverError.trim()) return serverError;
   return 'Не вдалося оновити заявку';
 }
+
+/**
+ * AuthProvider виставляє `user` в useEffect, тож на першому рендері `user` порожній
+ * навіть за наявного токена. Auth «усталений», коли користувач є або токена в сховищі немає.
+ */
+export function isAuthSettled(hasUser: boolean, storedToken: string | null): boolean {
+  return hasUser || !storedToken;
+}
+
+/** Лічильник запитів: лише останній запуск має право записувати стан. */
+export function createLatestGuard() {
+  let current = 0;
+  return {
+    next: () => ++current,
+    isLatest: (requestId: number) => requestId === current,
+    invalidate: () => {
+      current += 1;
+    },
+  };
+}

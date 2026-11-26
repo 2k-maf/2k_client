@@ -4,6 +4,8 @@ import {
   APPLICATION_STATUS_UA,
   applicationActions,
   applicationErrorMessage,
+  createLatestGuard,
+  isAuthSettled,
   resolveApplyView,
 } from './tournamentApplications';
 
@@ -106,5 +108,35 @@ describe('applicationErrorMessage', () => {
   it('без тексту — запасне повідомлення', () => {
     expect(applicationErrorMessage(undefined)).toBe('Не вдалося оновити заявку');
     expect(applicationErrorMessage('  ')).toBe('Не вдалося оновити заявку');
+  });
+});
+
+describe('isAuthSettled', () => {
+  it('є користувач: auth готовий', () => {
+    expect(isAuthSettled(true, 'jwt')).toBe(true);
+  });
+  it('немає користувача й немає токена в сховищі: гість, auth готовий', () => {
+    expect(isAuthSettled(false, null)).toBe(true);
+    expect(isAuthSettled(false, '')).toBe(true);
+  });
+  it('токен є, а користувача ще немає: чекаємо', () => {
+    expect(isAuthSettled(false, 'jwt')).toBe(false);
+  });
+});
+
+describe('createLatestGuard', () => {
+  it('лише останній запит вважається актуальним', () => {
+    const guard = createLatestGuard();
+    const first = guard.next();
+    expect(guard.isLatest(first)).toBe(true);
+    const second = guard.next();
+    expect(guard.isLatest(first)).toBe(false);
+    expect(guard.isLatest(second)).toBe(true);
+  });
+  it('invalidate скасовує поточний запит', () => {
+    const guard = createLatestGuard();
+    const first = guard.next();
+    guard.invalidate();
+    expect(guard.isLatest(first)).toBe(false);
   });
 });

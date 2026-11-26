@@ -12,7 +12,13 @@ import axios from './axios';
 import { useAuth } from './AuthProvider';
 import { notify } from './components/feedback/feedback';
 import { formatDateUkVancouver } from './utils/vancouverDate';
-import { APPLICATION_STATUS_UA, resolveApplyView, type ApplicationStatus } from './utils/tournamentApplications';
+import {
+  APPLICATION_STATUS_UA,
+  createLatestGuard,
+  isAuthSettled,
+  resolveApplyView,
+  type ApplicationStatus,
+} from './utils/tournamentApplications';
 
 type TournamentInfo = {
   name: string;
@@ -33,9 +39,13 @@ export default function TournamentApplyPage(props: { disableCustomTheme?: boolea
   const [avatarMissing, setAvatarMissing] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
 
-  /** Єдиний завантажувач: турнір + (лише для гравця) власна заявка. */
+  const authSettled = isAuthSettled(Boolean(user), localStorage.getItem('jwt_token'));
+  const loadGuard = React.useRef(createLatestGuard()).current;
+
+  /** Єдиний завантажувач: турнір + (лише для гравця) власна заявка. Стан пише лише останній запуск. */
   const load = React.useCallback(async () => {
-    if (!id) return;
+    if (!id || !authSettled) return;
+    const requestId = loadGuard.next();
     try {
       const [tournamentRes, myRes] = await Promise.all([
         axios.get<TournamentInfo>(`/public/tournament/${id}`),
@@ -43,17 +53,24 @@ export default function TournamentApplyPage(props: { disableCustomTheme?: boolea
           ? axios.get<{ status: ApplicationStatus | null }>(`/tournament/${id}/my-application`)
           : Promise.resolve(null),
       ]);
+      if (!loadGuard.isLatest(requestId)) return;
       setTournament(tournamentRes.data);
       setMyStatus(myRes?.data.status ?? null);
       setLoadState('ready');
     } catch (e: any) {
+      if (!loadGuard.isLatest(requestId)) return;
       setLoadState(e?.response?.status === 404 ? 'notFound' : 'error');
     }
-  }, [id, authType]);
+  }, [id, authType, authSettled, loadGuard]);
 
   React.useEffect(() => {
+    // Змінилися id або auth: скидаємо стан, щоб не показувати чужий вид, і скасовуємо запити в польоті.
+    setLoadState('loading');
+    setTournament(null);
+    setMyStatus(null);
     void load();
-  }, [load]);
+    return () => loadGuard.invalidate();
+  }, [load, loadGuard]);
 
   /** Виконує запит заявки, а помилку віддає в `onError` за кодом сервера. */
   const runAction = async (
