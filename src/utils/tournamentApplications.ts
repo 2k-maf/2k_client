@@ -18,6 +18,19 @@ export const APPLICATION_STATUS_UA: Record<ApplicationStatus, string> = {
   rejected: 'Відхилено',
 };
 
+export const APPLICATION_ACTION_UA: Record<ApplicationStatus, string> = {
+  approved: 'Схвалити',
+  rejected: 'Відхилити',
+  pending: 'Повернути в очікування',
+};
+
+const APPLICATION_ACTION_ORDER: ApplicationStatus[] = ['approved', 'rejected', 'pending'];
+
+/** Статуси, на які клуб може перевести заявку (усі, крім поточного). */
+export function applicationActions(status: ApplicationStatus): ApplicationStatus[] {
+  return APPLICATION_ACTION_ORDER.filter((s) => s !== status);
+}
+
 export type ApplyView = 'login' | 'club' | 'closed' | 'avatar' | 'form' | 'submitted';
 
 export function resolveApplyView(input: {
@@ -32,4 +45,11 @@ export function resolveApplyView(input: {
   if (input.tournamentStatus !== 'draft') return 'closed';
   if (!input.hasAvatar) return 'avatar';
   return 'form';
+}
+
+/** Текст помилки зміни статусу заявки для notify.error (код сервера -> українське повідомлення). */
+export function applicationErrorMessage(serverError: unknown): string {
+  if (serverError === 'TOURNAMENT_NOT_OPEN') return 'Набір закрито: турнір вже почався';
+  if (typeof serverError === 'string' && serverError.trim()) return serverError;
+  return 'Не вдалося оновити заявку';
 }

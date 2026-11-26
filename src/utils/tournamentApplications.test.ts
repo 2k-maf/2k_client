@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { APPLICATION_STATUS_UA, resolveApplyView } from './tournamentApplications';
+import {
+  APPLICATION_ACTION_UA,
+  APPLICATION_STATUS_UA,
+  applicationActions,
+  applicationErrorMessage,
+  resolveApplyView,
+} from './tournamentApplications';
 
 const base = {
   authType: 'Учасник' as const,
@@ -61,5 +67,44 @@ describe('resolveApplyView', () => {
 describe('APPLICATION_STATUS_UA', () => {
   it('містить переклад для кожного статусу', () => {
     expect(Object.keys(APPLICATION_STATUS_UA).sort()).toEqual(['approved', 'pending', 'rejected']);
+  });
+});
+
+describe('applicationActions', () => {
+  it('pending -> approved, rejected', () => {
+    expect(applicationActions('pending')).toEqual(['approved', 'rejected']);
+  });
+
+  it('approved -> rejected, pending', () => {
+    expect(applicationActions('approved')).toEqual(['rejected', 'pending']);
+  });
+
+  it('rejected -> approved, pending', () => {
+    expect(applicationActions('rejected')).toEqual(['approved', 'pending']);
+  });
+});
+
+describe('APPLICATION_ACTION_UA', () => {
+  it('точні підписи кнопок', () => {
+    expect(APPLICATION_ACTION_UA).toEqual({
+      approved: 'Схвалити',
+      rejected: 'Відхилити',
+      pending: 'Повернути в очікування',
+    });
+  });
+});
+
+describe('applicationErrorMessage', () => {
+  it('TOURNAMENT_NOT_OPEN -> українське повідомлення', () => {
+    expect(applicationErrorMessage('TOURNAMENT_NOT_OPEN')).toBe('Набір закрито: турнір вже почався');
+  });
+
+  it('інший текст сервера повертається як є', () => {
+    expect(applicationErrorMessage('Усі 10 місць зайняті')).toBe('Усі 10 місць зайняті');
+  });
+
+  it('без тексту — запасне повідомлення', () => {
+    expect(applicationErrorMessage(undefined)).toBe('Не вдалося оновити заявку');
+    expect(applicationErrorMessage('  ')).toBe('Не вдалося оновити заявку');
   });
 });

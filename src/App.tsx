@@ -23,6 +23,7 @@ import ScoringRules from "./ScoringRules";
 import Rules from "./Rules";
 import ResetPassword from "./ResetPassword";
 import PublicTournamentPage from "./PublicTournamentPage";
+import TournamentApplicationsPage from "./TournamentApplicationsPage";
 import StreamOverlay from "./stream/StreamOverlay";
 import NotFound from "./NotFound";
 
@@ -54,6 +55,7 @@ const App = () => {
           <Route path="rules" element={<Rules />} />
           <Route path="clubs" element={<ClubsList />} />
           <Route path="tournaments/:id" element={<PublicTournamentPage />} />
+          <Route path="tournaments/:id/applications" element={<TournamentApplicationsPage />} />
           <Route path="overlay" element={<StreamOverlay />} />
           <Route path="new-game" element={<NewGame />} />
           <Route path="profile" element={<PrivateRoute Component={DashboardHome}/>} />
