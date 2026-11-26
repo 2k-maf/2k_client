@@ -21,7 +21,7 @@ import Tab from '@mui/material/Tab';
 import { alpha } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import AppTheme from './theme/AppTheme';
 import BrandPage from './components/brand/BrandPage';
@@ -640,6 +640,18 @@ export default function PublicTournamentPage(props: { disableCustomTheme?: boole
                   <Typography variant="caption" color="text.secondary">
                     Ігор: {data.numGames}
                   </Typography>
+                  {data.status === 'draft' && id && (
+                    <>
+                      {!isClubOwnerPublic && (
+                        <Button component={RouterLink} to={`/tournaments/${id}/apply`} variant="contained" size="small">
+                          Податись на участь
+                        </Button>
+                      )}
+                      <Button component={RouterLink} to={`/tournaments/${id}/applications`} variant="outlined" size="small">
+                        Заявки
+                      </Button>
+                    </>
+                  )}
                 </Stack>
               </Stack>
 

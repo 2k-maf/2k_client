@@ -348,6 +348,11 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
                     Діюча гра
                   </Button>
                 )}
+                {isClubOwner && (
+                  <Button component={Link} to={`/tournaments/${id}/applications`} variant="outlined" size="small">
+                    Заявки
+                  </Button>
+                )}
               </Stack>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 Статус: {statusUa[tournament?.status] || tournament?.status} · Ігор: {tournament?.numGames} ·
