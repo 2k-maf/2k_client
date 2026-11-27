@@ -8,12 +8,14 @@ import { Link as RouterLink, useParams } from 'react-router-dom';
 import AppTheme from './theme/AppTheme';
 import BrandPage from './components/brand/BrandPage';
 import AvatarUploadButton from './components/AvatarUploadButton';
+import TournamentAnnouncement from './components/TournamentAnnouncement';
 import axios from './axios';
 import { useAuth } from './AuthProvider';
 import { notify } from './components/feedback/feedback';
 import { formatDateUkVancouver } from './utils/vancouverDate';
 import {
   APPLICATION_STATUS_UA,
+  applyInfoUrl,
   createLatestGuard,
   isAuthSettled,
   resolveApplyView,
@@ -25,6 +27,8 @@ type TournamentInfo = {
   status: string;
   scheduledDate: string | null;
   clubName: string;
+  posterUrl: string | null;
+  publicDescription: string;
 };
 
 type LoadState = 'loading' | 'ready' | 'notFound' | 'error';
@@ -48,7 +52,7 @@ export default function TournamentApplyPage(props: { disableCustomTheme?: boolea
     const requestId = loadGuard.next();
     try {
       const [tournamentRes, myRes] = await Promise.all([
-        axios.get<TournamentInfo>(`/public/tournament/${id}`),
+        axios.get<TournamentInfo>(applyInfoUrl(id)),
         authType === 'Учасник'
           ? axios.get<{ status: ApplicationStatus | null }>(`/tournament/${id}/my-application`)
           : Promise.resolve(null),
@@ -226,7 +230,12 @@ export default function TournamentApplyPage(props: { disableCustomTheme?: boolea
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
       <BrandPage eyebrow="Заявки на участь" title={tournament?.name ?? 'Податись на участь'}>
-        {renderBody()}
+        <Stack spacing={2}>
+          {tournament ? (
+            <TournamentAnnouncement posterUrl={tournament.posterUrl} description={tournament.publicDescription} />
+          ) : null}
+          {renderBody()}
+        </Stack>
       </BrandPage>
     </AppTheme>
   );

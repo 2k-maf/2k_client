@@ -62,12 +62,17 @@ export function isAuthSettled(hasUser: boolean, storedToken: string | null): boo
   return hasUser || !storedToken;
 }
 
+/** Публічні дані турніру для сторінок подачі й заявок (без чернеток поза вікном видимості). */
+export function applyInfoUrl(id: string): string {
+  return `/public/tournament/${id}/apply-info`;
+}
+
 /**
  * URL заголовка турніру. Публічний ендпоінт віддає 404 для чернеток поза вікном видимості,
  * тож клуб читає турнір авторизованим запитом (власник бачить його завжди).
  */
 export function tournamentHeaderUrl(id: string, isClubUser: boolean): string {
-  return isClubUser ? `/tournament/${id}` : `/public/tournament/${id}`;
+  return isClubUser ? `/tournament/${id}` : applyInfoUrl(id);
 }
 
 /** Лічильник запитів: лише останній запуск має право записувати стан. */

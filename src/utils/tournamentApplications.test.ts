@@ -4,6 +4,7 @@ import {
   APPLICATION_STATUS_UA,
   applicationActions,
   applicationErrorMessage,
+  applyInfoUrl,
   createLatestGuard,
   isAuthSettled,
   resolveApplyView,
@@ -125,12 +126,18 @@ describe('isAuthSettled', () => {
   });
 });
 
+describe('applyInfoUrl', () => {
+  it('публічний ендпоінт apply-info', () => {
+    expect(applyInfoUrl('a1')).toBe('/public/tournament/a1/apply-info');
+  });
+});
+
 describe('tournamentHeaderUrl', () => {
   it('клуб: авторизований ендпоінт', () => {
-    expect(tournamentHeaderUrl('abc', true)).toBe('/tournament/abc');
+    expect(tournamentHeaderUrl('a1', true)).toBe('/tournament/a1');
   });
-  it('гість або гравець: публічний ендпоінт', () => {
-    expect(tournamentHeaderUrl('abc', false)).toBe('/public/tournament/abc');
+  it('гість або гравець: apply-info', () => {
+    expect(tournamentHeaderUrl('a1', false)).toBe('/public/tournament/a1/apply-info');
   });
 });
 
