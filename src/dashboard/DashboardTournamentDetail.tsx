@@ -25,6 +25,7 @@ import { downloadSeatingAsPng } from '../utils/seatingPngExport';
 import { DEFAULT_TOURNAMENT_YOUTUBE_URL } from '../constants/youtube';
 import { confirmAction, notify } from '../components/feedback/feedback';
 import TournamentPosterField from '../components/TournamentPosterField';
+import { mergeParticipantUsers } from '../utils/participantUsers';
 
 /** Число в моно-шрифті — колонки рейтингу мають вирівнюватись по розряду. */
 const num = (value: any) => (
@@ -134,6 +135,11 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
     });
   }, [id, refresh, navigate]);
 
+  const knownUsers = React.useMemo(
+    () => mergeParticipantUsers(clubUsers, tournament?.participantUsers),
+    [clubUsers, tournament]
+  );
+
   React.useEffect(() => {
     if (!tournament) return;
     const parts = tournament.participants || [];
@@ -141,15 +147,15 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
       parts.map((p: any) => {
         const ids = (p.userIds || []).map(String);
         const u1 = ids[0]
-          ? clubUsers.find((u) => String(u._id) === ids[0]) || { _id: ids[0], nickname: ids[0] }
+          ? knownUsers.find((u) => String(u._id) === ids[0]) || { _id: ids[0], nickname: ids[0] }
           : null;
         const u2 = ids[1]
-          ? clubUsers.find((u) => String(u._id) === ids[1]) || { _id: ids[1], nickname: ids[1] }
+          ? knownUsers.find((u) => String(u._id) === ids[1]) || { _id: ids[1], nickname: ids[1] }
           : null;
         return { u1, u2 };
       })
     );
-  }, [tournament, clubUsers]);
+  }, [tournament, knownUsers]);
 
   const savePoster = async (request: () => Promise<unknown>) => {
     setPosterBusy(true);
@@ -219,7 +225,7 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
   const seatingLabel = (cell: { userIds: string[] } | undefined) => {
     if (!cell?.userIds?.length) return '—';
     return cell.userIds
-      .map((uid) => nick(clubUsers.find((u) => u._id === uid) || { _id: uid, nickname: uid }))
+      .map((uid) => nick(knownUsers.find((u) => u._id === uid) || { _id: uid, nickname: uid }))
       .join(' / ');
   };
 

@@ -41,6 +41,7 @@ import { votingFromNominated } from "./stream/activeGameSync";
 import ObsMuteButton, { compactHeaderQuery } from "./stream/ObsMuteButton";
 import { nextSeatMark, seatMark, seatMarkAction } from "./seatMark";
 import { useActiveGameSync } from "./stream/useActiveGameSync";
+import { mergeParticipantUsers } from "./utils/participantUsers";
 
 /**
  * Палець ведучого потребує зони дотику ≥44px. Лише для сенсорних екранів:
@@ -287,7 +288,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
   const [tournamentTitle, setTournamentTitle] = React.useState('');
   const [tournamentNumGames, setTournamentNumGames] = React.useState(0);
 
-  const [clubUsers, setClubUsers] = React.useState([]);
+  const [clubUsers, setClubUsers] = React.useState<any[]>([]);
   /** Унікальні гравці вечора (розсадка + ігри сьогодні) для топу пікера. */
   const [eveningPlayers, setEveningPlayers] = React.useState<Array<{ id: string; title: string }>>([]);
   const [winState, setWinState] = React.useState(saved?.winState || '');
@@ -752,7 +753,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
               setEditingSavedTournamentGame(true);
               try {
                 const { data: cu } = await axios.get('/club/users');
-                const members = cu.items || [];
+                const members = mergeParticipantUsers<any>(cu.items || [], tour.participantUsers);
                 setClubUsers(() => members.map((item: any, i: number) => ({ ...item, id: i + 1 })));
               } catch {
                 setClubUsers([]);
@@ -774,7 +775,7 @@ export default function NewGame(props: { disableCustomTheme?: boolean }) {
           }
 
           const { data: cu } = await axios.get('/club/users');
-          const members = cu.items || [];
+          const members = mergeParticipantUsers<any>(cu.items || [], tour.participantUsers);
           const array = members.map((item: any, i: number) => ({ ...item, id: i + 1 }));
           setClubUsers(() => array);
 
