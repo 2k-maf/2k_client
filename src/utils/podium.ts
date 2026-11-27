@@ -12,6 +12,9 @@ export type RatingPlayer = {
   totalGames: number;
   totalWinsRate: number;
   bonusPoints?: number;
+  /** Кількість ігор із вилученням (4 фоли) і сума штрафів за них (від'ємна). */
+  foulGames?: number;
+  foulPoints?: number;
   mafiaWins: number;
   mafiaGames: number;
   donWins: number;

@@ -22,9 +22,9 @@ import { formatFloat1, formatSeasonLabel, RatingPlayer } from './utils/podium';
 const PAGE_SIZE = 15;
 
 /** Сітка колонок таблиці — однакова для шапки і рядків. */
-const GRID_COLUMNS = '56px minmax(0,1fr) 148px 128px 72px 84px 84px';
+const GRID_COLUMNS = '56px minmax(0,1fr) 148px 128px 72px 84px 84px 84px';
 
-const HEADERS = ['№', 'ГРАВЕЦЬ', 'РЕЙТ', 'ІГРИ', 'ПВ', 'ОП5', 'ДБ'];
+const HEADERS = ['№', 'ГРАВЕЦЬ', 'РЕЙТ', 'ІГРИ', 'ПВ', 'ОП5', 'ДБ', 'ФОЛ'];
 
 /** Розшифровка скорочень заголовків: підказка при наведенні і легенда під таблицею. */
 const HEADER_HINTS: Record<string, string> = {
@@ -32,15 +32,16 @@ const HEADER_HINTS: Record<string, string> = {
   ПВ: 'перший вбитий',
   ОП5: "опорна п'ятірка",
   ДБ: 'додаткові бали від судді',
+  ФОЛ: 'штраф за вилучення (4 фоли)',
 };
 
-const LEGEND = ['ПВ', 'ОП5', 'ДБ'].map((term) => ({ term, text: HEADER_HINTS[term] }));
+const LEGEND = ['ПВ', 'ОП5', 'ДБ', 'ФОЛ'].map((term) => ({ term, text: HEADER_HINTS[term] }));
 
 /**
  * Нижче md рядок — картка у два яруси: зверху гравець і рейтинг, знизу статистика.
  * Раніше таблиця 860px гортала вбік, і на телефоні було видно 3 колонки із 7.
  */
-const MOBILE_COLUMNS = '28px minmax(0,1.6fr) repeat(3, minmax(0,1fr))';
+const MOBILE_COLUMNS = '28px minmax(0,1.6fr) repeat(4, minmax(0,1fr))';
 
 /** Місце комірки в картці на телефоні. Від md комірка стоїть у своїй колонці таблиці. */
 const mobileCell = (column: string, row: string) => ({
@@ -73,6 +74,9 @@ const formatSupportFive = (p: RatingPlayer) =>
     : '—';
 
 const formatBonus = (p: RatingPlayer) => (p.bonusPoints ? `+${formatFloat1(p.bonusPoints)}` : '—');
+
+/** Сума штрафів за 4 фоли (від'ємна) — вона вже входить у рейтинг, колонка лише показує її. */
+const formatFouls = (p: RatingPlayer) => (p.foulGames ? formatFloat1(p.foulPoints ?? 0) : '—');
 
 const roleStatLine = (icon: React.ReactNode, wins: number, games: number, rate: number) => (
   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.3 }}>
@@ -150,7 +154,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
         }
       >
         <Box sx={{ borderTop: `1px solid ${fg(0.14)}`, overflowX: 'auto' }}>
-          <Box sx={{ minWidth: { xs: 0, md: 860 } }}>
+          <Box sx={{ minWidth: { xs: 0, md: 950 } }}>
             {/* Сітка з div: ролі ARIA повертають читачу екрана рядки й колонки таблиці. */}
             <Box role="table" aria-label="Рейтинг гравців клубу">
             <Box
@@ -222,7 +226,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                   >
                     {player.rank}
                   </Box>
-                  <Box role="cell" sx={{ ...mobileCell('2 / span 3', '1'), display: 'flex', alignItems: 'center', gap: 1.75, minWidth: 0 }}>
+                  <Box role="cell" sx={{ ...mobileCell('2 / span 4', '1'), display: 'flex', alignItems: 'center', gap: 1.75, minWidth: 0 }}>
                     <Avatar
                       src={player.avatarUrl || undefined}
                       sx={{
@@ -262,7 +266,7 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                       )}
                     </Box>
                   </Box>
-                  <Box role="cell" sx={{ ...mobileCell('5', '1'), display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  <Box role="cell" sx={{ ...mobileCell('6', '1'), display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                     <Box component="span" sx={{ ...monoSx(16, brandColors.text), fontWeight: 700 }}>
                       {formatFloat1(player.rating)}
                     </Box>
@@ -301,6 +305,10 @@ export default function Rating(props: { disableCustomTheme?: boolean }) {
                   <Box component="span" role="cell" sx={{ ...mobileStatCell('5'), ...monoSx(13), textAlign: { xs: 'left', md: 'right' } }}>
                     <MobileLabel>{HEADERS[6]}</MobileLabel>
                     {formatBonus(player)}
+                  </Box>
+                  <Box component="span" role="cell" sx={{ ...mobileStatCell('6'), ...monoSx(13), textAlign: { xs: 'left', md: 'right' } }}>
+                    <MobileLabel>{HEADERS[7]}</MobileLabel>
+                    {formatFouls(player)}
                   </Box>
                 </Box>
               );
