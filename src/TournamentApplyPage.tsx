@@ -152,15 +152,9 @@ export default function TournamentApplyPage(props: { disableCustomTheme?: boolea
     });
 
     switch (view) {
-      case 'login':
-        return (
-          <Stack spacing={2}>
-            <Typography>Щоб подати заявку, увійдіть як гравець.</Typography>
-            <Button component={RouterLink} to="/login" variant="contained" sx={{ alignSelf: 'flex-start' }}>
-              Увійти
-            </Button>
-          </Stack>
-        );
+      case 'guest':
+      case 'guestSubmitted':
+        return null;
       case 'club':
         return (
           <Stack spacing={2}>
