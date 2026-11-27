@@ -5,6 +5,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useAuth } from '../AuthProvider';
 import axios from '../axios';
 import { invalidateClubRatingCache } from '../utils/clubRatingCache';
+import { formatMaxMb, IMAGE_ACCEPT, readImageFile } from '../utils/imageFile';
 import { notify } from './feedback/feedback';
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
@@ -29,32 +30,33 @@ type AvatarUploadButtonProps = {
 export default function AvatarUploadButton({ isClub, onUploaded }: AvatarUploadButtonProps) {
   const { setToken } = useAuth();
 
-  const handleUploadAvatar = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (file.size > MAX_AVATAR_BYTES) {
-      notify.error('Файл занадто великий (макс. 2MB)');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const { data } = await axios.post('/user/avatar', { image: reader.result });
-        data?.token && setToken(data.token);
-        invalidateClubRatingCache();
-        notify.success(isClub ? 'Логотип клубу збережено' : 'Аватар оновлено');
-        onUploaded?.();
-      } catch (e: any) {
-        notify.error(e?.response?.data?.error || 'Помилка при завантаженні');
+    try {
+      const result = await readImageFile(file, MAX_AVATAR_BYTES);
+      if (!result.ok) {
+        notify.error(
+          result.reason === 'type'
+            ? 'Дозволені лише файли JPEG або PNG'
+            : `Файл занадто великий (макс. ${formatMaxMb(MAX_AVATAR_BYTES)})`,
+        );
+        return;
       }
-    };
-    reader.readAsDataURL(file);
+      const { data } = await axios.post('/user/avatar', { image: result.dataUrl });
+      data?.token && setToken(data.token);
+      invalidateClubRatingCache();
+      notify.success(isClub ? 'Логотип клубу збережено' : 'Аватар оновлено');
+      onUploaded?.();
+    } catch (e: any) {
+      notify.error(e?.response?.data?.error || 'Помилка при завантаженні');
+    }
   };
 
   return (
     <Button component="label" variant="outlined" startIcon={<CloudUploadIcon />}>
       Завантажити
-      <VisuallyHiddenInput type="file" accept=".jpg, .jpeg, .png" onChange={handleUploadAvatar} />
+      <VisuallyHiddenInput type="file" accept={IMAGE_ACCEPT} onChange={handleUploadAvatar} />
     </Button>
   );
 }
