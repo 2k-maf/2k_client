@@ -3,16 +3,25 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import AppTheme from './theme/AppTheme';
 import BrandPage from './components/brand/BrandPage';
 import AvatarUploadButton from './components/AvatarUploadButton';
+import GuestApplyForm, { type GuestApplyInput } from './components/GuestApplyForm';
 import TournamentAnnouncement from './components/TournamentAnnouncement';
 import axios from './axios';
 import { useAuth } from './AuthProvider';
 import { notify } from './components/feedback/feedback';
 import { formatDateUkVancouver } from './utils/vancouverDate';
+import {
+  adoptGuestToken,
+  clearGuestToken,
+  guestApplicationLink,
+  guestApplyErrorMessage,
+  saveGuestToken,
+} from './utils/guestApplication';
 import {
   APPLICATION_STATUS_UA,
   applyInfoUrl,
@@ -33,6 +42,9 @@ type TournamentInfo = {
 
 type LoadState = 'loading' | 'ready' | 'notFound' | 'error';
 
+const guestApplicationUrl = (id: string) => `/public/tournament/${id}/guest-application`;
+const guestTokenHeaders = (token: string) => ({ 'x-guest-token': token });
+
 export default function TournamentApplyPage(props: { disableCustomTheme?: boolean }) {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -42,36 +54,74 @@ export default function TournamentApplyPage(props: { disableCustomTheme?: boolea
   const [loadState, setLoadState] = React.useState<LoadState>('loading');
   const [avatarMissing, setAvatarMissing] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
+  // Токен гостя живе в стані: `adoptGuestToken` прибирає `#g=` з URL, навіть якщо localStorage недоступний.
+  const [guestToken, setGuestToken] = React.useState<string | null>(null);
+  const [guestStatus, setGuestStatus] = React.useState<ApplicationStatus | null>(null);
+  const guestSession = React.useRef<{ id: string; token: string | null } | null>(null);
 
   const authSettled = isAuthSettled(Boolean(user), localStorage.getItem('jwt_token'));
   const loadGuard = React.useRef(createLatestGuard()).current;
 
-  /** Єдиний завантажувач: турнір + (лише для гравця) власна заявка. Стан пише лише останній запуск. */
+  /** Токен більше не діє (заявку відкликано або її не знайдено): прибираємо зі сховища й зі стану. */
+  const forgetGuestToken = React.useCallback((tournamentId: string) => {
+    clearGuestToken(tournamentId);
+    guestSession.current = { id: tournamentId, token: null };
+    setGuestToken(null);
+  }, []);
+
+  /** Токен гостя для `id`: фрагмент URL забираємо один раз на `id`, далі беремо із сесії сторінки. */
+  const resolveGuestToken = React.useCallback(
+    (tournamentId: string): string | null => {
+      if (authType) {
+        guestSession.current = null;
+        return null;
+      }
+      if (guestSession.current?.id !== tournamentId) {
+        guestSession.current = { id: tournamentId, token: adoptGuestToken(tournamentId) };
+      }
+      return guestSession.current.token;
+    },
+    [authType],
+  );
+
+  /** Єдиний завантажувач: турнір + власна заявка (гравець) або статус за токеном (гість). Стан пише лише останній запуск. */
   const load = React.useCallback(async () => {
     if (!id || !authSettled) return;
     const requestId = loadGuard.next();
+    const token = resolveGuestToken(id);
     try {
-      const [tournamentRes, myRes] = await Promise.all([
+      const [tournamentRes, myRes, guestRes] = await Promise.all([
         axios.get<TournamentInfo>(applyInfoUrl(id)),
         authType === 'Учасник'
           ? axios.get<{ status: ApplicationStatus | null }>(`/tournament/${id}/my-application`)
           : Promise.resolve(null),
+        token
+          ? axios.get<{ status: ApplicationStatus | null }>(guestApplicationUrl(id), {
+              headers: guestTokenHeaders(token),
+            })
+          : Promise.resolve(null),
       ]);
       if (!loadGuard.isLatest(requestId)) return;
+      const nextGuestStatus = guestRes?.data.status ?? null;
+      if (token && !nextGuestStatus) forgetGuestToken(id);
       setTournament(tournamentRes.data);
       setMyStatus(myRes?.data.status ?? null);
+      setGuestToken(nextGuestStatus ? token : null);
+      setGuestStatus(nextGuestStatus);
       setLoadState('ready');
     } catch (e: any) {
       if (!loadGuard.isLatest(requestId)) return;
       setLoadState(e?.response?.status === 404 ? 'notFound' : 'error');
     }
-  }, [id, authType, authSettled, loadGuard]);
+  }, [id, authType, authSettled, loadGuard, resolveGuestToken, forgetGuestToken]);
 
   React.useEffect(() => {
     // Змінилися id або auth: скидаємо стан, щоб не показувати чужий вид, і скасовуємо запити в польоті.
     setLoadState('loading');
     setTournament(null);
     setMyStatus(null);
+    setGuestToken(null);
+    setGuestStatus(null);
     void load();
     return () => loadGuard.invalidate();
   }, [load, loadGuard]);
@@ -126,6 +176,43 @@ export default function TournamentApplyPage(props: { disableCustomTheme?: boolea
       },
     );
 
+  const guestApply = (input: GuestApplyInput) =>
+    runAction(
+      async () => {
+        const { data } = await axios.post<{ token: string }>(`/public/tournament/${id}/guest-apply`, input);
+        saveGuestToken(id!, data.token);
+        guestSession.current = { id: id!, token: data.token };
+        setGuestToken(data.token);
+      },
+      () => setGuestStatus('pending'),
+      async (code) => {
+        notify.error(guestApplyErrorMessage(code));
+        if (code === 'TOURNAMENT_NOT_OPEN') await load();
+      },
+    );
+
+  const guestWithdraw = (token: string) =>
+    runAction(
+      () => axios.delete(guestApplicationUrl(id!), { headers: guestTokenHeaders(token) }),
+      async () => {
+        forgetGuestToken(id!);
+        await load();
+      },
+      async (code) => {
+        notify.error(code === 'TOURNAMENT_NOT_OPEN' ? guestApplyErrorMessage(code) : 'Не вдалося відкликати заявку');
+        if (code === 'TOURNAMENT_NOT_OPEN') await load();
+      },
+    );
+
+  const copyGuestLink = async (link: string) => {
+    try {
+      await navigator.clipboard.writeText(link);
+      notify.success('Посилання скопійовано');
+    } catch {
+      notify.error('Не вдалося скопіювати посилання');
+    }
+  };
+
   const backToTournament = (
     <Button component={RouterLink} to={`/tournaments/${id}`} variant="outlined" sx={{ alignSelf: 'flex-start' }}>
       До сторінки турніру
@@ -149,12 +236,50 @@ export default function TournamentApplyPage(props: { disableCustomTheme?: boolea
       hasAvatar: Boolean(user?.avatarUrl) && !avatarMissing,
       tournamentStatus: tournament.status,
       myStatus,
+      guestStatus,
     });
 
     switch (view) {
       case 'guest':
-      case 'guestSubmitted':
-        return null;
+        return <GuestApplyForm busy={busy} onSubmit={guestApply} />;
+      case 'guestSubmitted': {
+        const link = guestToken ? guestApplicationLink(window.location.origin, id!, guestToken) : null;
+        return (
+          <Stack spacing={2}>
+            <Typography>Вашу заявку подано.</Typography>
+            {guestStatus ? <Typography>Статус: {APPLICATION_STATUS_UA[guestStatus]}</Typography> : null}
+            {link ? (
+              <Stack spacing={1}>
+                <Typography variant="body2">
+                  Збережіть це приватне посилання: за ним можна переглянути статус заявки або відкликати її.
+                </Typography>
+                <Stack direction="row" gap={1} alignItems="center">
+                  <TextField
+                    value={link}
+                    size="small"
+                    fullWidth
+                    slotProps={{ htmlInput: { readOnly: true, 'aria-label': 'Приватне посилання на заявку' } }}
+                  />
+                  <Button variant="outlined" onClick={() => void copyGuestLink(link)}>
+                    Скопіювати
+                  </Button>
+                </Stack>
+              </Stack>
+            ) : null}
+            {guestToken && tournament.status === 'draft' && guestStatus !== 'rejected' ? (
+              <Button
+                variant="outlined"
+                color="error"
+                disabled={busy}
+                onClick={() => void guestWithdraw(guestToken)}
+                sx={{ alignSelf: 'flex-start' }}
+              >
+                Відкликати заявку
+              </Button>
+            ) : null}
+          </Stack>
+        );
+      }
       case 'club':
         return (
           <Stack spacing={2}>
