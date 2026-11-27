@@ -37,7 +37,7 @@ export function applicationActions(status: ApplicationStatus): ApplicationStatus
 
 /** Ключ рядка заявки: гість має `applicationId`, гравець — `userId`. */
 export function applicationRowKey(row: ApplicationRow): string {
-  return (row.applicationId ?? row.userId) as string;
+  return row.applicationId ?? row.userId ?? '';
 }
 
 /** URL рішення клубу щодо заявки (гостьова або гравця). */
