@@ -5,7 +5,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useAuth } from '../AuthProvider';
 import axios from '../axios';
 import { invalidateClubRatingCache } from '../utils/clubRatingCache';
-import { formatMaxMb, IMAGE_ACCEPT, readImageFile } from '../utils/imageFile';
+import { formatMaxMb, IMAGE_ACCEPT, IMAGE_TYPE_ERROR, readImageFile } from '../utils/imageFile';
 import { notify } from './feedback/feedback';
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
@@ -38,7 +38,7 @@ export default function AvatarUploadButton({ isClub, onUploaded }: AvatarUploadB
       if (!result.ok) {
         notify.error(
           result.reason === 'type'
-            ? 'Дозволені лише файли JPEG або PNG'
+            ? IMAGE_TYPE_ERROR
             : `Файл занадто великий (макс. ${formatMaxMb(MAX_AVATAR_BYTES)})`,
         );
         return;

@@ -15,6 +15,7 @@ import { useAuth } from '../AuthProvider';
 import { DEFAULT_TOURNAMENT_YOUTUBE_URL } from '../constants/youtube';
 import { brandColors, fg } from '../theme/brand';
 import { notify } from '../components/feedback/feedback';
+import TournamentPosterField from '../components/TournamentPosterField';
 
 export default function DashboardTournamentNew(props: { disableCustomTheme?: boolean }) {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ export default function DashboardTournamentNew(props: { disableCustomTheme?: boo
   const [publicDescription, setPublicDescription] = React.useState('');
   const [youtubeUrl, setYoutubeUrl] = React.useState('');
   const [hideHalf, setHideHalf] = React.useState(false);
+  const [posterDataUrl, setPosterDataUrl] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
@@ -50,6 +52,14 @@ export default function DashboardTournamentNew(props: { disableCustomTheme?: boo
         hideResultsAfterHalf: hideHalf,
       });
       const id = data.id;
+      if (id && posterDataUrl) {
+        try {
+          await axios.post(`/club/tournament/${id}/poster`, { image: posterDataUrl });
+        } catch (e) {
+          console.error(e);
+          notify.error('Турнір створено, але афішу не завантажено');
+        }
+      }
       if (id) navigate(`/profile/tournaments/${id}`);
       else navigate('/profile/tournaments');
     } catch (e: any) {
@@ -130,6 +140,14 @@ export default function DashboardTournamentNew(props: { disableCustomTheme?: boo
                   helperText="Показується на публічній сторінці турніру (посилання з головної)"
                   InputLabelProps={{ shrink: Boolean(publicDescription) }}
                 />
+                <Box sx={{ mt: 2 }}>
+                  <TournamentPosterField
+                    posterUrl={posterDataUrl}
+                    busy={saving}
+                    onPick={setPosterDataUrl}
+                    onRemove={() => setPosterDataUrl(null)}
+                  />
+                </Box>
                 <TextField
                   label="Посилання на YouTube (необовʼязково)"
                   value={youtubeUrl}

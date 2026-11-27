@@ -1,5 +1,7 @@
 export const IMAGE_ACCEPT = '.jpg, .jpeg, .png';
 
+export const IMAGE_TYPE_ERROR = 'Дозволені лише файли JPEG або PNG';
+
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
 
 export type ReadImageFileResult =

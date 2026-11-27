@@ -24,6 +24,7 @@ import { dateInputValueFromApi } from '../utils/vancouverDate';
 import { downloadSeatingAsPng } from '../utils/seatingPngExport';
 import { DEFAULT_TOURNAMENT_YOUTUBE_URL } from '../constants/youtube';
 import { confirmAction, notify } from '../components/feedback/feedback';
+import TournamentPosterField from '../components/TournamentPosterField';
 
 /** Число в моно-шрифті — колонки рейтингу мають вирівнюватись по розряду. */
 const num = (value: any) => (
@@ -81,6 +82,7 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
   const [publicDescription, setPublicDescription] = React.useState('');
   const [youtubeUrl, setYoutubeUrl] = React.useState('');
   const [hideHalf, setHideHalf] = React.useState(false);
+  const [posterBusy, setPosterBusy] = React.useState(false);
   const [participantRows, setParticipantRows] = React.useState<{ u1: ClubUser | null; u2: ClubUser | null }[]>([]);
   const [autosaveState, setAutosaveState] = React.useState<'idle' | 'saving' | 'error'>('idle');
 
@@ -148,6 +150,18 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
       })
     );
   }, [tournament, clubUsers]);
+
+  const savePoster = async (request: () => Promise<unknown>) => {
+    setPosterBusy(true);
+    try {
+      await request();
+      await refresh();
+    } catch (e: any) {
+      notify.error(e?.response?.data?.error || 'Не вдалося зберегти афішу');
+    } finally {
+      setPosterBusy(false);
+    }
+  };
 
   const canEdit = isClub && tournament?.clubId === clubIdStr && tournament?.status !== 'completed';
 
@@ -415,6 +429,14 @@ export default function DashboardTournamentDetail(props: { disableCustomTheme?: 
                       helperText={id ? `Публічна сторінка: /tournaments/${id}` : 'Публічна сторінка турніру'}
                       InputLabelProps={{ shrink: Boolean(publicDescription) }}
                     />
+                    {isClubOwner && (
+                      <TournamentPosterField
+                        posterUrl={tournament?.posterUrl ?? null}
+                        busy={posterBusy}
+                        onPick={(image) => savePoster(() => axios.post(`/club/tournament/${id}/poster`, { image }))}
+                        onRemove={() => savePoster(() => axios.delete(`/club/tournament/${id}/poster`))}
+                      />
+                    )}
                     <TextField
                       label="Посилання на YouTube (необовʼязково)"
                       value={youtubeUrl}
