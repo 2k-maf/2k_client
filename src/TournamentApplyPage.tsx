@@ -61,12 +61,13 @@ export default function TournamentApplyPage(props: { disableCustomTheme?: boolea
 
   const authSettled = isAuthSettled(Boolean(user), localStorage.getItem('jwt_token'));
   const loadGuard = React.useRef(createLatestGuard()).current;
+  // Окремий захист для гостьових POST/DELETE: скасовується разом зі зміною id або user.
+  const guestMutationGuard = React.useRef(createLatestGuard()).current;
 
-  /** Токен більше не діє (заявку відкликано або її не знайдено): прибираємо зі сховища й зі стану. */
+  /** Токен більше не діє (заявку відкликано або її не знайдено): прибираємо зі сховища й із сесії сторінки. */
   const forgetGuestToken = React.useCallback((tournamentId: string) => {
     clearGuestToken(tournamentId);
-    guestSession.current = { id: tournamentId, token: null };
-    setGuestToken(null);
+    if (guestSession.current?.id === tournamentId) guestSession.current = { id: tournamentId, token: null };
   }, []);
 
   /** Токен гостя для `id`: фрагмент URL забираємо один раз на `id`, далі беремо із сесії сторінки. */
@@ -123,8 +124,11 @@ export default function TournamentApplyPage(props: { disableCustomTheme?: boolea
     setGuestToken(null);
     setGuestStatus(null);
     void load();
-    return () => loadGuard.invalidate();
-  }, [load, loadGuard]);
+    return () => {
+      loadGuard.invalidate();
+      guestMutationGuard.invalidate();
+    };
+  }, [load, loadGuard, guestMutationGuard]);
 
   /** Виконує запит заявки, а помилку віддає в `onError` за кодом сервера. */
   const runAction = async (
@@ -176,33 +180,53 @@ export default function TournamentApplyPage(props: { disableCustomTheme?: boolea
       },
     );
 
-  const guestApply = (input: GuestApplyInput) =>
-    runAction(
+  /** Починає гостьову дію; повертає перевірку, що id і user не змінилися, поки запит був у польоті. */
+  const startGuestMutation = () => {
+    const requestId = guestMutationGuard.next();
+    return () => guestMutationGuard.isLatest(requestId);
+  };
+
+  const guestApply = (input: GuestApplyInput) => {
+    const tournamentId = id!;
+    const isCurrent = startGuestMutation();
+    return runAction(
       async () => {
-        const { data } = await axios.post<{ token: string }>(`/public/tournament/${id}/guest-apply`, input);
-        saveGuestToken(id!, data.token);
-        guestSession.current = { id: id!, token: data.token };
+        const { data } = await axios.post<{ token: string }>(
+          `/public/tournament/${tournamentId}/guest-apply`,
+          input,
+        );
+        // Заявку подано: токен зберігаємо завжди, а стан сторінки пишемо лише якщо вона та сама.
+        saveGuestToken(tournamentId, data.token);
+        if (!isCurrent()) return;
+        guestSession.current = { id: tournamentId, token: data.token };
         setGuestToken(data.token);
+        setGuestStatus('pending');
       },
-      () => setGuestStatus('pending'),
+      () => undefined,
       async (code) => {
+        if (!isCurrent()) return;
         notify.error(guestApplyErrorMessage(code));
         if (code === 'TOURNAMENT_NOT_OPEN') await load();
       },
     );
+  };
 
-  const guestWithdraw = (token: string) =>
-    runAction(
-      () => axios.delete(guestApplicationUrl(id!), { headers: guestTokenHeaders(token) }),
+  const guestWithdraw = (token: string) => {
+    const tournamentId = id!;
+    const isCurrent = startGuestMutation();
+    return runAction(
+      () => axios.delete(guestApplicationUrl(tournamentId), { headers: guestTokenHeaders(token) }),
       async () => {
-        forgetGuestToken(id!);
-        await load();
+        forgetGuestToken(tournamentId);
+        if (isCurrent()) await load();
       },
       async (code) => {
+        if (!isCurrent()) return;
         notify.error(code === 'TOURNAMENT_NOT_OPEN' ? guestApplyErrorMessage(code) : 'Не вдалося відкликати заявку');
         if (code === 'TOURNAMENT_NOT_OPEN') await load();
       },
     );
+  };
 
   const copyGuestLink = async (link: string) => {
     try {

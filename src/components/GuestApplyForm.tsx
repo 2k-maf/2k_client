@@ -7,26 +7,12 @@ import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { styled } from '@mui/material/styles';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { Link as RouterLink } from 'react-router-dom';
 import { GUEST_FORM_LIMITS, validateGuestForm } from '../utils/guestApplication';
-import { formatMaxMb, IMAGE_ACCEPT, IMAGE_TYPE_ERROR, readImageFile } from '../utils/imageFile';
+import { formatMaxMb, IMAGE_ACCEPT, imageRejectedMessage, MAX_AVATAR_BYTES, readImageFile } from '../utils/imageFile';
 import { notify } from './feedback/feedback';
-
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
-
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
+import VisuallyHiddenInput from './VisuallyHiddenInput';
 
 export type GuestApplyInput = { nickname: string; contact: string; image: string; website: string };
 
@@ -54,11 +40,7 @@ export default function GuestApplyForm({ busy, onSubmit }: GuestApplyFormProps) 
     try {
       const result = await readImageFile(file, MAX_AVATAR_BYTES);
       if (!result.ok) {
-        notify.error(
-          result.reason === 'type'
-            ? IMAGE_TYPE_ERROR
-            : `Файл занадто великий (макс. ${formatMaxMb(MAX_AVATAR_BYTES)})`,
-        );
+        notify.error(imageRejectedMessage(result.reason, MAX_AVATAR_BYTES));
         return;
       }
       setImage(result.dataUrl);

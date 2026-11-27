@@ -3,24 +3,12 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { styled } from '@mui/material/styles';
-import { formatMaxMb, IMAGE_ACCEPT, IMAGE_TYPE_ERROR, readImageFile } from '../utils/imageFile';
+import { IMAGE_ACCEPT, imageRejectedMessage, readImageFile } from '../utils/imageFile';
 import { resolveMediaUrl } from '../utils/mediaUrl';
 import { notify } from './feedback/feedback';
+import VisuallyHiddenInput from './VisuallyHiddenInput';
 
 export const POSTER_MAX_BYTES = 3 * 1024 * 1024;
-
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
 
 type TournamentPosterFieldProps = {
   posterUrl: string | null;
@@ -45,11 +33,7 @@ export default function TournamentPosterField({
     try {
       const result = await readImageFile(file, POSTER_MAX_BYTES);
       if (!result.ok) {
-        notify.error(
-          result.reason === 'type'
-            ? IMAGE_TYPE_ERROR
-            : `Файл занадто великий (макс. ${formatMaxMb(POSTER_MAX_BYTES)})`,
-        );
+        notify.error(imageRejectedMessage(result.reason, POSTER_MAX_BYTES));
         return;
       }
       await onPick(result.dataUrl);

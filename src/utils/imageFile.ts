@@ -24,3 +24,9 @@ export const readImageFile = (file: File, maxBytes: number): Promise<ReadImageFi
 };
 
 export const formatMaxMb = (bytes: number): string => `${bytes / (1024 * 1024)} МБ`;
+
+export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+
+/** Текст помилки для відхиленого `readImageFile` (тип або розмір понад `maxBytes`). */
+export const imageRejectedMessage = (reason: 'type' | 'size', maxBytes: number): string =>
+  reason === 'type' ? IMAGE_TYPE_ERROR : `Файл занадто великий (макс. ${formatMaxMb(maxBytes)})`;

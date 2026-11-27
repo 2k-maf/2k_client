@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMaxMb, readImageFile } from './imageFile';
+import { formatMaxMb, IMAGE_TYPE_ERROR, imageRejectedMessage, MAX_AVATAR_BYTES, readImageFile } from './imageFile';
 
 const MB = 1024 * 1024;
 
@@ -43,5 +43,16 @@ describe('formatMaxMb', () => {
   it('форматує ліміт у мегабайтах', () => {
     expect(formatMaxMb(2 * MB)).toBe('2 МБ');
     expect(formatMaxMb(3 * MB)).toBe('3 МБ');
+  });
+});
+
+describe('imageRejectedMessage', () => {
+  it('тип -> IMAGE_TYPE_ERROR, розмір -> ліміт у МБ', () => {
+    expect(imageRejectedMessage('type', 2 * MB)).toBe(IMAGE_TYPE_ERROR);
+    expect(imageRejectedMessage('size', 3 * MB)).toBe('Файл занадто великий (макс. 3 МБ)');
+  });
+
+  it('MAX_AVATAR_BYTES = 2 МБ', () => {
+    expect(MAX_AVATAR_BYTES).toBe(2 * MB);
   });
 });
