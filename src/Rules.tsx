@@ -83,7 +83,7 @@ export default function Rules(props: { disableCustomTheme?: boolean }) {
             надмірна жестикуляція, грубість тощо.
           </DocText>
           <DocTable
-            columns="minmax(0,1fr) 160px"
+            columns="minmax(0,1fr) auto"
             headers={['ПОРУШЕННЯ', 'НАСЛІДОК']}
             align={['left', 'right']}
             rows={[

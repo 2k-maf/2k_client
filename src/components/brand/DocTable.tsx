@@ -66,47 +66,45 @@ export default function DocTable({
 }) {
   const alignOf = (i: number) => align[i] ?? 'left';
   return (
-    <Box sx={{ overflowX: 'auto' }}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 520 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: columns,
+          gap: 2,
+          py: 1.25,
+          borderBottom: `1px solid ${fg(0.12)}`,
+          // Ті самі токени, що в BrandTable — шапки таблиць не мають розходитись.
+          ...monoSx(11, fg(0.6)),
+          letterSpacing: '0.14em',
+        }}
+      >
+        {headers.map((h, i) => (
+          <Box key={h} component="span" sx={{ textAlign: alignOf(i) }}>
+            {h}
+          </Box>
+        ))}
+      </Box>
+      {rows.map((row, rowIndex) => (
         <Box
+          key={rowIndex}
           sx={{
             display: 'grid',
             gridTemplateColumns: columns,
             gap: 2,
-            py: 1.25,
-            borderBottom: `1px solid ${fg(0.12)}`,
-            // Ті самі токени, що в BrandTable — шапки таблиць не мають розходитись.
-            ...monoSx(11, fg(0.6)),
-            letterSpacing: '0.14em',
+            alignItems: 'center',
+            py: 1.75,
+            borderBottom: `1px solid ${fg(0.07)}`,
+            fontSize: 15,
           }}
         >
-          {headers.map((h, i) => (
-            <Box key={h} component="span" sx={{ textAlign: alignOf(i) }}>
-              {h}
+          {row.map((cell, i) => (
+            <Box key={i} component="span" sx={{ textAlign: alignOf(i), minWidth: 0 }}>
+              {cell}
             </Box>
           ))}
         </Box>
-        {rows.map((row, rowIndex) => (
-          <Box
-            key={rowIndex}
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: columns,
-              gap: 2,
-              alignItems: 'center',
-              py: 1.75,
-              borderBottom: `1px solid ${fg(0.07)}`,
-              fontSize: 15,
-            }}
-          >
-            {row.map((cell, i) => (
-              <Box key={i} component="span" sx={{ textAlign: alignOf(i), minWidth: 0 }}>
-                {cell}
-              </Box>
-            ))}
-          </Box>
-        ))}
-      </Box>
+      ))}
     </Box>
   );
 }

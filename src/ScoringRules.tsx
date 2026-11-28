@@ -8,7 +8,7 @@ import DocTable, { Pill, teamTone } from './components/brand/DocTable';
 import { RULES_TABS } from './Rules';
 import { brandColors, brandFonts, fg } from './theme/brand';
 
-const TWO_COLUMNS = 'minmax(0,1fr) 140px';
+const TWO_COLUMNS = 'minmax(0,1fr) auto';
 const OP5_COLUMNS = 'minmax(0,0.8fr) minmax(0,1fr) 140px';
 
 export default function ScoringRules(props: { disableCustomTheme?: boolean }) {
