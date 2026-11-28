@@ -1,7 +1,11 @@
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected';
 
 export type ApplicationRow = {
-  userId: string;
+  kind: 'user' | 'guest';
+  userId: string | null;
+  applicationId?: string;
+  isGuest?: boolean;
+  contact?: string;
   nickname: string;
   avatarUrl: string | null;
   status: ApplicationStatus;
@@ -31,15 +35,31 @@ export function applicationActions(status: ApplicationStatus): ApplicationStatus
   return APPLICATION_ACTION_ORDER.filter((s) => s !== status);
 }
 
-export type ApplyView = 'login' | 'club' | 'closed' | 'avatar' | 'form' | 'submitted';
+/** Ключ рядка заявки: гість має `applicationId`, гравець — `userId`. */
+export function applicationRowKey(row: ApplicationRow): string {
+  return row.applicationId ?? row.userId ?? '';
+}
+
+/** URL рішення клубу щодо заявки (гостьова або гравця). */
+export function applicationDecisionUrl(tournamentId: string, row: ApplicationRow): string {
+  return row.kind === 'guest'
+    ? `/club/tournament/${tournamentId}/guest-applications/${row.applicationId}`
+    : `/club/tournament/${tournamentId}/applications/${row.userId}`;
+}
+
+export type ApplyView = 'guest' | 'guestSubmitted' | 'club' | 'closed' | 'avatar' | 'form' | 'submitted';
 
 export function resolveApplyView(input: {
   authType: 'Клуб' | 'Учасник' | undefined;
   hasAvatar: boolean;
   tournamentStatus: string;
   myStatus: ApplicationStatus | null;
+  guestStatus?: ApplicationStatus | null;
 }): ApplyView {
-  if (!input.authType) return 'login';
+  if (!input.authType) {
+    if (input.guestStatus) return 'guestSubmitted';
+    return input.tournamentStatus !== 'draft' ? 'closed' : 'guest';
+  }
   if (input.authType === 'Клуб') return 'club';
   if (input.myStatus) return 'submitted';
   if (input.tournamentStatus !== 'draft') return 'closed';
@@ -62,12 +82,17 @@ export function isAuthSettled(hasUser: boolean, storedToken: string | null): boo
   return hasUser || !storedToken;
 }
 
+/** Публічні дані турніру для сторінок подачі й заявок (без чернеток поза вікном видимості). */
+export function applyInfoUrl(id: string): string {
+  return `/public/tournament/${id}/apply-info`;
+}
+
 /**
  * URL заголовка турніру. Публічний ендпоінт віддає 404 для чернеток поза вікном видимості,
  * тож клуб читає турнір авторизованим запитом (власник бачить його завжди).
  */
 export function tournamentHeaderUrl(id: string, isClubUser: boolean): string {
-  return isClubUser ? `/tournament/${id}` : `/public/tournament/${id}`;
+  return isClubUser ? `/tournament/${id}` : applyInfoUrl(id);
 }
 
 /** Лічильник запитів: лише останній запуск має право записувати стан. */

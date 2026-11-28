@@ -4,10 +4,14 @@ import {
   APPLICATION_STATUS_UA,
   applicationActions,
   applicationErrorMessage,
+  applicationDecisionUrl,
+  applicationRowKey,
+  applyInfoUrl,
   createLatestGuard,
   isAuthSettled,
   resolveApplyView,
   tournamentHeaderUrl,
+  type ApplicationRow,
 } from './tournamentApplications';
 
 const base = {
@@ -18,8 +22,25 @@ const base = {
 };
 
 describe('resolveApplyView', () => {
-  it('login: немає authType', () => {
-    expect(resolveApplyView({ ...base, authType: undefined })).toBe('login');
+  it('guest: немає authType, турнір у draft', () => {
+    expect(resolveApplyView({ ...base, authType: undefined })).toBe('guest');
+  });
+
+  it('guestSubmitted: немає authType, є гостьова заявка', () => {
+    expect(resolveApplyView({ ...base, authType: undefined, guestStatus: 'pending' })).toBe('guestSubmitted');
+  });
+
+  it('guestSubmitted має пріоритет над closed', () => {
+    expect(
+      resolveApplyView({ ...base, authType: undefined, tournamentStatus: 'started', guestStatus: 'approved' }),
+    ).toBe('guestSubmitted');
+  });
+
+  it('closed: немає authType, турнір не в draft, заявки немає', () => {
+    expect(resolveApplyView({ ...base, authType: undefined, tournamentStatus: 'started' })).toBe('closed');
+    expect(resolveApplyView({ ...base, authType: undefined, tournamentStatus: 'started', guestStatus: null })).toBe(
+      'closed',
+    );
   });
 
   it('club: акаунт клубу', () => {
@@ -60,10 +81,46 @@ describe('resolveApplyView', () => {
     ).toBe('club');
   });
 
-  it('login має пріоритет над усім', () => {
-    expect(
-      resolveApplyView({ authType: undefined, hasAvatar: false, tournamentStatus: 'started', myStatus: 'pending' }),
-    ).toBe('login');
+  it('guestStatus ігнорується для авторизованих', () => {
+    expect(resolveApplyView({ ...base, guestStatus: 'pending' })).toBe('form');
+  });
+});
+
+const userRow: ApplicationRow = {
+  kind: 'user',
+  userId: 'u1',
+  nickname: 'Гравець',
+  avatarUrl: null,
+  status: 'pending',
+  rating: null,
+  rank: null,
+  totalGames: 0,
+  createdAt: '2026-01-01T00:00:00.000Z',
+};
+const guestRow: ApplicationRow = {
+  ...userRow,
+  kind: 'guest',
+  userId: null,
+  applicationId: 'a1',
+  isGuest: true,
+  contact: '@guest',
+};
+
+describe('applicationRowKey', () => {
+  it('гість: applicationId', () => {
+    expect(applicationRowKey(guestRow)).toBe('a1');
+  });
+  it('гравець: userId', () => {
+    expect(applicationRowKey(userRow)).toBe('u1');
+  });
+});
+
+describe('applicationDecisionUrl', () => {
+  it('гість', () => {
+    expect(applicationDecisionUrl('t1', guestRow)).toBe('/club/tournament/t1/guest-applications/a1');
+  });
+  it('гравець', () => {
+    expect(applicationDecisionUrl('t1', userRow)).toBe('/club/tournament/t1/applications/u1');
   });
 });
 
@@ -125,12 +182,18 @@ describe('isAuthSettled', () => {
   });
 });
 
+describe('applyInfoUrl', () => {
+  it('публічний ендпоінт apply-info', () => {
+    expect(applyInfoUrl('a1')).toBe('/public/tournament/a1/apply-info');
+  });
+});
+
 describe('tournamentHeaderUrl', () => {
   it('клуб: авторизований ендпоінт', () => {
-    expect(tournamentHeaderUrl('abc', true)).toBe('/tournament/abc');
+    expect(tournamentHeaderUrl('a1', true)).toBe('/tournament/a1');
   });
-  it('гість або гравець: публічний ендпоінт', () => {
-    expect(tournamentHeaderUrl('abc', false)).toBe('/public/tournament/abc');
+  it('гість або гравець: apply-info', () => {
+    expect(tournamentHeaderUrl('a1', false)).toBe('/public/tournament/a1/apply-info');
   });
 });
 

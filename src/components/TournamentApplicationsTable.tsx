@@ -7,17 +7,20 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Stack from '@mui/material/Stack';
+import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
 import { alpha } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 import RemoteAvatar from './brand/RemoteAvatar';
-import { APPLICATION_STATUS_UA, type ApplicationRow } from '../utils/tournamentApplications';
+import { APPLICATION_STATUS_UA, applicationRowKey, type ApplicationRow } from '../utils/tournamentApplications';
 
 type Props = {
   /** Рядки в порядку, у якому їх віддав сервер. */
   rows: ApplicationRow[];
   /** Якщо передано — додається колонка дій (лише для клубу-власника). */
   actions?: (row: ApplicationRow) => React.ReactNode;
+  /** Колонка «Контакт» гостьових заявок (лише для клубу-власника). */
+  showContact?: boolean;
 };
 
 const headSx = {
@@ -32,7 +35,8 @@ const headSx = {
 
 const formatRating = (rating: number | null) => (rating == null ? '—' : rating.toFixed(1));
 
-export default function TournamentApplicationsTable({ rows, actions }: Props) {
+export default function TournamentApplicationsTable({ rows, actions, showContact }: Props) {
+  const columnCount = 5 + (showContact ? 1 : 0) + (actions ? 1 : 0);
   return (
     <TableContainer
       component={Paper}
@@ -54,6 +58,7 @@ export default function TournamentApplicationsTable({ rows, actions }: Props) {
             <TableCell>Гравець</TableCell>
             <TableCell align="right">Рейтинг</TableCell>
             <TableCell align="right">Ігор</TableCell>
+            {showContact ? <TableCell>Контакт</TableCell> : null}
             <TableCell>Статус</TableCell>
             {actions ? <TableCell>Дії</TableCell> : null}
           </TableRow>
@@ -61,7 +66,7 @@ export default function TournamentApplicationsTable({ rows, actions }: Props) {
         <TableBody>
           {rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={actions ? 6 : 5} align="center" sx={{ py: 4 }}>
+              <TableCell colSpan={columnCount} align="center" sx={{ py: 4 }}>
                 <Typography variant="body2" color="text.secondary">
                   Заявок поки немає.
                 </Typography>
@@ -70,7 +75,7 @@ export default function TournamentApplicationsTable({ rows, actions }: Props) {
           ) : (
             rows.map((row) => (
               <TableRow
-                key={row.userId}
+                key={applicationRowKey(row)}
                 sx={{
                   '&:nth-of-type(even)': { bgcolor: (t) => alpha(t.palette.action.hover, 0.2) },
                   '&:last-child td': { borderBottom: 0 },
@@ -87,10 +92,12 @@ export default function TournamentApplicationsTable({ rows, actions }: Props) {
                     <Typography variant="body1" fontWeight={600} noWrap>
                       {row.nickname}
                     </Typography>
+                    {row.isGuest ? <Chip size="small" label="гість" /> : null}
                   </Stack>
                 </TableCell>
                 <TableCell align="right">{formatRating(row.rating)}</TableCell>
                 <TableCell align="right">{row.totalGames}</TableCell>
+                {showContact ? <TableCell sx={{ wordBreak: 'break-word' }}>{row.contact ?? '—'}</TableCell> : null}
                 <TableCell>{APPLICATION_STATUS_UA[row.status]}</TableCell>
                 {actions ? <TableCell>{actions(row)}</TableCell> : null}
               </TableRow>

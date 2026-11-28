@@ -13,6 +13,8 @@ import { notify } from './components/feedback/feedback';
 import {
   APPLICATION_ACTION_UA,
   applicationActions,
+  applicationDecisionUrl,
+  applicationRowKey,
   applicationErrorMessage,
   createLatestGuard,
   isAuthSettled,
@@ -30,7 +32,7 @@ export default function TournamentApplicationsPage(props: { disableCustomTheme?:
   const [tournament, setTournament] = React.useState<TournamentInfo | null>(null);
   const [list, setList] = React.useState<ApplicationsPayload | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const [busyUserId, setBusyUserId] = React.useState<string | null>(null);
+  const [busyKey, setBusyKey] = React.useState<string | null>(null);
 
   const isOwner =
     user?.authType === 'Клуб' && tournament != null && String(user._id) === String(tournament.clubId);
@@ -82,15 +84,16 @@ export default function TournamentApplicationsPage(props: { disableCustomTheme?:
   }, [loadList]);
 
   const changeStatus = async (row: ApplicationRow, status: ApplicationStatus) => {
-    setBusyUserId(row.userId);
+    if (!id) return;
+    setBusyKey(applicationRowKey(row));
     try {
-      await axios.put(`/club/tournament/${id}/applications/${row.userId}`, { status });
+      await axios.put(applicationDecisionUrl(id, row), { status });
       notify.success('Заявку оновлено');
       await loadList();
     } catch (e: any) {
       notify.error(applicationErrorMessage(e?.response?.data?.error));
     } finally {
-      setBusyUserId(null);
+      setBusyKey(null);
     }
   };
 
@@ -102,7 +105,7 @@ export default function TournamentApplicationsPage(props: { disableCustomTheme?:
           size="small"
           variant="outlined"
           color={status === 'rejected' ? 'error' : 'primary'}
-          disabled={busyUserId === row.userId}
+          disabled={busyKey === applicationRowKey(row)}
           onClick={() => void changeStatus(row, status)}
         >
           {APPLICATION_ACTION_UA[status]}
@@ -131,7 +134,11 @@ export default function TournamentApplicationsPage(props: { disableCustomTheme?:
                 </Button>
               ) : null}
             </Stack>
-            <TournamentApplicationsTable rows={list.items} actions={isOwner ? renderActions : undefined} />
+            <TournamentApplicationsTable
+              rows={list.items}
+              actions={isOwner ? renderActions : undefined}
+              showContact={isOwner}
+            />
           </Stack>
         )}
       </BrandPage>
